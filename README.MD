@@ -1,10 +1,47 @@
 # File structure
 
-Please see below for the file structure. Read this please!
+Please see below for the file structure. Read this please! Some of the code might take a while to run - please be patient.
+
+## Virtual Environment Setup
+
+Before running any of the code in this repository, you should set up a virtual environment to manage dependencies. Follow these steps:
+
+### For Windows:
+```
+
+# Create a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+venv\Scripts\activate
+
+# Install required packages
+pip install -r requirements.txt
+```
+
+### For macOS/Linux:
+```
+# Navigate to the project directory
+cd path/to/DCSP-Team-2
+
+# Create a virtual environment
+python3 -m venv venv
+
+# Activate the virtual environment
+source venv/bin/activate
+
+# Install required packages
+pip install -r requirements.txt
+```
+
+To deactivate the virtual environment when you're done, simply run:
+```
+deactivate
+```
 
 ### Data
 
-`dataextract.py` is a file used to connect to the Postgre server to create `dfs`. See note below.
+`dataextract.py` is a file used to connect to the Postgre server to create `dfs`. Run this **first**. See note below.
 
 `datavisualiser.py` is a jupyter notebook to explore some of the data.
 
@@ -25,4 +62,3 @@ Note: `dfs` is a dictionary containing the various dataframes related to our ass
 ### CO2 Forecasting
 
 `carbondioxide_predictor.py` is the file we'll use to predict the level of CO2. To determine if a compost feed is eco-friendly.
-

@@ -1,6 +1,6 @@
 ##################################################################################################
-# In this section, we set the user authentication, user and app ID, model details, and the path
-# to the local image we want as an input. Change these strings to run your own example.
+# In this section, we set the user authentication, user and app ID, model details, and the URL
+# of the image we want as an input. Change these strings to run your own example.
 #################################################################################################
 
 # Your PAT (Personal Access Token) can be found in the Account's Security section
@@ -9,10 +9,12 @@ PAT = '88daa3cc427546dfaf4f37e1c1ddb3d3'
 # Since you're making inferences outside your app's scope
 USER_ID = 'clarifai'
 APP_ID = 'main'
-# Change these to whatever model and image path you want to use
-MODEL_ID = 'general-image-recognition'
-MODEL_VERSION_ID = 'aa7f35c01e0642fda5cf400f543e7c40'
-IMAGE_PATH = 'testimage.png'  # Local image file
+# Change these to whatever model and image URL you want to use
+MODEL_ID = 'image-subject-segmentation'
+MODEL_VERSION_ID = '55b2051b75f14577b6fdd5a4fa3fd5a7'
+# IMAGE_URL = 'https://samples.clarifai.com/metro-north.jpg'
+# To use a local file, assign the location variable
+IMAGE_FILE_LOCATION = 'testimage.png'
 
 ############################################################################
 # YOU DO NOT NEED TO CHANGE ANYTHING BELOW THIS LINE TO RUN THIS EXAMPLE
@@ -27,11 +29,11 @@ stub = service_pb2_grpc.V2Stub(channel)
 
 metadata = (('authorization', 'Key ' + PAT),)
 
-userDataObject = resources_pb2.UserAppIDSet(user_id=USER_ID, app_id=APP_ID)
-
-# Read the local image file
-with open(IMAGE_PATH, "rb") as f:
+# To use a local file, uncomment the following lines
+with open(IMAGE_FILE_LOCATION, "rb") as f:
     file_bytes = f.read()
+
+userDataObject = resources_pb2.UserAppIDSet(user_id=USER_ID, app_id=APP_ID)
 
 post_model_outputs_response = stub.PostModelOutputs(
     service_pb2.PostModelOutputsRequest(
@@ -42,6 +44,7 @@ post_model_outputs_response = stub.PostModelOutputs(
             resources_pb2.Input(
                 data=resources_pb2.Data(
                     image=resources_pb2.Image(
+                        # url=IMAGE_URL
                         base64=file_bytes
                     )
                 )
@@ -54,12 +57,11 @@ if post_model_outputs_response.status.code != status_code_pb2.SUCCESS:
     print(post_model_outputs_response.status)
     raise Exception("Post model outputs failed, status: " + post_model_outputs_response.status.description)
 
-# Since we have one input, one output will exist here
-output = post_model_outputs_response.outputs[0]
+regions = post_model_outputs_response.outputs[0].data.regions
 
-print("Predicted concepts:")
-for concept in output.data.concepts:
-    print("%s %.2f" % (concept.name, concept.value))
-
-# Uncomment this line to print the full Response JSON
-print(output)
+for region in regions:
+    for concept in region.data.concepts:
+        # Accessing and rounding the concept's percentage of image covered
+        name = concept.name
+        value = round(concept.value, 4)
+        print((f"{name}: {value}"))
