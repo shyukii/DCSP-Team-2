@@ -54,7 +54,7 @@ HELP_MESSAGE = """Here's what I can do for you:
 🟢 /input — Get food/water input guide
 🟢 /scan — Upload compost or plant image
 🟢 /care — Get plant care suggestions
-🟢 /co2 — View CO₂ saved
+🟢 /co2 — View CO2 saved
 🟢 /profile — Update your compost setup
 🟢 /help — Show this commands list
 
@@ -186,8 +186,8 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         
         # Plant-specific care tips
         care_tips = {
-            "ladysfinger": "🌡️ Keep soil temperature between 22-35°C\n💧 Water regularly, keeping soil moist\n☀️ Requires 6+ hours of direct sunlight",
-            "spinach": "🌡️ Prefers cooler temperatures (15-20°C)\n💧 Keep soil consistently moist\n🌱 Harvest outer leaves first for continuous growth",
+            "ladysfinger": "🌡️ Keep soil temperature between 22-35C\n💧 Water regularly, keeping soil moist\n☀️ Requires 6+ hours of direct sunlight",
+            "spinach": "🌡️ Prefers cooler temperatures (15-20C)\n💧 Keep soil consistently moist\n🌱 Harvest outer leaves first for continuous growth",
             "longbean": "🌿 Provide support for climbing\n💧 Water deeply once a week\n☀️ Plant in full sun exposure"
         }
         
@@ -224,7 +224,7 @@ async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(
             f"🌍 **CO₂ Savings Impact**\n\n"
             f"Your {compost_volume}L compost system helps avoid approximately:\n\n"
-            f"🌱 **{co2_saved} kg** of CO₂ emissions per year\n"
+            f"🌱 **{co2_saved} kg** of CO2 emissions per year\n"
             f"🌳 Equivalent to planting **{trees_equivalent} trees**!\n\n"
             f"By composting, you're reducing methane emissions from landfills and helping fight climate change.",
             parse_mode="Markdown"
