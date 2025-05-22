@@ -39,6 +39,15 @@ To deactivate the virtual environment when you're done, simply run:
 deactivate
 ```
 
+### Setting up chatbot
+
+1. Download [ollama](https://ollama.com/) 
+2. Run the following scripts in your virtual environment
+```bash
+ollama pull llama2
+```
+3. Run `chatbot.py`
+
 ### Data
 
 `dataextract.py` is a file used to connect to the Postgre server to create `dfs`. Run this **first**. See note below.

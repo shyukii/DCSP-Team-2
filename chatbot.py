@@ -2,6 +2,7 @@ import logging
 import json
 import asyncio
 import os
+import subprocess
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram._message import Message
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
@@ -14,8 +15,66 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Define conversation states
-AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU = range(8)
+AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU = range(9)
 
+### Llama Implementation
+class LlamaInterface:
+    def __init__(self):
+        # Test if Ollama is available
+        try:
+            subprocess.run(['ollama', '--version'], check=True, capture_output=True)
+            self.backend = 'ollama'
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            self.backend = None
+            print("Ollama not found. Please install it first.")
+    
+    async def generate_response(self, prompt):
+        if self.backend == 'ollama':
+            try:
+                # Run Ollama in a separate thread to avoid blocking
+                loop = asyncio.get_event_loop()
+                result = await loop.run_in_executor(
+                    None,
+                    lambda: subprocess.run(
+                        ['ollama', 'run', 'llama2', prompt],
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                )
+                return result.stdout.strip()
+            except subprocess.TimeoutExpired:
+                return "Sorry, that took too long to process."
+            except Exception as e:
+                return f"Error: {str(e)}"
+        else:
+            return "Llama 2 is not available."
+
+llama = LlamaInterface()
+
+async def start_llama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("I'm now in AI chat mode using Llama 2. Ask me anything!")
+    return AMA
+
+async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    user_message = update.message.text
+    if user_message.lower() in ['/menu', '/back', '/exit']:
+        username = context.user_data.get("username")
+        return await show_main_menu(update, context, username)
+    
+    try:
+        # Send typing action to show bot is processing
+        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+        
+        response = await llama.generate_response(user_message)
+        await update.message.reply_text(response)
+    except Exception as e:
+        logging.error(f"Error getting response from Llama: {e}")
+        await update.message.reply_text(
+            "Sorry, I'm having trouble processing your request. Please try again."
+        )
+    return AMA
+### Llama Implementation
 # Path to JSON file for storing user credentials
 LOGIN_FILE = "loginIDs.json"
 
@@ -419,6 +478,9 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
             InlineKeyboardButton("📸 Image Scan", callback_data="image_scan")
         ],
         [
+            InlineKeyboardButton("🤖 Chat with AI", callback_data="start_llama")  # Updated this
+        ],
+        [
             InlineKeyboardButton("❓ Help & Commands", callback_data="help_commands")
         ]
     ]
@@ -447,7 +509,9 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     choice = query.data
     username = context.user_data.get("username") or context.user_data.get("login_username")
-    
+    if choice =="start_llama":
+        await query.edit_message_text("I'm now in AI chat mode using Llama 2. Ask me anything!")
+        return AMA
     if choice == "help_commands":
         # Show help and commands menu
         await query.edit_message_text(
@@ -560,7 +624,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 def main() -> None:
     """Run the bot."""
     try:
-        # Replace with your actual API key if needed
+        # Telegram token
         token = "7787023282:AAFGs3KVK9iIQEoeSfjj3XpZ2R1MgOhZWP8"
         
         # Create the Application
@@ -578,6 +642,7 @@ def main() -> None:
                 PLANT_SPECIES: [CallbackQueryHandler(plant_species)],
                 COMPOST_VOLUME: [MessageHandler(filters.TEXT & ~filters.COMMAND, compost_volume)],
                 MAIN_MENU: [CallbackQueryHandler(handle_main_menu)],
+                AMA:[MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response)],
             },
             fallbacks=[CommandHandler("cancel", cancel)],
             name="auth_conversation"
@@ -597,6 +662,9 @@ def main() -> None:
         application.add_handler(MessageHandler(
             filters.TEXT & filters.Regex(r'(?i)what can you do\??'), handle_what_can_you_do
         ))
+
+        # Add handler for llama
+        application.add_handler(CommandHandler("talktome",start_llama))
         
         # Add the conversation handler
         application.add_handler(conv_handler)
