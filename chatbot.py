@@ -6,8 +6,9 @@ import subprocess
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram._message import Message
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
+from llama.py import LlamaInterface  
 
-# Enable logging
+# Enable logging  
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -17,38 +18,7 @@ logger = logging.getLogger(__name__)
 # Define conversation states
 AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU = range(9)
 
-### Llama Implementation
-class LlamaInterface:
-    def __init__(self):
-        # Test if Ollama is available
-        try:
-            subprocess.run(['ollama', '--version'], check=True, capture_output=True)
-            self.backend = 'ollama'
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            self.backend = None
-            print("Ollama not found. Please install it first.")
-    
-    async def generate_response(self, prompt):
-        if self.backend == 'ollama':
-            try:
-                # Run Ollama in a separate thread to avoid blocking
-                loop = asyncio.get_event_loop()
-                result = await loop.run_in_executor(
-                    None,
-                    lambda: subprocess.run(
-                        ['ollama', 'run', 'llama2', prompt],
-                        capture_output=True,
-                        text=True,
-                        timeout=30
-                    )
-                )
-                return result.stdout.strip()
-            except subprocess.TimeoutExpired:
-                return "Sorry, that took too long to process."
-            except Exception as e:
-                return f"Error: {str(e)}"
-        else:
-            return "Llama 2 is not available."
+
 
 llama = LlamaInterface()
 
@@ -74,50 +44,12 @@ async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "Sorry, I'm having trouble processing your request. Please try again."
         )
     return AMA
-### Llama Implementation
-# Path to JSON file for storing user credentials
-LOGIN_FILE = "loginIDs.json"
 
-# Ensure login file exists
-def ensure_login_file_exists():
-    if not os.path.exists(LOGIN_FILE):
-        with open(LOGIN_FILE, 'w') as f:
-            json.dump({}, f)
 
-# Load user credentials from JSON file
-def load_user_credentials():
-    ensure_login_file_exists()
-    try:
-        with open(LOGIN_FILE, 'r') as f:
-            data = f.read().strip()
-            if data:
-                return json.loads(data)
-            return {}
-    except json.JSONDecodeError:
-        return {}
 
-# Save user credentials to JSON file
-def save_user_credentials(credentials):
-    with open(LOGIN_FILE, 'w') as f:
-        json.dump(credentials, f, indent=4)
-
-# Welcome message
-WELCOME_MESSAGE = """👋 Hi there! I'm NutriBot, your friendly composting and plant care assistant 🌱♻️
-
-You don't need to be a gardening expert — just ask me anything!"""
-
-# Help message
-HELP_MESSAGE = """Here's what I can do for you:
-
-🟢 /status — Check compost readiness
-🟢 /input — Get food/water input guide
-🟢 /scan — Upload compost or plant image
-🟢 /care — Get plant care suggestions
-🟢 /co2 — View CO2 saved
-🟢 /profile — Update your compost setup
-🟢 /help — Show this commands list
-
-Type any of these commands or use the menu buttons to get started!"""
+############################################################################
+# (/start)
+############################################################################
 
 # Direct bot response message (non-conversation)
 async def direct_start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -167,6 +99,45 @@ async def handle_what_can_you_do(update: Update, context: ContextTypes.DEFAULT_T
     """Respond to 'What can you do?' question with help information."""
     await update.message.reply_text(HELP_MESSAGE)
 
+############################################################################
+# Login
+############################################################################
+
+# Path to JSON file for storing user credentials
+LOGIN_FILE = "loginIDs.json"
+
+# Ensure login file exists
+def ensure_login_file_exists():
+    if not os.path.exists(LOGIN_FILE):
+        with open(LOGIN_FILE, 'w') as f:
+            json.dump({}, f)
+
+# Load user credentials from JSON file
+def load_user_credentials():
+    ensure_login_file_exists()
+    try:
+        with open(LOGIN_FILE, 'r') as f:
+            data = f.read().strip()
+            if data:
+                return json.loads(data)
+            return {}
+    except json.JSONDecodeError:
+        return {}
+
+# Save user credentials to JSON file
+def save_user_credentials(credentials):
+    with open(LOGIN_FILE, 'w') as f:
+        json.dump(credentials, f, indent=4)
+
+# Welcome message
+WELCOME_MESSAGE = """👋 Hi there! I'm NutriBot, your friendly composting and plant care assistant 🌱♻️
+
+You don't need to be a gardening expert — just ask me anything!"""
+
+############################################################################
+# Checking compost readiness (/status)
+############################################################################
+
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /status command to check compost readiness."""
     username = context.user_data.get("username")
@@ -189,6 +160,10 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
     else:
         await update.message.reply_text("Please use /start to login first.")
+
+############################################################################
+# Getting food/water input guidance (/input)
+############################################################################
 
 async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /input command to get food/water input guide."""
@@ -220,6 +195,10 @@ async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     else:
         await update.message.reply_text("Please use /start to login first.")
 
+############################################################################
+# Upload compost or plant image (/scan)
+############################################################################
+
 async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /scan command to upload and analyze images."""
     await update.message.reply_text(
@@ -228,6 +207,10 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "For best results, ensure good lighting and focus on the area of concern.",
         parse_mode="Markdown"
     )
+
+############################################################################
+# Learn more about composting or get plant care suggestions (/care)
+############################################################################
 
 async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /care command to get plant care suggestions."""
@@ -260,6 +243,7 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
     else:
         await update.message.reply_text("Please use /start to login first.")
+
 
 async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /co2 command to view CO₂ savings."""
@@ -461,6 +445,10 @@ async def compost_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Show main menu
     return await show_main_menu(update, context, username)
 
+############################################################################
+# Main Menu
+############################################################################
+
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username) -> int:
     """Show the main menu with options."""
     # Get user data for personalized greeting
@@ -478,7 +466,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
             InlineKeyboardButton("📸 Image Scan", callback_data="image_scan")
         ],
         [
-            InlineKeyboardButton("🤖 Chat with AI", callback_data="start_llama")  # Updated this
+            InlineKeyboardButton("🤖 Chat with AI", callback_data="start_llama") 
         ],
         [
             InlineKeyboardButton("❓ Help & Commands", callback_data="help_commands")
@@ -615,11 +603,37 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     return MAIN_MENU
 
+############################################################################
+# Help message and commands (/help)
+############################################################################
+
+# Help message
+HELP_MESSAGE = """Here's what I can do for you:
+
+/status — Check compost readiness
+/input — Get food and water input guidance
+/scan — Upload compost or plant image for analysis
+/care — Get compost or plant care advice
+/co2 — View your CO2 emissions impact
+/profile — Update your compost setup
+/help — Show this commands list
+
+Type any of these commands or use the menu buttons to get started!"""
+
+############################################################################
+# Stop conversation (/cancel)
+############################################################################
+
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancels and ends the conversation."""
     await update.message.reply_text("Operation cancelled. Type /start to begin again.")
     context.user_data.clear()
     return ConversationHandler.END
+
+
+############################################################################
+# Main 
+############################################################################
 
 def main() -> None:
     """Run the bot."""
