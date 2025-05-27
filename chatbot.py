@@ -7,6 +7,8 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram._message import Message
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
 from llama import LlamaInterface  
+from emissions_calculator import EmissionsCalculator
+from computer_vision import ClarifaiImageSegmentation
 
 # Enable logging  
 logging.basicConfig(
@@ -18,13 +20,11 @@ logger = logging.getLogger(__name__)
 # Define conversation states
 AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU = range(9)
 
-
-
 llama = LlamaInterface()
 
-async def start_llama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("I'm now in AI chat mode using Llama 2. Ask me anything!")
-    return AMA
+# async def start_llama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+#     await update.message.reply_text("I'm Llama and I'm here to help you with caring your plants!")
+#     return AMA
 
 async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_message = update.message.text
@@ -321,6 +321,9 @@ async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 # Upload compost or plant image (/scan)
 ############################################################################
 
+# Initialize Clarifai image segmentation
+clarifai_segmenter = ClarifaiImageSegmentation(pat='88daa3cc427546dfaf4f37e1c1ddb3d3')
+
 async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /scan command to upload and analyze images."""
     await update.message.reply_text(
@@ -329,6 +332,119 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "For best results, ensure good lighting and focus on the area of concern.",
         parse_mode="Markdown"
     )
+    # Set a flag to indicate we're expecting an image
+    context.user_data["expecting_image"] = True
+
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle photo messages for image analysis."""
+    # Check if user is logged in
+    username = context.user_data.get("username")
+    if not username:
+        await update.message.reply_text("Please use /start to login first before uploading images.")
+        return
+    
+    # Check if we're expecting an image (user used /scan command)
+    if not context.user_data.get("expecting_image", False):
+        await update.message.reply_text(
+            "I received your image! Use /scan command first if you want me to analyse it."
+        )
+        return
+    
+    # Reset the flag
+    context.user_data["expecting_image"] = False
+    
+    try:
+        # Send processing message
+        processing_msg = await update.message.reply_text("🔄 Analysing your image, please wait...")
+        
+        # Get the largest photo size
+        photo = update.message.photo[-1]
+        
+        # Download the photo
+        photo_file = await context.bot.get_file(photo.file_id)
+        photo_path = f"temp_image_{update.effective_user.id}.jpg"
+        await photo_file.download_to_drive(photo_path)
+        
+        # Analyse the image using Clarifai
+        try:
+            results = clarifai_segmenter.analyse_image(photo_path)
+            top_concepts = clarifai_segmenter.get_top_concepts(photo_path, top_n=5)
+            
+            # Format the results
+            if top_concepts:
+                analysis_text = "🔍 **Image Analysis Results**\n\n"
+                analysis_text += "**Top detected elements:**\n"
+                
+                for i, concept in enumerate(top_concepts, 1):
+                    confidence_percent = round(concept['value'] * 100, 1)
+                    analysis_text += f"{i}. {concept['name'].title()}: {confidence_percent}%\n"
+                
+                # Add plant-specific advice based on detected elements
+                plant_keywords = ['plant', 'leaf', 'flower', 'stem', 'garden', 'vegetation']
+                compost_keywords = ['soil', 'dirt', 'compost', 'organic', 'waste']
+                
+                detected_elements = [concept['name'].lower() for concept in top_concepts]
+                
+                if any(keyword in ' '.join(detected_elements) for keyword in plant_keywords):
+                    analysis_text += "\n🌱 **Plant Care Advice:**\n"
+                    # Get user's plant type for specific advice
+                    credentials = load_user_credentials()
+                    if username in credentials:
+                        plant_species = credentials[username].get("plant_species", "plants")
+                        if plant_species == "spinach":
+                            analysis_text += "• Monitor for leaf discoloration or pest damage\n"
+                            analysis_text += "• Ensure consistent moisture levels\n"
+                        elif plant_species == "ladysfinger":
+                            analysis_text += "• Check for proper flowering and pod development\n"
+                            analysis_text += "• Ensure adequate support for growing stems\n"
+                        elif plant_species == "longbean":
+                            analysis_text += "• Provide climbing support if needed\n"
+                            analysis_text += "• Monitor bean pod development\n"
+                        else:
+                            analysis_text += "• Monitor plant health and growth patterns\n"
+                            analysis_text += "• Check for signs of nutrient deficiency\n"
+                
+                elif any(keyword in ' '.join(detected_elements) for keyword in compost_keywords):
+                    analysis_text += "\n♻️ **Compost Analysis:**\n"
+                    analysis_text += "• Compost appears to be developing well\n"
+                    analysis_text += "• Ensure proper moisture and aeration\n"
+                    analysis_text += "• Consider adding more organic matter if needed\n"
+                
+                analysis_text += f"\n💡 **Tip:** For more specific advice, you can ask me questions about what you see!"
+                
+            else:
+                analysis_text = "❌ I couldn't detect specific elements in your image. Please try uploading a clearer photo with better lighting."
+            
+        except Exception as cv_error:
+            logger.error(f"Computer vision error: {cv_error}")
+            analysis_text = (
+                "⚠️ I encountered an issue analysing your image. This could be due to:\n\n"
+                "• Image quality or lighting\n"
+                "• Network connectivity\n"
+                "• Service availability\n\n"
+                "Please try again with a clearer photo."
+            )
+        
+        # Clean up the temporary file
+        try:
+            os.remove(photo_path)
+        except:
+            pass  # Ignore cleanup errors
+        
+        # Delete processing message and send results
+        await processing_msg.delete()
+        await update.message.reply_text(analysis_text, parse_mode="Markdown")
+        
+    except Exception as e:
+        logger.error(f"Error handling photo: {e}")
+        await update.message.reply_text(
+            "❌ Sorry, I couldn't process your image. Please try again."
+        )
+        # Clean up the temporary file in case of error
+        try:
+            os.remove(photo_path)
+        except:
+            pass
 
 ############################################################################
 # Learn more about composting or get plant care suggestions (/care)
@@ -467,14 +583,11 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     keyboard = [
         [
             InlineKeyboardButton("📦 Compost Help", callback_data="compost_help"),
-            InlineKeyboardButton("🪴 Plant Care", callback_data="plant_care")
+            InlineKeyboardButton("🪴 Plant Care", callback_data="start_llama")
         ],
         [
             InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker"),
             InlineKeyboardButton("📸 Image Scan", callback_data="image_scan")
-        ],
-        [
-            InlineKeyboardButton("🤖 Chat with AI", callback_data="start_llama") 
         ],
         [
             InlineKeyboardButton("❓ Help & Commands", callback_data="help_commands")
@@ -506,7 +619,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     choice = query.data
     username = context.user_data.get("username") or context.user_data.get("login_username")
     if choice =="start_llama":
-        await query.edit_message_text("I'm now in AI chat mode using Llama 2. Ask me anything!")
+        await query.edit_message_text("I'm Llama and I'm here to help you with your plants!!")
         return AMA
     if choice == "help_commands":
         # Show help and commands menu
@@ -527,17 +640,6 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("What to Add", callback_data="compost_add"),
                  InlineKeyboardButton("When Ready", callback_data="compost_ready")],
-                [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
-            ])
-        )
-    elif choice == "plant_care":
-        await query.edit_message_text(
-            "🌱 **Plant Care**\n\n"
-            "I can help you take care of your plants. What would you like assistance with?",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Watering Tips", callback_data="plant_water"),
-                 InlineKeyboardButton("Growth Issues", callback_data="plant_growth")],
                 [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
             ])
         )
@@ -679,9 +781,12 @@ def main() -> None:
         application.add_handler(CommandHandler("care", care_command))
         application.add_handler(CommandHandler("co2", co2_command))
         application.add_handler(CommandHandler("profile", profile_command))
-
-        # Add handler for llama
-        application.add_handler(CommandHandler("talktome",start_llama))
+        
+        # Add photo handler for image analysis
+        application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+        
+        # Add photo handler for image analysis
+        application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
         
         # Add the conversation handler
         application.add_handler(conv_handler)
