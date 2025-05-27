@@ -6,7 +6,7 @@ import subprocess
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram._message import Message
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
-from llama.py import LlamaInterface  
+from llama import LlamaInterface
 
 # Enable logging  
 logging.basicConfig(
@@ -17,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 # Define conversation states
 AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU = range(9)
-
-
 
 llama = LlamaInterface()
 
@@ -93,10 +91,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    await update.message.reply_text(HELP_MESSAGE)
-
-async def handle_what_can_you_do(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Respond to 'What can you do?' question with help information."""
     await update.message.reply_text(HELP_MESSAGE)
 
 ############################################################################
@@ -671,11 +665,6 @@ def main() -> None:
         application.add_handler(CommandHandler("care", care_command))
         application.add_handler(CommandHandler("co2", co2_command))
         application.add_handler(CommandHandler("profile", profile_command))
-        
-        # Add handler for "What can you do?" question
-        application.add_handler(MessageHandler(
-            filters.TEXT & filters.Regex(r'(?i)what can you do\??'), handle_what_can_you_do
-        ))
 
         # Add handler for llama
         application.add_handler(CommandHandler("talktome",start_llama))

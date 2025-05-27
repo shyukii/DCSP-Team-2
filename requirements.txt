@@ -6,6 +6,5 @@ Pillow>=9.4.0
 matplotlib>=3.7.0
 minio>=7.1.0
 clarifai-grpc>=9.0.0
-google-genai>=1.15.0
 
 # Version constraints might need adjustment based on compatibility requirements
