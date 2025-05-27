@@ -6,7 +6,7 @@ import subprocess
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram._message import Message
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler, CallbackQueryHandler
-from llama import LlamaInterface
+from llama import LlamaInterface  
 
 # Enable logging  
 logging.basicConfig(
@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 # Define conversation states
 AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU = range(9)
+
+
 
 llama = LlamaInterface()
 
@@ -42,8 +44,6 @@ async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "Sorry, I'm having trouble processing your request. Please try again."
         )
     return AMA
-
-
 
 ############################################################################
 # (/start)
@@ -93,8 +93,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     await update.message.reply_text(HELP_MESSAGE)
 
+
 ############################################################################
-# Login
+# Login Handler
 ############################################################################
 
 # Path to JSON file for storing user credentials
@@ -129,192 +130,8 @@ WELCOME_MESSAGE = """👋 Hi there! I'm NutriBot, your friendly composting and p
 You don't need to be a gardening expert — just ask me anything!"""
 
 ############################################################################
-# Checking compost readiness (/status)
+# Register Handler
 ############################################################################
-
-async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /status command to check compost readiness."""
-    username = context.user_data.get("username")
-    
-    # If not logged in, prompt login
-    if not username:
-        await update.message.reply_text("Please use /start to login first.")
-        return
-    
-    # Get user data
-    credentials = load_user_credentials()
-    if username in credentials:
-        # Placeholder for actual compost status check
-        await update.message.reply_text(
-            "🧪 **Compost Status Check**\n\n"
-            "Based on your setup, your compost is approximately 65% ready.\n"
-            "Estimated time to full maturity: 2-3 weeks.\n\n"
-            "The moisture level appears normal and bacterial activity is good.",
-            parse_mode="Markdown"
-        )
-    else:
-        await update.message.reply_text("Please use /start to login first.")
-
-############################################################################
-# Getting food/water input guidance (/input)
-############################################################################
-
-async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /input command to get food/water input guide."""
-    username = context.user_data.get("username")
-    
-    # If not logged in, prompt login
-    if not username:
-        await update.message.reply_text("Please use /start to login first.")
-        return
-    
-    # Get user data
-    credentials = load_user_credentials()
-    if username in credentials:
-        plant_species = credentials[username].get("plant_species", "plants")
-        compost_volume = credentials[username].get("compost_volume", 0)
-        
-        # Calculate recommended inputs based on compost volume
-        food_weekly = round(compost_volume * 0.2, 1)  # 20% of volume
-        water_weekly = round(compost_volume * 0.1, 1)  # 10% of volume
-        
-        await update.message.reply_text(
-            f"🥕 **Food & Water Input Guide**\n\n"
-            f"For your {compost_volume} litre compost bin:\n\n"
-            f"🍎 **Food Scraps**: Add {food_weekly} litres per week\n"
-            f"💧 **Water**: Add {water_weekly} litres per week\n\n"
-            f"*Tip for {plant_species}*: Ensure you add vegetable scraps rich in nitrogen for optimal growth.",
-            parse_mode="Markdown"
-        )
-    else:
-        await update.message.reply_text("Please use /start to login first.")
-
-############################################################################
-# Upload compost or plant image (/scan)
-############################################################################
-
-async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /scan command to upload and analyze images."""
-    await update.message.reply_text(
-        "📸 **Image Analysis**\n\n"
-        "Please send me a photo of your compost or plants, and I'll analyze it for you!\n\n"
-        "For best results, ensure good lighting and focus on the area of concern.",
-        parse_mode="Markdown"
-    )
-
-############################################################################
-# Learn more about composting or get plant care suggestions (/care)
-############################################################################
-
-async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /care command to get plant care suggestions."""
-    username = context.user_data.get("username")
-    
-    # If not logged in, prompt login
-    if not username:
-        await update.message.reply_text("Please use /start to login first.")
-        return
-    
-    # Get user data
-    credentials = load_user_credentials()
-    if username in credentials:
-        plant_species = credentials[username].get("plant_species", "plants")
-        
-        # Plant-specific care tips
-        care_tips = {
-            "ladysfinger": "🌡️ Keep soil temperature between 22-35C\n💧 Water regularly, keeping soil moist\n☀️ Requires 6+ hours of direct sunlight",
-            "spinach": "🌡️ Prefers cooler temperatures (15-20C)\n💧 Keep soil consistently moist\n🌱 Harvest outer leaves first for continuous growth",
-            "longbean": "🌿 Provide support for climbing\n💧 Water deeply once a week\n☀️ Plant in full sun exposure"
-        }
-        
-        tips = care_tips.get(plant_species, "Keep soil moist and provide adequate sunlight.")
-        
-        await update.message.reply_text(
-            f"🪴 **{plant_species.capitalize()} Care Guide**\n\n"
-            f"{tips}\n\n"
-            f"Remember to apply compost when soil appears depleted of nutrients.",
-            parse_mode="Markdown"
-        )
-    else:
-        await update.message.reply_text("Please use /start to login first.")
-
-
-async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /co2 command to view CO₂ savings."""
-    username = context.user_data.get("username")
-    
-    # If not logged in, prompt login
-    if not username:
-        await update.message.reply_text("Please use /start to login first.")
-        return
-    
-    # Get user data
-    credentials = load_user_credentials()
-    if username in credentials:
-        compost_volume = credentials[username].get("compost_volume", 0)
-        
-        # Calculate CO2 savings (simplified estimation)
-        # Assume 1L of compost saves about 0.5kg of CO2 over 3 months
-        co2_saved = round(compost_volume * 0.5, 1)
-        trees_equivalent = round(co2_saved / 25, 1)  # 25kg CO2 per tree per year (simplified)
-        
-        await update.message.reply_text(
-            f"🌍 **CO₂ Savings Impact**\n\n"
-            f"Your {compost_volume}L compost system helps avoid approximately:\n\n"
-            f"🌱 **{co2_saved} kg** of CO2 emissions per year\n"
-            f"🌳 Equivalent to planting **{trees_equivalent} trees**!\n\n"
-            f"By composting, you're reducing methane emissions from landfills and helping fight climate change.",
-            parse_mode="Markdown"
-        )
-    else:
-        await update.message.reply_text("Please use /start to login first.")
-
-async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /profile command to update compost setup."""
-    username = context.user_data.get("username")
-    
-    # If not logged in, prompt login
-    if not username:
-        await update.message.reply_text("Please use /start to login first.")
-        return
-    
-    # Get user data
-    credentials = load_user_credentials()
-    if username in credentials:
-        plant_species = credentials[username].get("plant_species", "unknown")
-        compost_volume = credentials[username].get("compost_volume", 0)
-        
-        # Create keyboard for updating profile
-        keyboard = [
-            [InlineKeyboardButton("Change Plant Type", callback_data="change_plant")],
-            [InlineKeyboardButton("Change Compost Volume", callback_data="change_volume")],
-            [InlineKeyboardButton("Back to Main Menu", callback_data="back_to_menu")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.message.reply_text(
-            f"👤 **Your Profile**\n\n"
-            f"🪴 Plant type: {plant_species}\n"
-            f"📦 Compost volume: {compost_volume} litres\n\n"
-            f"What would you like to update?",
-            parse_mode="Markdown",
-            reply_markup=reply_markup
-        )
-    else:
-        await update.message.reply_text("Please use /start to login first.")
-
-async def auth_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle the auth choice callback."""
-    query = update.callback_query
-    await query.answer()
-    
-    choice = query.data
-    if choice == "register":
-        await query.edit_message_text("You selected registration. Please enter a username:")
-        return REGISTER_USERNAME
-    else:
-        await query.edit_message_text("You selected login. Please enter your username:")
-        return LOGIN_USERNAME
 
 async def register_username(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Stores the username for registration and asks for password."""
@@ -438,6 +255,203 @@ async def compost_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     # Show main menu
     return await show_main_menu(update, context, username)
+
+############################################################################
+# Checking compost readiness (/status)
+############################################################################
+
+async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /status command to check compost readiness."""
+    username = context.user_data.get("username")
+    
+    # If not logged in, prompt login
+    if not username:
+        await update.message.reply_text("Please use /start to login first.")
+        return
+    
+    # Get user data
+    credentials = load_user_credentials()
+    if username in credentials:
+        # Placeholder for actual compost status check
+        await update.message.reply_text(
+            "🧪 **Compost Status Check**\n\n"
+            "Based on your setup, your compost is approximately 65% ready.\n"
+            "Estimated time to full maturity: 2-3 weeks.\n\n"
+            "The moisture level appears normal and bacterial activity is good.",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text("Please use /start to login first.")
+
+############################################################################
+# Getting food/water input guidance (/input)
+############################################################################
+
+async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /input command to get food/water input guide."""
+    username = context.user_data.get("username")
+    
+    # If not logged in, prompt login
+    if not username:
+        await update.message.reply_text("Please use /start to login first.")
+        return
+    
+    # Get user data
+    credentials = load_user_credentials()
+    if username in credentials:
+        plant_species = credentials[username].get("plant_species", "plants")
+        compost_volume = credentials[username].get("compost_volume", 0)
+        
+        # Calculate recommended inputs based on compost volume
+        food_weekly = round(compost_volume * 0.2, 1)  # 20% of volume
+        water_weekly = round(compost_volume * 0.1, 1)  # 10% of volume
+        
+        await update.message.reply_text(
+            f"🥕 **Food & Water Input Guide**\n\n"
+            f"For your {compost_volume} litre compost bin:\n\n"
+            f"🍎 **Food Scraps**: Add {food_weekly} litres per week\n"
+            f"💧 **Water**: Add {water_weekly} litres per week\n\n"
+            f"*Tip for {plant_species}*: Ensure you add vegetable scraps rich in nitrogen for optimal growth.",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text("Please use /start to login first.")
+
+############################################################################
+# Upload compost or plant image (/scan)
+############################################################################
+
+async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /scan command to upload and analyze images."""
+    await update.message.reply_text(
+        "📸 **Image Analysis**\n\n"
+        "Please send me a photo of your compost or plants, and I'll analyze it for you!\n\n"
+        "For best results, ensure good lighting and focus on the area of concern.",
+        parse_mode="Markdown"
+    )
+
+############################################################################
+# Learn more about composting or get plant care suggestions (/care)
+############################################################################
+
+async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /care command to get plant care suggestions."""
+    username = context.user_data.get("username")
+    
+    # If not logged in, prompt login
+    if not username:
+        await update.message.reply_text("Please use /start to login first.")
+        return
+    
+    # Get user data
+    credentials = load_user_credentials()
+    if username in credentials:
+        plant_species = credentials[username].get("plant_species", "plants")
+        
+        # Plant-specific care tips
+        care_tips = {
+            "ladysfinger": "🌡️ Keep soil temperature between 22-35C\n💧 Water regularly, keeping soil moist\n☀️ Requires 6+ hours of direct sunlight",
+            "spinach": "🌡️ Prefers cooler temperatures (15-20C)\n💧 Keep soil consistently moist\n🌱 Harvest outer leaves first for continuous growth",
+            "longbean": "🌿 Provide support for climbing\n💧 Water deeply once a week\n☀️ Plant in full sun exposure"
+        }
+        
+        tips = care_tips.get(plant_species, "Keep soil moist and provide adequate sunlight.")
+        
+        await update.message.reply_text(
+            f"🪴 **{plant_species.capitalize()} Care Guide**\n\n"
+            f"{tips}\n\n"
+            f"Remember to apply compost when soil appears depleted of nutrients.",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text("Please use /start to login first.")
+
+############################################################################
+# View c02 emissions saved (/c02)
+############################################################################
+
+from emissions_calculator import EmissionsCalculator
+
+async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /co2 command to view CO₂ savings."""
+    username = context.user_data.get("username")
+    
+    # If not logged in, prompt login
+    if not username:
+        await update.message.reply_text("Please use /start to login first.")
+        return
+    
+    # Get user data
+    credentials = load_user_credentials()
+    if username in credentials:
+        compost_volume = credentials[username].get("compost_volume", 0)
+        
+        # Calculate CO2 savings (simplified estimation)
+        # Assume 1L of compost saves about 0.5kg of CO2 over 3 months
+        co2_saved = round(compost_volume * 0.5, 1)
+        trees_equivalent = round(co2_saved / 25, 1)  # 25kg CO2 per tree per year (simplified)
+        
+        await update.message.reply_text(
+            f"🌍 **CO₂ Savings Impact**\n\n"
+            f"Your {compost_volume}L compost system helps avoid approximately:\n\n"
+            f"🌱 **{co2_saved} kg** of CO2 emissions per year\n"
+            f"🌳 Equivalent to planting **{trees_equivalent} trees**!\n\n"
+            f"By composting, you're reducing methane emissions from landfills and helping fight climate change.",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text("Please use /start to login first.")
+
+############################################################################
+# Updating users composting set up (/profile)
+############################################################################
+
+async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /profile command to update compost setup."""
+    username = context.user_data.get("username")
+    
+    # If not logged in, prompt login
+    if not username:
+        await update.message.reply_text("Please use /start to login first.")
+        return
+    
+    # Get user data
+    credentials = load_user_credentials()
+    if username in credentials:
+        plant_species = credentials[username].get("plant_species", "unknown")
+        compost_volume = credentials[username].get("compost_volume", 0)
+        
+        # Create keyboard for updating profile
+        keyboard = [
+            [InlineKeyboardButton("Change Plant Type", callback_data="change_plant")],
+            [InlineKeyboardButton("Change Compost Volume", callback_data="change_volume")],
+            [InlineKeyboardButton("Back to Main Menu", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(
+            f"👤 **Your Profile**\n\n"
+            f"🪴 Plant type: {plant_species}\n"
+            f"📦 Compost volume: {compost_volume} litres\n\n"
+            f"What would you like to update?",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+    else:
+        await update.message.reply_text("Please use /start to login first.")
+
+async def auth_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle the auth choice callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    choice = query.data
+    if choice == "register":
+        await query.edit_message_text("You selected registration. Please enter a username:")
+        return REGISTER_USERNAME
+    else:
+        await query.edit_message_text("You selected login. Please enter your username:")
+        return LOGIN_USERNAME
 
 ############################################################################
 # Main Menu
