@@ -9,8 +9,8 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     species = creds[username].get("plant_species","plants")
 
     kb = [
-        [InlineKeyboardButton("📦 Compost Feeding", callback_data="feed_calculator"),
-         InlineKeyboardButton("Compost Extraction", callback_data="feed_calculator")],
+        [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
+         InlineKeyboardButton("Compost Extraction", callback_data="compost_extract")],
         [InlineKeyboardButton("🪴 Gardening Guidance",    callback_data="start_llama")],
         [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
         [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
@@ -48,19 +48,39 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return AMA
 
     # compost help submenu
-    if choice == "compost_help":
-        kb = [
-            [InlineKeyboardButton("What to Add",   callback_data="compost_add"),
-             InlineKeyboardButton("When Ready",   callback_data="compost_ready")],
-            [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
+    if choice == "compost_feed":
+        keyboard = [
+            [InlineKeyboardButton("🧮 Feed Calculator", callback_data="use_calculator")],
+            [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
         ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
         await q.edit_message_text(
-            "🧑‍🌾 **Compost Help**\n\nWhat would you like to know?",
+            "🥕 **Food & Water Input Guide**\n\n"
+            "Choose how you'd like to get feeding recommendations:",
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(kb)
+            reply_markup=reply_markup
         )
         return MAIN_MENU
-
+    if choice == "compost_extract":
+        # Get user credentials to check compost volume
+        creds = load_user_credentials()
+        vol = creds[user].get("compost_volume", 0)
+        
+        # Create back button
+        kb = [[InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(kb)
+        
+        # Send status message (same as status_command)
+        await q.edit_message_text(
+            "🧪 **Compost Status Check**\n\n"
+            "Based on your setup, your compost is approximately 65% ready.\n"
+            "Estimated time to full maturity: 2-3 weeks.\n\n"
+            "The moisture level appears normal and bacterial activity is good.",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        return MAIN_MENU
     if choice == "co2_tracker":
         kb = [
             [InlineKeyboardButton("View Impact", callback_data="co2_impact"),
