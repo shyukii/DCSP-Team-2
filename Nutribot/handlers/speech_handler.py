@@ -39,7 +39,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # download & convert
     await file.download_to_drive(ogg)
     if not convert_to_wav(ogg, wav):
-        await update.message.reply_text("⚠️ Couldn’t convert audio.")
+        await update.message.reply_text("Couldn’t convert audio.")
         os.remove(ogg)
         return
 
@@ -55,7 +55,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # require prior login via text
     if not context.user_data.get("username"):
         await update.message.reply_text(
-            "🔒 Voice commands work only after you’ve logged in via /start.\n"
+            "Voice commands work only after you’ve logged in via /start.\n"
             "Please register or login using text first."
         )
         return
@@ -67,5 +67,5 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # fallback
     await update.message.reply_text(
-        "🤔 I didn’t catch that. Try saying: ‘help’, ‘status’, ‘input’, ‘scan’, ‘care’, ‘co2’, or ‘back’."
+        "I didn’t catch that. Try saying: ‘help’, ‘status’, ‘input’, ‘scan’, ‘care’, ‘co2’, or ‘back’."
     )

@@ -9,10 +9,11 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     species = creds[username].get("plant_species","plants")
 
     kb = [
-        [InlineKeyboardButton("📦 Compost Help", callback_data="compost_help"),
-         InlineKeyboardButton("🪴 Plant Care",    callback_data="start_llama")],
-        [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker"),
-         InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
+        [InlineKeyboardButton("📦 Compost Feeding", callback_data="feed_calculator"),
+         InlineKeyboardButton("Compost Extraction", callback_data="feed_calculator")],
+        [InlineKeyboardButton("🪴 Gardening Guidance",    callback_data="start_llama")],
+        [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
+        [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
         [InlineKeyboardButton("❓ Help",         callback_data="help_commands")]
     ]
     markup = InlineKeyboardMarkup(kb)
@@ -35,6 +36,11 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     q = update.callback_query; await q.answer()
     choice = q.data
     user   = context.user_data.get("username")
+
+    # Handle calculator choices
+    if choice in ["use_calculator", "basic_guidelines", "back_to_menu"]:
+        from handlers.commands import handle_calculator_choice
+        return await handle_calculator_choice(update, context)
 
     if choice == "start_llama":
         await q.edit_message_text("I'm Llama and I'm here to help you with your plants!!")

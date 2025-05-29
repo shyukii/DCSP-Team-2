@@ -1,3 +1,14 @@
+import os
+import sys
+
+# Fix encoding issues on Windows
+if sys.platform.startswith('win'):
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    # Also set console encoding
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+
 import logging
 import asyncio
 from telegram import Update
@@ -22,6 +33,7 @@ from constants import (
     COMPOST_VOLUME,
     MAIN_MENU,
     AMA,
+    GREENS_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -45,6 +57,8 @@ from handlers.commands import (
     care_command,
     co2_command,
     profile_command,
+    handle_calculator_choice,
+    handle_greens_input,
 )
 from handlers.menu import handle_main_menu
 from handlers.speech_handler import handle_voice  # <-- New import
@@ -73,6 +87,7 @@ def main() -> None:
             COMPOST_VOLUME:    [MessageHandler(filters.TEXT & ~filters.COMMAND, compost_volume)],
             MAIN_MENU:         [CallbackQueryHandler(handle_main_menu)],
             AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response)],
+            GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         name="nutribot_conversation",
