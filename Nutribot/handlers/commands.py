@@ -18,7 +18,8 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Please /start to login first.")
         return
     creds = load_user_credentials()
-    vol = creds[user].get("compost_volume",0)
+    tank_vol = creds[user].get("tank_volume", 0)
+    soil_vol = creds[user].get("soil_volume", 0)
     await update.message.reply_text(
         "🧪 **Compost Status Check**\n\n"
         "Based on your setup, your compost is approximately 65% ready.\n"
@@ -187,13 +188,15 @@ async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text("Please /start to login first.")
         return
     creds = load_user_credentials()
-    vol = creds[user].get("compost_volume",0)
+    tank_vol = creds[user].get("tank_volume", 0)
+    soil_vol = creds[user].get("soil_volume", 0)
+    total_vol = tank_vol + soil_vol
     # using 0.5kg CO₂ saved per litre per year
-    saved = round(vol*0.5,1)
-    trees = round(saved/25,1)
+    saved = round(total_vol * 0.5, 1)
+    trees = round(saved / 25, 1)
     await update.message.reply_text(
         f"🌍 **CO₂ Savings Impact**\n\n"
-        f"Your {vol}L compost saves ~{saved} kg CO₂/year\n"
+        f"Your {total_vol}L setup saves ~{saved} kg CO₂/year\n"
         f"Equivalent to planting **{trees} trees**!",
         parse_mode="Markdown"
     )
@@ -205,17 +208,19 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text("Please /start to login first.")
         return
     creds = load_user_credentials()
-    species = creds[user].get("plant_species","unknown")
-    vol     = creds[user].get("compost_volume",0)
+    species = creds[user].get("plant_species", "unknown")
+    tank_vol = creds[user].get("tank_volume", 0)
+    soil_vol = creds[user].get("soil_volume", 0)
     kb = [
         [InlineKeyboardButton("Change Plant", callback_data="change_plant")],
-        [InlineKeyboardButton("Change Volume",callback_data="change_volume")],
-        [InlineKeyboardButton("Back to Menu",callback_data="back_to_menu")]
+        [InlineKeyboardButton("Change Volume", callback_data="change_volume")],
+        [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
     ]
     await update.message.reply_text(
         f"👤 **Your Profile**\n\n"
         f"🪴 Plant: {species}\n"
-        f"📦 Volume: {vol} L\n\n"
+        f"🪣 Tank Volume: {tank_vol} L\n"
+        f"🌱 Soil Volume: {soil_vol} L\n\n"
         "What to update?",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(kb)

@@ -11,7 +11,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     kb = [
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
          InlineKeyboardButton("Compost Extraction", callback_data="compost_extract")],
-        [InlineKeyboardButton("🪴 Gardening Guidance",    callback_data="start_llama")],
+        [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
         [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
         [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
         [InlineKeyboardButton("❓ Help",         callback_data="help_commands")]
@@ -63,9 +63,10 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         return MAIN_MENU
     if choice == "compost_extract":
-        # Get user credentials to check compost volume
+        # Get user credentials to check tank volume
         creds = load_user_credentials()
-        vol = creds[user].get("compost_volume", 0)
+        tank_vol = creds[user].get("tank_volume", 0)
+        soil_vol = creds[user].get("soil_volume", 0)
         
         # Create back button
         kb = [[InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]]
@@ -117,7 +118,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice == "change_volume":
         kb = [[InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]]
         await q.edit_message.reply_text(
-            "Send a message with your new compost volume (litres).",
+            "Send a message with your new tank volume (litres) followed by soil volume (litres).",
             reply_markup=InlineKeyboardMarkup(kb)
         )
         return MAIN_MENU

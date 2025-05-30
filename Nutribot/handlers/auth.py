@@ -5,8 +5,8 @@ import logging
 
 from constants import (
     AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD,
-    LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, COMPOST_VOLUME, MAIN_MENU,
-    WELCOME_MESSAGE
+    LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, TANK_VOLUME, SOIL_VOLUME, MAIN_MENU,
+    WELCOME_MESSAGE, REGISTRATION_MESSAGE, GLOSSARY_MESSAGE
 )
 from utils.file_utils import load_user_credentials, save_user_credentials
 from services.clarifai_segmentation import ClarifaiImageSegmentation
@@ -71,6 +71,9 @@ async def register_password(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     creds[user] = {"password": pwd}
     save_user_credentials(creds)
 
+    await update.message.reply_text(REGISTRATION_MESSAGE)
+    await update.message.reply_text(GLOSSARY_MESSAGE)
+
     kb = [
         [InlineKeyboardButton("Lady's Finger", callback_data="ladysfinger"),
          InlineKeyboardButton("Spinach",        callback_data="spinach"),
@@ -97,7 +100,7 @@ async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if user in creds and creds[user]["password"] == pwd:
         context.user_data["username"] = user
         user_data = creds[user]
-        if "plant_species" in user_data and "compost_volume" in user_data:
+        if "plant_species" in user_data and "tank_volume" in user_data and "soil_volume" in user_data:
             return await show_main_menu(update, context, user)
         # else, complete setup
         kb = [
@@ -125,21 +128,38 @@ async def plant_species(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     creds[user]["plant_species"] = species
     save_user_credentials(creds)
 
-    await q.edit_message_text(f"You selected {species}. Enter your compost volume (litres):")
-    return COMPOST_VOLUME
+    await q.edit_message_text(f"You selected {species}. Enter your compost tank volume (litres):")
+    return TANK_VOLUME
 
-async def compost_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def tank_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
         vol = float(update.message.text)
         if vol <= 0:
             raise ValueError()
     except ValueError:
         await update.message.reply_text("Enter a valid positive number.")
-        return COMPOST_VOLUME
+        return TANK_VOLUME
 
     user = context.user_data.get("username") or context.user_data.get("login_username")
     creds = load_user_credentials()
-    creds[user]["compost_volume"] = vol
+    creds[user]["tank_volume"] = vol
+    save_user_credentials(creds)
+
+    await update.message.reply_text("Now enter your soil volume (litres):")
+    return SOIL_VOLUME
+
+async def soil_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    try:
+        vol = float(update.message.text)
+        if vol <= 0:
+            raise ValueError()
+    except ValueError:
+        await update.message.reply_text("Enter a valid positive number.")
+        return SOIL_VOLUME
+
+    user = context.user_data.get("username") or context.user_data.get("login_username")
+    creds = load_user_credentials()
+    creds[user]["soil_volume"] = vol
     save_user_credentials(creds)
 
     return await show_main_menu(update, context, user)
