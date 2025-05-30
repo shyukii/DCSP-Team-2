@@ -62,7 +62,7 @@ from handlers.commands import (
     handle_calculator_choice,
     handle_greens_input,
 )
-from services.extraction_timing import (
+from services.emissions_calculator import (
     co2_calculator_command,
     handle_co2_callback,
     handle_food_waste_input,

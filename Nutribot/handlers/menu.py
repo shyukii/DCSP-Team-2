@@ -94,7 +94,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     # Handle CO2 calculator callbacks
     if choice.startswith("co2_") and choice not in ["co2_tracker", "co2_impact", "co2_add"]:
-        from services.extraction_timing import handle_co2_callback
+        from services.emissions_calculator import handle_co2_callback
         return await handle_co2_callback(update, context)
 
     if choice == "start_llama":
