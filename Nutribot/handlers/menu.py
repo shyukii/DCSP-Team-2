@@ -3,6 +3,10 @@ from telegram.ext import ContextTypes
 from utils.file_utils import load_user_credentials, save_user_credentials
 from constants import MAIN_MENU
 from services.clarifai_segmentation import ClarifaiImageSegmentation
+import os
+
+# Initialize clarifai service
+clarifai = ClarifaiImageSegmentation()
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username: str) -> int:
     creds = load_user_credentials()
@@ -30,6 +34,52 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
             "Choose an option:",
             reply_markup=markup
         )
+    return MAIN_MENU
+
+async def handle_photo_from_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle photo processing when user sends image after selecting image_scan from menu"""
+    user = context.user_data.get("username")
+    if not user:
+        await update.message.reply_text("Please /start to login first.")
+        return MAIN_MENU
+    
+    if not context.user_data.get("expecting_image"):
+        await update.message.reply_text("Use the Image Scan option from the menu first.")
+        return MAIN_MENU
+
+    context.user_data["expecting_image"] = False
+    processing = await update.message.reply_text("🔄 Analysing your image...")
+    photo = update.message.photo[-1]
+    file = await context.bot.get_file(photo.file_id)
+    path = f"temp_{update.effective_user.id}.jpg"
+    await file.download_to_drive(path)
+
+    try:
+        top = clarifai.get_top_concepts(path, top_n=5)
+        text = "🔍 **Image Analysis Results**\n\n**Top elements:**\n"
+        for i,c in enumerate(top,1):
+            text += f"{i}. {c['name'].title()}: {round(c['value']*100,1)}%\n"
+        text += "\n💡 Ask me questions about what you see!"
+    except Exception:
+        text = "⚠️ Could not analyse image. Try a clearer photo."
+
+    try: 
+        os.remove(path)
+    except: 
+        pass
+
+    await processing.delete()
+    
+    # Create back to menu button
+    kb = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+    reply_markup = InlineKeyboardMarkup(kb)
+    
+    await update.message.reply_text(
+        text, 
+        parse_mode="Markdown",
+        reply_markup=reply_markup
+    )
+    
     return MAIN_MENU
 
 async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -67,6 +117,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             reply_markup=reply_markup
         )
         return MAIN_MENU
+        
     if choice == "compost_extract":
         # Get user credentials to check tank volume
         creds = load_user_credentials()
@@ -87,6 +138,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             reply_markup=reply_markup
         )
         return MAIN_MENU
+        
     if choice == "co2_tracker":
         kb = [
             [InlineKeyboardButton("View Impact", callback_data="co2_impact"),
@@ -94,19 +146,25 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
         ]
         await q.edit_message_text(
-            "🌍 **CO₂ Tracker**\n\nTrack your compost’s impact!",
+            "🌍 **CO₂ Tracker**\n\nTrack your compost's impact!",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(kb)
         )
         return MAIN_MENU
 
     if choice == "image_scan":
-        kb = [[InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]]
+        # Create back button
+        kb = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+        
+        # Send instruction message and set expecting_image flag
         await q.edit_message_text(
-            "📸 **Image Scan**\nSend me a photo to analyse.",
+            "📸 **Image Analysis**\n\n"
+            "Send a photo of your compost or plants!\n"
+            "Ensure good lighting and focus.",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(kb)
         )
+        context.user_data["expecting_image"] = True
         return MAIN_MENU
 
     # profile updates
@@ -122,7 +180,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     if choice == "change_volume":
         kb = [[InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]]
-        await q.edit_message.reply_text(
+        await q.edit_message_text(
             "Send a message with your new tank volume (litres) followed by soil volume (litres).",
             reply_markup=InlineKeyboardMarkup(kb)
         )
