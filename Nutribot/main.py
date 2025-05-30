@@ -93,7 +93,10 @@ def main() -> None:
             PLANT_SPECIES:     [CallbackQueryHandler(plant_species)],
             TANK_VOLUME:       [MessageHandler(filters.TEXT & ~filters.COMMAND, tank_volume)],
             SOIL_VOLUME:       [MessageHandler(filters.TEXT & ~filters.COMMAND, soil_volume)],
-            MAIN_MENU:         [CallbackQueryHandler(handle_main_menu)],
+            MAIN_MENU:         [
+                CallbackQueryHandler(handle_main_menu),
+                MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
+            ],
             AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response)],
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
             CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
@@ -111,9 +114,8 @@ def main() -> None:
     application.add_handler(CommandHandler("co2", co2_calculator_command))
     application.add_handler(CommandHandler("profile", profile_command))
 
-    # Photo and voice handlers
-    application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-    application.add_handler(MessageHandler(filters.VOICE, handle_voice))  # <-- Voice support
+    # Voice handler (keep this outside conversation as it doesn't need state)
+    application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
     # Add the conversation handler
     application.add_handler(conv_handler)

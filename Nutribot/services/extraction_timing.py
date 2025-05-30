@@ -7,10 +7,9 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from services.emissions_calculator import EmissionsCalculator
 from utils.file_utils import load_user_credentials, save_user_credentials
-from constants import MAIN_MENU
+from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT
 
-# Define a new conversation state for CO2 input
-CO2_FOOD_WASTE_INPUT = 12  # Add this to constants.py as well
+
 
 async def co2_calculator_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """

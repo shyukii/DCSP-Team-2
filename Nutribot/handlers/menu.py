@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from utils.file_utils import load_user_credentials, save_user_credentials
-from constants import MAIN_MENU
+from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT
 from services.clarifai_segmentation import ClarifaiImageSegmentation
 import os
 
@@ -140,16 +140,66 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return MAIN_MENU
         
     if choice == "co2_tracker":
-        kb = [
-            [InlineKeyboardButton("View Impact", callback_data="co2_impact"),
-             InlineKeyboardButton("Add Compost", callback_data="co2_add")],
-            [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
+        # Load user data for CO2 calculator
+        user = context.user_data.get("username")
+        creds = load_user_credentials()
+        tank_vol = creds[user].get("tank_volume", 0)
+        soil_vol = creds[user].get("soil_volume", 0)
+        
+        # Check if user has set up volumes
+        if tank_vol == 0 or soil_vol == 0:
+            await q.edit_message_text(
+                "⚠️ **Volume Setup Required**\n\n"
+                "Please set up your tank and soil volumes in /profile first!",
+                parse_mode="Markdown"
+            )
+            return MAIN_MENU
+        
+        # Get stored food waste total if available
+        total_food_waste = creds[user].get("total_food_waste_kg", 0)
+        
+        # Create keyboard options
+        keyboard = [
+            [InlineKeyboardButton("🧮 Calculate New Savings", callback_data="co2_calculate")],
+            [InlineKeyboardButton("📊 View Total Impact", callback_data="co2_view_total")],
+            [InlineKeyboardButton("🔄 Reset Counter", callback_data="co2_reset")],
+            [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
         ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Calculate current savings
+        if total_food_waste > 0:
+            from services.emissions_calculator import EmissionsCalculator
+            result = EmissionsCalculator.calculate_co2_saved_from_food_waste(
+                total_food_waste, tank_vol, soil_vol
+            )
+            impact = EmissionsCalculator.get_environmental_impact_summary(
+                result['total_co2_saved_kg']
+            )
+            
+            message = (
+                f"🌍 **CO₂ Savings Calculator**\n\n"
+                f"📈 **Your Impact So Far:**\n"
+                f"• Food waste composted: {total_food_waste:.1f} kg\n"
+                f"• CO₂ saved: {result['total_co2_saved_kg']:.1f} kg\n"
+                f"• Equivalent to planting {impact['trees_equivalent']} trees 🌳\n"
+                f"• Or saving {impact['petrol_litres_equivalent']} litres of petrol ⛽\n\n"
+                f"What would you like to do?"
+            )
+        else:
+            message = (
+                "🌍 **CO₂ Savings Calculator**\n\n"
+                "Start tracking your environmental impact!\n"
+                "Calculate how much CO₂ you save by composting food waste.\n\n"
+                "What would you like to do?"
+            )
+        
         await q.edit_message_text(
-            "🌍 **CO₂ Tracker**\n\nTrack your compost's impact!",
+            message,
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(kb)
+            reply_markup=reply_markup
         )
+        
         return MAIN_MENU
 
     if choice == "image_scan":

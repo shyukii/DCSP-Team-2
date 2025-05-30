@@ -133,36 +133,20 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     )
     context.user_data["expecting_image"] = True
 
-async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = context.user_data.get("username")
     if not user:
         await update.message.reply_text("Please /start to login first.")
         return
-    if not context.user_data.get("expecting_image"):
-        await update.message.reply_text("Use /scan first to analyze images.")
-        return
-
-    context.user_data["expecting_image"] = False
-    processing = await update.message.reply_text("🔄 Analysing your image...")
-    photo = update.message.photo[-1]
-    file = await context.bot.get_file(photo.file_id)
-    path = f"temp_{update.effective_user.id}.jpg"
-    await file.download_to_drive(path)
-
-    try:
-        top = clarifai.get_top_concepts(path, top_n=5)
-        text = "🔍 **Image Analysis Results**\n\n**Top elements:**\n"
-        for i,c in enumerate(top,1):
-            text += f"{i}. {c['name'].title()}: {round(c['value']*100,1)}%\n"
-        text += "\n💡 Ask me questions about what you see!"
-    except Exception:
-        text = "⚠️ Could not analyse image. Try a clearer photo."
-
-    try: os.remove(path)
-    except: pass
-
-    await processing.delete()
-    await update.message.reply_text(text, parse_mode="Markdown")
+    
+    # Check if we're in menu mode and expecting an image
+    if context.user_data.get("expecting_image"):
+        from handlers.menu import handle_photo_from_menu
+        return await handle_photo_from_menu(update, context)
+    
+    # Otherwise, use the regular /scan command flow
+    await update.message.reply_text("Use /scan first to analyze images.")
+    return
 
 async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = context.user_data.get("username")
