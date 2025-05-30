@@ -1,73 +1,94 @@
-# File structure
+# Nutribot - Smart Composting Assistant
 
-Please see below for the file structure. Read this please! Some of the code might take a while to run - please be patient.
+Nutribot is a Telegram chatbot that helps you manage your composting system.
 
-## Virtual Environment Setup
+## Project Structure
 
-Before running any of the code in this repository, you should set up a virtual environment to manage dependencies. Follow these steps:
-
-### For Windows:
+```
+DCSP-Team-2/
+├── Nutribot/                   # Main application directory
+│   ├── main.py                # Main entry point (START HERE)
+│   ├── config.py              # Configuration settings
+│   ├── .env                   # Environment variables (create this)
+│   ├── handlers/              # Command and message handlers
+│   ├── services/             # Core business logic
+│   └── utils/                # Utility functions
+├── requirements.txt          # Python dependencies
+└── README.md                # This file
 ```
 
-# Create a virtual environment
-python -m venv venv
+## Quick Setup
 
-# Activate the virtual environment
-venv\Scripts\activate
+### Prerequisites
+- Python 3.8+, Telegram account, FFmpeg
 
-# Install required packages
-pip install -r requirements.txt
+### Installation
+
+1. Clone: `git clone https://github.com/shyukii/DCSP-Team-2 && cd DCSP-Team-2`
+
+2. Virtual environment:
+   - Windows: `python -m venv venv && venv\Scripts\activate`
+   - macOS/Linux: `python3 -m venv venv && source venv/bin/activate`
+
+3. Install: `pip install -r requirements.txt`
+
+4. Create `.env` file in `Nutribot/` directory with API tokens (refer to below)
+
+5. Run: `cd Nutribot && python main.py`
+
+## Environment Variables (.env file)
+
+Create a `.env` file in the `Nutribot/` directory with:
+
+```
+BOT_TOKEN=your_telegram_bot_token
+CLARIFAI_PAT=your_clarifai_api_token
+HUGGINGFACE_API_TOKEN=your_huggingface_token
+REPLICATE_API_TOKEN=your_replicate_token
+FFMPEG_PATH=path_to_ffmpeg_executable
 ```
 
-### For macOS/Linux:
-```
-# Navigate to the project directory
-cd path/to/DCSP-Team-2
+## Features
 
-# Create a virtual environment
-python3 -m venv venv
+- **User Authentication:** Secure registration and login system
+- **Plant Management:** Track your composting setup with plant species and container volumes
+- **Image Analysis:** Upload photos of your compost for AI-powered analysis
+- **Voice Commands:** Send voice messages for hands-free interaction
+- **CO2 Calculator:** Calculate carbon emissions from your food waste
+- **Feed Recommendations:** Get personalised advice on composting materials
+- **Compost Helper:** Step-by-step guidance for optimal composting
 
-# Activate the virtual environment
-source venv/bin/activate
+## Available Commands
 
-# Install required packages
-pip install -r requirements.txt
-```
+- `/start` - Begin using the bot and set up your profile
+- `/help` - Get help and information about commands
+- `/status` - Check the current status of your composting system
+- `/scan` - Analyse photos of your compost
+- `/care` - Get care instructions for your plants
+- `/co2` - Calculate carbon emissions from food waste
+- `/profile` - View and manage your profile
+- `/cancel` - Cancel current operation
 
-To deactivate the virtual environment when you're done, simply run:
-```
-deactivate
-```
+## How to Use
 
-### Setting up chatbot
+1. **First Time Setup:**
+   - Start a conversation with your bot on Telegram
+   - Use `/start` to begin registration
+   - Choose to register a new account or log in
+   - Set up your plant species and container volumes
 
-1. Download [ollama](https://ollama.com/) 
-2. Run the following scripts in your virtual environment
-```bash
-ollama pull llama2
-```
-3. Run `chatbot.py`
+2. **Daily Use:**
+   - Send photos of your compost for analysis
+   - Ask questions using the AI assistant
+   - Use voice messages for convenience
+   - Calculate emissions from your food waste
+   - Get feeding recommendations for optimal composting
 
-### Data
+## Troubleshooting
 
-`dataextract.py` is a file used to connect to the Postgre server to create `dfs`. Run this **first**. See note below.
+- **Bot not responding:** Check your BOT_TOKEN in the .env file
+- **Voice messages not working:** Ensure FFmpeg is properly installed
+- **Image analysis failing:** Verify your CLARIFAI_PAT token is valid
+- **AI responses not working:** Check your Hugging Face and Replicate API tokens
 
-`datavisualiser.py` is a jupyter notebook to explore some of the data.
-
-`credentials.json` DO NOT TOUCH THIS FILE. Credentials for minIO
-
-`minIO.py` This retrieves the various images from the MinIO bucket. Modify this later for integration with computer vision tech
-
-Note: `dfs` is a dictionary containing the various dataframes related to our assignment. The keys are the different types of data (e.g. devicedata, errors etc) and the values are the tables of data itself (you can run standard pandas/numpy/seaborn exploration on these tables to get a better feel)
-
-### Image Segmentation
-
-`extraction_timing.py` a model that predicts the optimal compost extraction timing based on the NPK levels
-
-### Green and Browns
-
-`feed_recommender.py` is the file that recommends what is the optimal browns and greens ratio to give the worms.
-
-### CO2 Forecasting
-
-`carbondioxide_predictor.py` is the file we'll use to predict the level of CO2. To determine if a compost feed is eco-friendly.
+To deactivate the virtual environment: `deactivate`
