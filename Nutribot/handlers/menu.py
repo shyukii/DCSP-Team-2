@@ -41,6 +41,11 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice in ["use_calculator", "basic_guidelines", "back_to_menu"]:
         from handlers.commands import handle_calculator_choice
         return await handle_calculator_choice(update, context)
+    
+    # Handle CO2 calculator callbacks
+    if choice.startswith("co2_") and choice not in ["co2_tracker", "co2_impact", "co2_add"]:
+        from services.extraction_timing import handle_co2_callback
+        return await handle_co2_callback(update, context)
 
     if choice == "start_llama":
         await q.edit_message_text("I'm Llama and I'm here to help you with your plants!!")

@@ -35,6 +35,7 @@ from constants import (
     MAIN_MENU,
     AMA,
     GREENS_INPUT,
+    CO2_FOOD_WASTE_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -57,10 +58,14 @@ from handlers.commands import (
     scan_command,
     handle_photo,
     care_command,
-    co2_command,
     profile_command,
     handle_calculator_choice,
     handle_greens_input,
+)
+from services.extraction_timing import (
+    co2_calculator_command,
+    handle_co2_callback,
+    handle_food_waste_input,
 )
 from handlers.menu import handle_main_menu
 from handlers.speech_handler import handle_voice  # <-- New import
@@ -91,6 +96,7 @@ def main() -> None:
             MAIN_MENU:         [CallbackQueryHandler(handle_main_menu)],
             AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response)],
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
+            CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         name="nutribot_conversation",
@@ -102,7 +108,7 @@ def main() -> None:
     application.add_handler(CommandHandler("input", input_command))
     application.add_handler(CommandHandler("scan", scan_command))
     application.add_handler(CommandHandler("care", care_command))
-    application.add_handler(CommandHandler("co2", co2_command))
+    application.add_handler(CommandHandler("co2", co2_calculator_command))
     application.add_handler(CommandHandler("profile", profile_command))
 
     # Photo and voice handlers
