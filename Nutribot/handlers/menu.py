@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from utils.file_utils import load_user_credentials, save_user_credentials
-from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT
+from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT
 from services.clarifai_segmentation import ClarifaiImageSegmentation
 import os
 
@@ -14,7 +14,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 
     kb = [
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
-         InlineKeyboardButton("Compost Extraction", callback_data="compost_extract")],
+         InlineKeyboardButton("💩 Compost Extraction", callback_data="compost_extract")],
         [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
         [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
         [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
@@ -117,27 +117,27 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             reply_markup=reply_markup
         )
         return MAIN_MENU
-        
+         
+    if choice == "compost_helper":
+        from handlers.commands import compost_helper_start
+        return await compost_helper_start(update, context)
+    
     if choice == "compost_extract":
-        # Get user credentials to check tank volume
-        creds = load_user_credentials()
-        tank_vol = creds[user].get("tank_volume", 0)
-        soil_vol = creds[user].get("soil_volume", 0)
-        
-        # Create back button
-        kb = [[InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]]
+        # build a single “Back to Menu” button
+        kb = [[ InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu") ]]
         reply_markup = InlineKeyboardMarkup(kb)
-        
-        # Send status message (same as status_command)
+
+        # show the estimate-calculator “page”
         await q.edit_message_text(
-            "🧪 **Compost Status Check**\n\n"
-            "Based on your setup, your compost is approximately 65% ready.\n"
-            "Estimated time to full maturity: 2-3 weeks.\n\n"
-            "The moisture level appears normal and bacterial activity is good.",
+            "🌱 *Compost Estimate Calculator*\n\n"
+            "Please tell me the amount of *greens* (kg), *browns* (kg), and *water* (L) you intend to put.\n\n"
+            "Enter three numbers separated by semicolons:\n"
+            "`greens;browns;water`\n\n"
+            "_Example_: `1.5;0.8;0.4`",
             parse_mode="Markdown",
             reply_markup=reply_markup
         )
-        return MAIN_MENU
+        return COMPOST_HELPER_INPUT
         
     if choice == "co2_tracker":
         # Load user data for CO2 calculator

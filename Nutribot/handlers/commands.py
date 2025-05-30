@@ -4,13 +4,14 @@ from telegram.ext import ContextTypes
 from services.clarifai_segmentation import ClarifaiImageSegmentation
 from services.emissions_calculator import EmissionsCalculator
 from services.feeding_input import FeedCalculator
-from constants import GREENS_INPUT
-from constants import MAIN_MENU
+from services.extraction_timing import CompostProcessCalculator
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT
 from utils.file_utils import load_user_credentials
 from handlers.menu import show_main_menu
 
 clarifai = ClarifaiImageSegmentation()
 feed_calculator = FeedCalculator()
+
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = context.user_data.get("username")
@@ -223,3 +224,63 @@ async def back_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
     # Show the main menu again
     return await show_main_menu(update, context, username)
+
+async def compost_helper_start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    prompt = (
+        "🌱 *Compost Estimate Calculator*\n\n"
+        "Please tell me the amount of *greens* (kg), *browns* (kg), and *water* (L) you intend to put.\n\n"
+        "Enter three numbers separated by semicolons:\n"
+        "`greens;browns;water`\n\n"
+        "_Example_: `1.5;0.8;0.4`"
+    )
+
+    # 1) If this was triggered by an inline-button…
+    if update.callback_query:
+        q = update.callback_query
+        await q.answer()
+        await q.edit_message_text(
+            prompt,
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+            )
+        )
+
+    # 2) …or if it was triggered by a voice/text command
+    else:
+        await update.message.reply_text(
+            prompt,
+            parse_mode="Markdown"
+        )
+
+    return COMPOST_HELPER_INPUT
+
+async def compost_helper_input(update, context):
+    text = update.message.text.strip()
+    try:
+        greens_kg, browns_kg, water_kg = map(float, text.split(";"))
+    except ValueError:
+        await update.message.reply_text(
+            "❌ Invalid format. Send three numbers separated by semicolons, e.g.: `1.5;0.8;0.4`\n"
+            "Please try again:"
+        )
+        return COMPOST_HELPER_INPUT
+
+    results = CompostProcessCalculator.analyze_actual_mix(
+        greens_kg, browns_kg, water_kg
+    )
+
+    await update.message.reply_text(
+        "📊 *Compost Estimate Result*\n\n"
+        f"• Start mass: **{results['total_start_mass_kg']} kg**\n"
+        f"• Expected yield: **{results['expected_yield_kg']} kg of compost**\n"
+        f"• Est. time to ready: **~{results['time_est_days']} days**\n"
+        f"  _(range: {results['time_lower_days']}–{results['time_upper_days']} days)_",
+        parse_mode="Markdown"
+    )
+
+    # return to main menu
+    return await show_main_menu(update, context, context.user_data["username"])

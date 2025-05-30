@@ -36,6 +36,7 @@ from constants import (
     AMA,
     GREENS_INPUT,
     CO2_FOOD_WASTE_INPUT,
+    COMPOST_HELPER_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -61,6 +62,8 @@ from handlers.commands import (
     profile_command,
     handle_calculator_choice,
     handle_greens_input,
+    compost_helper_start,
+    compost_helper_input,
 )
 from services.emissions_calculator import (
     co2_calculator_command,
@@ -100,6 +103,10 @@ def main() -> None:
             AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response)],
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
             CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
+            COMPOST_HELPER_INPUT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, compost_helper_input),
+                CallbackQueryHandler(handle_main_menu, pattern="^back_to_menu$")
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         name="nutribot_conversation",

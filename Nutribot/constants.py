@@ -46,11 +46,20 @@ HELP_MESSAGE = """Here is what I can do for you:
 Type a command or tap a button to get started!
 """
 KEYWORD_TRIGGERS = {
-    "help":   ["help", "command"],
-    "status": ["status", "ready", "mature"],
-    "input":  ["input", "food", "water"],
-    "scan":   ["scan", "image", "photo", "picture"],
-    "care":   ["care", "plant", "watering", "growth"],
-    "co2":    ["co2", "carbon", "emission", "savings"],
-    "back":   ["back", "previous", "return"],
+    "help":           ["help", "command", "commands", "show help"],
+    "status":         ["status", "mature", "check status"],
+    "input":          ["input", "compost feed", "feeding", "food", "water", "greens", "browns"],
+    "scan":           ["scan", "image", "photo", "picture", "scan image"],
+    "care":           ["care", "plant", "watering", "growth", "gardening","guidance"],
+    "co2":            ["co2", "carbon", "emission", "savings", "co2 tracker"],
+    "back":           ["back", "previous", "return", "go back"],
+    "profile":        ["profile", "my profile", "show profile"],
+    "compost_feed":   ["compost feed", "feeding recommendations","feeding"],
+    "compost_extract":["compost extraction", "estimate compost", "compost helper","compost readiness","ready"],
+    "image_scan":     ["image scan", "analyse image", "scan compost"],
+    "help_commands":  ["help commands", "list commands", "what can i do"],
 }
+
+CHECK_READINESS, GET_CURRENT_VOL = range(9, 11)
+BATCH_PLAN = 30
+COMPOST_HELPER_INPUT = 31

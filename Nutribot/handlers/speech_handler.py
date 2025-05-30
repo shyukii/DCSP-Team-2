@@ -1,8 +1,8 @@
 import os
-import re
+import logging
 
 from telegram import Update
-from telegram.ext import ContextTypes, filters
+from telegram.ext import ContextTypes
 
 from services.speech_to_text import convert_to_wav, transcribe_audio
 from constants import KEYWORD_TRIGGERS
@@ -13,10 +13,13 @@ from handlers.commands import (
     scan_command,
     care_command,
     co2_command,
-    back_command
+    back_command,
+    profile_command,     
+    compost_helper_start,  
 )
 
-# Map intents to their handlers
+logger = logging.getLogger(__name__)
+
 INTENT_HANDLERS = {
     "help":   help_command,
     "status": status_command,
@@ -25,47 +28,91 @@ INTENT_HANDLERS = {
     "care":   care_command,
     "co2":    co2_command,
     "back":   back_command,
+    "profile":        profile_command,
+    "compost_feed":   input_command,
+    "compost_extract":compost_helper_start,
+    "image_scan":     scan_command,
+    "help_commands":  help_command,
 }
+
+MAX_AUDIO_DURATION = 120  # seconds
 
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     voice = update.message.voice
-    file  = await context.bot.get_file(voice.file_id)
+    user_id = update.effective_user.id
+    logger.info(f"Processing voice from user {user_id}")
 
-    # ensure temp folder exists
-    os.makedirs("temp", exist_ok=True)
-    ogg = os.path.join("temp", f"{voice.file_unique_id}.ogg")
-    wav = ogg.replace(".ogg", ".wav")
-
-    # download & convert
-    await file.download_to_drive(ogg)
-    if not convert_to_wav(ogg, wav):
-        await update.message.reply_text("Couldn’t convert audio.")
-        os.remove(ogg)
-        return
-
-    # transcribe
-    transcription = transcribe_audio(wav).lower()
-    await update.message.reply_text(f"🗣️ You said: {transcription}")
-
-    # cleanup
-    for path in (ogg, wav):
-        try: os.remove(path)
-        except: pass
-
-    # require prior login via text
-    if not context.user_data.get("username"):
+    if voice.duration > MAX_AUDIO_DURATION:
         await update.message.reply_text(
-            "Voice commands work only after you’ve logged in via /start.\n"
-            "Please register or login using text first."
+            f"⏰ Please keep voice messages under {MAX_AUDIO_DURATION}s."
         )
         return
 
-    # dispatch by keyword
-    for intent, keywords in KEYWORD_TRIGGERS.items():
-        if any(kw in transcription for kw in keywords):
-            return await INTENT_HANDLERS[intent](update, context)
+    file = await context.bot.get_file(voice.file_id)
+    os.makedirs("temp", exist_ok=True)
+    ogg_path = os.path.join("temp", f"{voice.file_unique_id}.ogg")
+    wav_path = ogg_path.replace(".ogg", ".wav")
 
-    # fallback
-    await update.message.reply_text(
-        "I didn’t catch that. Try saying: ‘help’, ‘status’, ‘input’, ‘scan’, ‘care’, ‘co2’, or ‘back’."
-    )
+    try:
+        await update.message.reply_text("🎤 Processing your voice…")
+        await file.download_to_drive(ogg_path)
+
+        if not convert_to_wav(ogg_path, wav_path):
+            await update.message.reply_text("❌ Couldn’t convert audio. Try again?")
+            return
+
+        # **Now always-English** translation
+        transcription = transcribe_audio(wav_path)
+        if not transcription:
+            await update.message.reply_text(
+                "❌ I didn’t catch that—please try again."
+            )
+            return
+
+        await update.message.reply_text(f"🗣️ You said (in English): “{transcription}”")
+
+        if not context.user_data.get("username"):
+            await update.message.reply_text(
+                "🔐 Voice commands only work after login. Use /start first."
+            )
+            return
+
+        await process_voice_command(update, context, transcription.lower())
+
+    except Exception as e:
+        logger.error(f"Error in handle_voice: {e}")
+        await update.message.reply_text(
+            "❌ Something went wrong. Please try again."
+        )
+    finally:
+        for p in (ogg_path, wav_path):
+            try:
+                if os.path.exists(p):
+                    os.remove(p)
+            except:
+                pass
+
+async def process_voice_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    transcription: str
+):
+    matched = None
+    for intent, keywords in KEYWORD_TRIGGERS.items():
+        if any(kw.lower() in transcription for kw in keywords):
+            matched = intent
+            break
+
+    if matched and matched in INTENT_HANDLERS:
+        try:
+            await INTENT_HANDLERS[matched](update, context)
+        except Exception as e:
+            logger.error(f"Error executing '{matched}': {e}")
+            await update.message.reply_text(
+                f"❌ Couldn’t run '{matched}'. Please try again."
+            )
+    else:
+        cmds = "', '".join(KEYWORD_TRIGGERS.keys())
+        await update.message.reply_text(
+            f"🤔 Didn’t understand. Try: '{cmds}' or use text commands."
+        )
