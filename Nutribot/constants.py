@@ -55,7 +55,7 @@ KEYWORD_TRIGGERS = {
     "back":           ["back", "previous", "return", "go back"],
     "profile":        ["profile", "my profile", "show profile"],
     "compost_feed":   ["compost feed", "feeding recommendations","feeding"],
-    "compost_extract":["compost extraction", "estimate compost", "compost helper","compost readiness","ready"],
+    "compost_extract":["compost extraction", "estimate compost", "compost helper","compost readiness","ready","extract","extract my compost"],
     "image_scan":     ["image scan", "analyse image", "scan compost"],
     "help_commands":  ["help commands", "list commands", "what can i do"],
 }
