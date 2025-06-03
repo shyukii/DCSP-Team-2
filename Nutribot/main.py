@@ -100,7 +100,8 @@ def main() -> None:
                 CallbackQueryHandler(handle_main_menu),
                 MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
             ],
-            AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response)],
+            AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response),
+                                MessageHandler(filters.VOICE, handle_voice),],
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
             CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
             COMPOST_HELPER_INPUT: [

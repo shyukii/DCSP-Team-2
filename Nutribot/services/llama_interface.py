@@ -1,6 +1,7 @@
 import logging
 import aiohttp
 import json
+import asyncio
 from config import LLAMA_MODEL, HUGGINGFACE_API_TOKEN
 
 logger = logging.getLogger(__name__)
