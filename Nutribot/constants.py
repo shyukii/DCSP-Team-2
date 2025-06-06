@@ -1,5 +1,42 @@
-# Conversation states
-AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD, LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, TANK_VOLUME, SOIL_VOLUME, MAIN_MENU, GREENS_INPUT, CO2_FOOD_WASTE_INPUT = range(12)
+from enum import IntEnum
+from config import Config
+
+# Conversation states using IntEnum for clarity
+class ConversationState(IntEnum):
+    AMA = 0
+    AUTH_CHOICE = 1
+    REGISTER_USERNAME = 2
+    REGISTER_PASSWORD = 3
+    LOGIN_USERNAME = 4
+    LOGIN_PASSWORD = 5
+    PLANT_SPECIES = 6
+    TANK_VOLUME = 7
+    SOIL_VOLUME = 8
+    MAIN_MENU = 9
+    GREENS_INPUT = 10
+    CO2_FOOD_WASTE_INPUT = 11
+    CHECK_READINESS = 12
+    GET_CURRENT_VOL = 13
+    BATCH_PLAN = 14
+    COMPOST_HELPER_INPUT = 15
+
+# Export for backward compatibility
+AMA = ConversationState.AMA
+AUTH_CHOICE = ConversationState.AUTH_CHOICE
+REGISTER_USERNAME = ConversationState.REGISTER_USERNAME
+REGISTER_PASSWORD = ConversationState.REGISTER_PASSWORD
+LOGIN_USERNAME = ConversationState.LOGIN_USERNAME
+LOGIN_PASSWORD = ConversationState.LOGIN_PASSWORD
+PLANT_SPECIES = ConversationState.PLANT_SPECIES
+TANK_VOLUME = ConversationState.TANK_VOLUME
+SOIL_VOLUME = ConversationState.SOIL_VOLUME
+MAIN_MENU = ConversationState.MAIN_MENU
+GREENS_INPUT = ConversationState.GREENS_INPUT
+CO2_FOOD_WASTE_INPUT = ConversationState.CO2_FOOD_WASTE_INPUT
+CHECK_READINESS = ConversationState.CHECK_READINESS
+GET_CURRENT_VOL = ConversationState.GET_CURRENT_VOL
+BATCH_PLAN = ConversationState.BATCH_PLAN
+COMPOST_HELPER_INPUT = ConversationState.COMPOST_HELPER_INPUT
 
 # Bot messages
 WELCOME_MESSAGE = """👋 *Hi there! I'm NutriBot, your friendly composting and plant care assistant *🌱♻️
@@ -45,6 +82,8 @@ HELP_MESSAGE = """Here is what I can do for you:
 
 Type a command or tap a button to get started!
 """
+
+# Keyword triggers for voice commands
 KEYWORD_TRIGGERS = {
     "help":           ["help", "command", "commands", "show help"],
     "status":         ["status", "mature", "check status"],
@@ -59,7 +98,3 @@ KEYWORD_TRIGGERS = {
     "image_scan":     ["image scan", "analyse image", "scan compost"],
     "help_commands":  ["help commands", "list commands", "what can i do"],
 }
-
-CHECK_READINESS, GET_CURRENT_VOL = range(9, 11)
-BATCH_PLAN = 30
-COMPOST_HELPER_INPUT = 31

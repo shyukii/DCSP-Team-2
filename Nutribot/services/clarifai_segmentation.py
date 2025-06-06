@@ -3,21 +3,21 @@ from typing import List, Dict, Union
 from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
 from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
 from clarifai_grpc.grpc.api.status import status_code_pb2
-from config import CLARIFAI_PAT
+from config import Config
 
 class ClarifaiImageSegmentation:
     """
     A class for performing image subject segmentation using Clarifai's API.
     """
     def __init__(self,
-                 pat: str = CLARIFAI_PAT,
-                 user_id: str = 'clarifai',
-                 app_id: str = 'main'):
+                 pat: str = Config.CLARIFAI_PAT,
+                 user_id: str = Config.CLARIFAI_USER_ID,
+                 app_id: str = Config.CLARIFAI_APP_ID):
         self.pat = pat
         self.user_id = user_id
         self.app_id = app_id
-        self.model_id = 'image-subject-segmentation'
-        self.model_version_id = '55b2051b75f14577b6fdd5a4fa3fd5a7'
+        self.model_id = Config.CLARIFAI_MODEL_ID
+        self.model_version_id = Config.CLARIFAI_MODEL_VERSION
         self.channel = ClarifaiChannel.get_grpc_channel()
         self.stub = service_pb2_grpc.V2Stub(self.channel)
         self.metadata = (('authorization', 'Key ' + self.pat),)

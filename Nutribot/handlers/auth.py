@@ -31,7 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await asyncio.sleep(0.5)
     
     # Check if user exists in database
-    existing_user = await db.get_user_by_telegram_id(telegram_id)
+    existing_user = db.get_user_by_telegram_id(telegram_id)
     
     await loading.delete()
     
@@ -42,7 +42,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         context.user_data["user_db"] = existing_user
         
         # Check if profile is complete
-        if await db.is_profile_complete(telegram_id):
+        if db.is_profile_complete(telegram_id):
             await update.message.reply_text(
                 f"Welcome back, {existing_user['username']}! 🌱\n"
                 f"You've been automatically authenticated."
@@ -102,13 +102,13 @@ async def register_password(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     telegram_id = update.effective_user.id
     
     # Check if username already exists
-    existing_user = await db.get_user_by_username(username)
+    existing_user = db.get_user_by_username(username)
     if existing_user:
         await update.message.reply_text("Username already exists. Please try a different one:")
         return REGISTER_USERNAME
     
     # Create user in database
-    new_user = await db.create_user(telegram_id, username, pwd)
+    new_user = db.create_user(telegram_id, username, pwd)
     if not new_user:
         await update.message.reply_text("Registration failed. Please try again later.")
         return ConversationHandler.END
@@ -143,19 +143,19 @@ async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     telegram_id = update.effective_user.id
     
     # Authenticate user
-    user = await db.authenticate_user(username, pwd)
+    user = db.authenticate_user(username, pwd)
     
     if user:
         # Update telegram_id if not set or different
         if user['telegram_id'] != telegram_id:
-            user = await db.update_user_profile(telegram_id, telegram_id=telegram_id)
+            user = db.update_user_profile(telegram_id, telegram_id=telegram_id)
         
         context.user_data["username"] = username
         context.user_data["telegram_id"] = telegram_id
         context.user_data["user_db"] = user
         
         # Check if profile is complete
-        if await db.is_profile_complete(telegram_id):
+        if db.is_profile_complete(telegram_id):
             return await show_main_menu(update, context, username)
         
         # Complete setup
@@ -183,7 +183,7 @@ async def plant_species(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     telegram_id = context.user_data.get("telegram_id", update.effective_user.id)
     
     # Update in database
-    await db.update_user_profile(telegram_id, plant_species=species)
+    db.update_user_profile(telegram_id, plant_species=species)
 
     await q.edit_message_text(f"You selected {species}. Enter your compost tank volume (litres):")
     return TANK_VOLUME
@@ -200,7 +200,7 @@ async def tank_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     telegram_id = context.user_data.get("telegram_id", update.effective_user.id)
     
     # Update in database
-    await db.update_user_profile(telegram_id, tank_volume=vol)
+    db.update_user_profile(telegram_id, tank_volume=vol)
 
     await update.message.reply_text("Now enter your soil volume (litres):")
     return SOIL_VOLUME
@@ -218,7 +218,7 @@ async def soil_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     username = context.user_data.get("username") or context.user_data.get("login_username")
     
     # Update in database
-    await db.update_user_profile(telegram_id, soil_volume=vol)
+    db.update_user_profile(telegram_id, soil_volume=vol)
 
     return await show_main_menu(update, context, username)
 

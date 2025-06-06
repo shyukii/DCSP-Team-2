@@ -1,3 +1,5 @@
+from config import Config
+
 class CompostProcessCalculator:
     """
     Calculates the compost recipe (greens, browns, water) 
@@ -6,12 +8,12 @@ class CompostProcessCalculator:
     """
 
     # Typical C:N ratios
-    CN_GREENS    = 17    # C:N of greens
-    CN_BROWNS    = 70    # C:N of browns
-    TARGET_CN    = 30    # Desired overall C:N
+    CN_GREENS    = Config.CompostCalculations.CN_GREENS
+    CN_BROWNS    = Config.CompostCalculations.CN_BROWNS
+    TARGET_CN    = Config.CompostCalculations.TARGET_CN_RATIO
 
     # Moisture targets
-    TARGET_MOISTURE = 0.55  # 55%
+    TARGET_MOISTURE = Config.CompostCalculations.TARGET_MOISTURE
 
     @staticmethod
     def calculate_recipe(feed_weight_kg: float) -> dict:
@@ -47,12 +49,12 @@ class CompostProcessCalculator:
         Base estimator for days until compost is ready.
         Uses 6 days per kg of greens as a rule-of-thumb.
         """
-        return round(feed_weight_kg * 6, 1)
+        return round(feed_weight_kg * Config.CompostCalculations.TIME_PER_KG_GREENS, 1)
 
     @staticmethod
     def estimate_time_range(
         feed_weight_kg: float,
-        variability: float = 0.2
+        variability: float = Config.CompostCalculations.TIMING_VARIABILITY
     ) -> tuple[float, float, float]:
         """
         Returns (lower_bound, estimate, upper_bound) in days,

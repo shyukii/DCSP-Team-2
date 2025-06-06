@@ -7,6 +7,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from services.database import db
 from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT
+from config import Config
 
 
 class EmissionsCalculator:
@@ -30,7 +31,7 @@ class EmissionsCalculator:
         baseline_co2_grams = (co2_ppm / 1_000_000) * effective_volume * 1.8
 
         # 1kg food waste → ~2.5kg CO₂, composting reduces 80%
-        co2_saved_landfill_kg = food_waste_kg * 2.5 * 0.8
+        co2_saved_landfill_kg = food_waste_kg * Config.EmissionsCalculations.FOOD_WASTE_CO2_FACTOR * Config.EmissionsCalculations.COMPOST_REDUCTION_FACTOR
         co2_saved_landfill_g = co2_saved_landfill_kg * 1000
 
         total_saved_g = baseline_co2_grams + co2_saved_landfill_g
@@ -53,9 +54,9 @@ class EmissionsCalculator:
         Convert CO₂ savings into relatable metrics.
         """
         return {
-            'trees_equivalent': round(co2_saved_kg / 25, 2),
-            'petrol_litres_equivalent': round(co2_saved_kg / 2.3, 1),
-            'car_miles_equivalent': round(co2_saved_kg / 0.4, 1)
+            'trees_equivalent': round(co2_saved_kg / Config.EmissionsCalculations.TREE_CO2_ABSORPTION, 2),
+            'petrol_litres_equivalent': round(co2_saved_kg / Config.EmissionsCalculations.PETROL_CO2_FACTOR, 1),
+            'car_miles_equivalent': round(co2_saved_kg / Config.EmissionsCalculations.CAR_CO2_FACTOR, 1)
         }
 
 
@@ -65,7 +66,7 @@ async def co2_calculator_command(update: Update, context: ContextTypes.DEFAULT_T
     Enhanced CO2 command with calculator functionality
     """
     telegram_id = update.effective_user.id
-    user_data = await db.get_user_by_telegram_id(telegram_id)
+    user_data = db.get_user_by_telegram_id(telegram_id)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -136,7 +137,7 @@ async def handle_co2_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer()
     
     telegram_id = update.effective_user.id
-    user_data = await db.get_user_by_telegram_id(telegram_id)
+    user_data = db.get_user_by_telegram_id(telegram_id)
     
     if query.data == "co2_calculate":
         await query.edit_message_text(
@@ -210,7 +211,7 @@ async def handle_co2_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
         
     elif query.data == "co2_confirm_reset":
         # Reset the counter
-        await db.update_user_profile(telegram_id, total_food_waste_kg=0)
+        db.update_user_profile(telegram_id, total_food_waste_kg=0)
         
         await query.edit_message_text(
             "✅ **Counter Reset**\n\n"
@@ -237,23 +238,23 @@ async def handle_food_waste_input(update: Update, context: ContextTypes.DEFAULT_
             )
             return CO2_FOOD_WASTE_INPUT
             
-        if food_waste_kg > 100:  # Sanity check
+        if food_waste_kg > Config.MAX_FOOD_WASTE_INPUT:  # Sanity check
             await update.message.reply_text(
-                "❌ That seems like a very large amount! Please enter a reasonable weight (up to 100kg).\n"
+                f"❌ That seems like a very large amount! Please enter a reasonable weight (up to {Config.MAX_FOOD_WASTE_INPUT}kg).\n"
                 "Try again with a smaller number."
             )
             return CO2_FOOD_WASTE_INPUT
         
         # Load user data
         telegram_id = update.effective_user.id
-        user_data = await db.get_user_by_telegram_id(telegram_id)
+        user_data = db.get_user_by_telegram_id(telegram_id)
         tank_vol = user_data.get("tank_volume", 0)
         soil_vol = user_data.get("soil_volume", 0)
         
         # Update total food waste
         current_total = user_data.get("total_food_waste_kg", 0)
         new_total = current_total + food_waste_kg
-        await db.update_user_profile(telegram_id, total_food_waste_kg=new_total)
+        db.update_user_profile(telegram_id, total_food_waste_kg=new_total)
         
         # Calculate savings for this input
         result = EmissionsCalculator.calculate_co2_saved_from_food_waste(

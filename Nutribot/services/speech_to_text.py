@@ -4,20 +4,14 @@ import os
 import logging
 from dotenv import load_dotenv
 import replicate
+from config import Config
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
-# Make sure this is set in your .env
-REPLICATE_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-if not REPLICATE_TOKEN:
-    raise RuntimeError("⚠️  Please set REPLICATE_API_TOKEN in your .env")
 
 # Pin to the only available version on Replicate
-MODEL = (
-    "cjwbw/seamless_communication:"
-    "668a4fec05a887143e5fe8d45df25ec4c794dd43169b9a11562309b2d45873b0"
-)
+MODEL = Config.REPLICATE_SPEECH_MODEL
 
 def convert_to_wav(input_path: str, output_path: str) -> bool:
     from config import FFMPEG_PATH
@@ -28,9 +22,9 @@ def convert_to_wav(input_path: str, output_path: str) -> bool:
             [
                 FFMPEG_PATH,
                 "-i", input_path,
-                "-acodec", "pcm_s16le",
-                "-ar", "16000",
-                "-ac", "1",
+                "-acodec", Config.AUDIO_CODEC,
+                "-ar", str(Config.AUDIO_SAMPLE_RATE),
+                "-ac", str(Config.AUDIO_CHANNELS),
                 "-y",
                 output_path,
             ],
@@ -62,7 +56,7 @@ def transcribe_audio(wav_path: str) -> str:
                     "task_name": "S2TT (Speech to Text translation)",
                     "target_language_text_only": "English",  # <-- force English output
                 },
-                api_token=REPLICATE_TOKEN,
+                api_token=Config.REPLICATE_API_TOKEN,
             )
 
         text = output.get("text_output", "") or ""

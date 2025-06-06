@@ -2,7 +2,7 @@ import logging
 import aiohttp
 import json
 import asyncio
-from config import LLAMA_MODEL, HUGGINGFACE_API_TOKEN
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class LlamaInterface:
             model_name: Name of the model to use. Defaults to LLAMA_MODEL from config.
         """
         # Use a working model as fallback
-        self.model_name = model_name or LLAMA_MODEL
+        self.model_name = model_name or Config.LLAMA_MODEL
         
         # List of known working models
         self.working_models = [
@@ -32,9 +32,9 @@ class LlamaInterface:
             logger.warning(f"Model {self.model_name} is currently unavailable. Using fallback model.")
             self.model_name = "HuggingFaceH4/zephyr-7b-beta"
         
-        self.api_url = f"https://api-inference.huggingface.co/models/{self.model_name}"
+        self.api_url = Config.HUGGINGFACE_API_URL.format(model_name=self.model_name)
         self.headers = {
-            "Authorization": f"Bearer {HUGGINGFACE_API_TOKEN}",
+            "Authorization": f"Bearer {Config.HUGGINGFACE_API_TOKEN}",
             "Content-Type": "application/json"
         }
         
@@ -63,8 +63,8 @@ class LlamaInterface:
                 "inputs": formatted_prompt,
                 "parameters": {
                     "max_new_tokens": max_length,
-                    "temperature": 0.8,
-                    "top_p": 0.9,
+                    "temperature": Config.AI_TEMPERATURE,
+                    "top_p": Config.AI_TOP_P,
                     "do_sample": True,
                     "return_full_text": False
                 }
@@ -75,7 +75,7 @@ class LlamaInterface:
                     self.api_url,
                     headers=self.headers,
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=aiohttp.ClientTimeout(total=Config.HTTP_TIMEOUT)
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
@@ -108,7 +108,7 @@ class LlamaInterface:
                         if self.model_name not in self.working_models:
                             logger.info("Attempting with fallback model...")
                             self.model_name = self.working_models[0]
-                            self.api_url = f"https://api-inference.huggingface.co/models/{self.model_name}"
+                            self.api_url = Config.HUGGINGFACE_API_URL.format(model_name=self.model_name)
                             return await self.generate_response(prompt, max_length)
                         
                         return "Sorry, I encountered an error while processing your request. Please try again."

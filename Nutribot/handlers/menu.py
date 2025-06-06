@@ -10,7 +10,7 @@ clarifai = ClarifaiImageSegmentation()
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username: str) -> int:
     telegram_id = update.effective_user.id
-    user_data = await db.get_user_by_telegram_id(telegram_id)
+    user_data = db.get_user_by_telegram_id(telegram_id)
     species = user_data.get("plant_species", "plants") if user_data else "plants"
 
     kb = [
@@ -150,7 +150,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice == "co2_tracker":
         # Load user data for CO2 calculator
         telegram_id = update.effective_user.id
-        user_data = await db.get_user_by_telegram_id(telegram_id)
+        user_data = db.get_user_by_telegram_id(telegram_id)
         tank_vol = user_data.get("tank_volume", 0) if user_data else 0
         soil_vol = user_data.get("soil_volume", 0) if user_data else 0
         
@@ -247,7 +247,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice.startswith("update_plant_"):
         new = choice.split("update_plant_")[-1]
         telegram_id = update.effective_user.id
-        await db.update_user_profile(telegram_id, plant_species=new)
+        db.update_user_profile(telegram_id, plant_species=new)
         await q.edit_message_text(
             f"Your plant type has been updated to {new}!",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]])

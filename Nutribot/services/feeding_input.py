@@ -13,6 +13,7 @@ Water content should be 50-60% of the total compost volume.
 
 import logging
 from typing import Dict, Tuple, Optional
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +23,14 @@ class FeedCalculator:
     """
     
     # Average C:N ratios for different materials
-    GREENS_CN_RATIO = 20  # Average C:N ratio for greens (nitrogen-rich materials)
-    BROWNS_CN_RATIO = 300  # Average C:N ratio for browns (carbon-rich materials)
-    TARGET_CN_RATIO = 30  # Optimal C:N ratio for composting
+    GREENS_CN_RATIO = Config.CompostCalculations.GREENS_CN_RATIO
+    BROWNS_CN_RATIO = Config.CompostCalculations.BROWNS_CN_RATIO
+    TARGET_CN_RATIO = Config.CompostCalculations.TARGET_CN_RATIO
     
     # Water content parameters
-    TARGET_MOISTURE = 0.55  # 55% moisture content (optimal range 50-60%)
-    GREENS_WATER_CONTENT = 0.8  # Greens typically contain 80% water
-    BROWNS_WATER_CONTENT = 0.15  # Browns typically contain 15% water
+    TARGET_MOISTURE = Config.CompostCalculations.TARGET_MOISTURE
+    GREENS_WATER_CONTENT = Config.CompostCalculations.GREENS_WATER_CONTENT
+    BROWNS_WATER_CONTENT = Config.CompostCalculations.BROWNS_WATER_CONTENT
     
     def __init__(self):
         """Initialise the FeedCalculator."""
@@ -80,7 +81,7 @@ class FeedCalculator:
         
         # Estimate total volume (assuming density of ~0.4 kg/L for compost mix)
         total_weight = total_dry_weight + existing_water + additional_water_litres
-        total_volume_litres = total_weight / 0.4
+        total_volume_litres = total_weight / Config.CompostCalculations.COMPOST_DENSITY
         
         # Calculate actual C:N ratio
         carbon_from_greens = greens_weight_kg * self.GREENS_CN_RATIO

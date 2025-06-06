@@ -26,7 +26,7 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-from config import TELEGRAM_TOKEN
+from config import Config
 from constants import (
     AUTH_CHOICE,
     REGISTER_USERNAME,
@@ -80,13 +80,14 @@ from handlers.speech_handler import handle_voice  # <-- New import
 def main() -> None:
     # Configure logging
     logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format=Config.LOGGING_FORMAT,
         level=logging.INFO,
     )
     logger = logging.getLogger(__name__)
 
     # Build the application
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
+    Config.validate_required_env_vars()
+    application = Application.builder().token(Config.TELEGRAM_TOKEN).build()
 
     # Conversation flow: auth → setup → main menu → AMA
     conv_handler = ConversationHandler(

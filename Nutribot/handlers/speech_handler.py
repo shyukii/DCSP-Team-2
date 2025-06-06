@@ -7,6 +7,7 @@ from telegram.ext import ContextTypes
 from services.speech_to_text import convert_to_wav, transcribe_audio
 from constants import KEYWORD_TRIGGERS, AMA
 from handlers.llama_handler import llama_response
+from config import Config
 from handlers.auth import help_command
 from handlers.commands import (
     status_command,
@@ -36,7 +37,7 @@ INTENT_HANDLERS = {
     "help_commands":  help_command,
 }
 
-MAX_AUDIO_DURATION = 120  # seconds
+MAX_AUDIO_DURATION = Config.MAX_AUDIO_DURATION  # seconds
 
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     voice = update.message.voice
@@ -92,31 +93,6 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     os.remove(p)
             except:
                 pass
-
-async def process_voice_command(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-    transcription: str
-):
-    matched = None
-    for intent, keywords in KEYWORD_TRIGGERS.items():
-        if any(kw.lower() in transcription for kw in keywords):
-            matched = intent
-            break
-
-    if matched and matched in INTENT_HANDLERS:
-        try:
-            await INTENT_HANDLERS[matched](update, context)
-        except Exception as e:
-            logger.error(f"Error executing '{matched}': {e}")
-            await update.message.reply_text(
-                f"❌ Couldn’t run '{matched}'. Please try again."
-            )
-    else:
-        # Fallback to llama LLM
-        context.args = [transcription]  # Optional: Set args if your LLM handler depends on it
-        await update.message.reply_text("💬 Passing your voice message to NutriBot…")
-        await llama_response(update, context)
 
 async def process_voice_command(
     update: Update,

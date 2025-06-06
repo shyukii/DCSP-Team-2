@@ -15,7 +15,7 @@ feed_calculator = FeedCalculator()
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
-    user_data = await db.get_user_by_telegram_id(telegram_id)
+    user_data = db.get_user_by_telegram_id(telegram_id)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -33,7 +33,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     telegram_id = update.effective_user.id
-    user_data = await db.get_user_by_telegram_id(telegram_id)
+    user_data = db.get_user_by_telegram_id(telegram_id)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -154,12 +154,14 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return
 
 async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = context.user_data.get("username")
-    if not user:
+    telegram_id = update.effective_user.id
+    user_data = db.get_user_by_telegram_id(telegram_id)
+    
+    if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
-    creds = load_user_credentials()
-    species = creds[user].get("plant_species","plants")
+        
+    species = user_data.get("plant_species", "plants")
     tips = {
         "ladysfinger": "🌡️ Keep soil 22-35°C\n💧 Water regularly\n☀️ 6+ hrs sun",
         "spinach":     "🌡️ 15-20°C\n💧 Keep moist\n🌱 Harvest outer leaves",
@@ -172,13 +174,15 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     )
 
 async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = context.user_data.get("username")
-    if not user:
+    telegram_id = update.effective_user.id
+    user_data = db.get_user_by_telegram_id(telegram_id)
+    
+    if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
-    creds = load_user_credentials()
-    tank_vol = creds[user].get("tank_volume", 0)
-    soil_vol = creds[user].get("soil_volume", 0)
+        
+    tank_vol = user_data.get("tank_volume", 0)
+    soil_vol = user_data.get("soil_volume", 0)
     total_vol = tank_vol + soil_vol
     # using 0.5kg CO₂ saved per litre per year
     saved = round(total_vol * 0.5, 1)
@@ -193,7 +197,7 @@ async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
     telegram_id = update.effective_user.id
-    user_data = await db.get_user_by_telegram_id(telegram_id)
+    user_data = db.get_user_by_telegram_id(telegram_id)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
