@@ -6,7 +6,7 @@ from services.emissions_calculator import EmissionsCalculator
 from services.feeding_input import FeedCalculator
 from services.extraction_timing import CompostProcessCalculator
 from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT
-from utils.file_utils import load_user_credentials
+from services.database import db
 from handlers.menu import show_main_menu
 
 clarifai = ClarifaiImageSegmentation()
@@ -14,13 +14,15 @@ feed_calculator = FeedCalculator()
 
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = context.user_data.get("username")
-    if not user:
+    telegram_id = update.effective_user.id
+    user_data = await db.get_user_by_telegram_id(telegram_id)
+    
+    if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
-    creds = load_user_credentials()
-    tank_vol = creds[user].get("tank_volume", 0)
-    soil_vol = creds[user].get("soil_volume", 0)
+        
+    tank_vol = user_data.get("tank_volume", 0)
+    soil_vol = user_data.get("soil_volume", 0)
     await update.message.reply_text(
         "🧪 **Compost Status Check**\n\n"
         "Based on your setup, your compost is approximately 65% ready.\n"
@@ -30,8 +32,10 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
 async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user = context.user_data.get("username")
-    if not user:
+    telegram_id = update.effective_user.id
+    user_data = await db.get_user_by_telegram_id(telegram_id)
+    
+    if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
     
@@ -188,14 +192,16 @@ async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    user = context.user_data.get("username")
-    if not user:
+    telegram_id = update.effective_user.id
+    user_data = await db.get_user_by_telegram_id(telegram_id)
+    
+    if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
-    creds = load_user_credentials()
-    species = creds[user].get("plant_species", "unknown")
-    tank_vol = creds[user].get("tank_volume", 0)
-    soil_vol = creds[user].get("soil_volume", 0)
+        
+    species = user_data.get("plant_species", "unknown")
+    tank_vol = user_data.get("tank_volume", 0)
+    soil_vol = user_data.get("soil_volume", 0)
     kb = [
         [InlineKeyboardButton("Change Plant", callback_data="change_plant")],
         [InlineKeyboardButton("Change Volume", callback_data="change_volume")],

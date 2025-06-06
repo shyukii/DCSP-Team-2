@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
-from utils.file_utils import load_user_credentials, save_user_credentials
+from services.database import db
 from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT
 from services.clarifai_segmentation import ClarifaiImageSegmentation
 import os
@@ -9,8 +9,9 @@ import os
 clarifai = ClarifaiImageSegmentation()
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username: str) -> int:
-    creds = load_user_credentials()
-    species = creds[username].get("plant_species","plants")
+    telegram_id = update.effective_user.id
+    user_data = await db.get_user_by_telegram_id(telegram_id)
+    species = user_data.get("plant_species", "plants") if user_data else "plants"
 
     kb = [
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
@@ -148,10 +149,10 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         
     if choice == "co2_tracker":
         # Load user data for CO2 calculator
-        user = context.user_data.get("username")
-        creds = load_user_credentials()
-        tank_vol = creds[user].get("tank_volume", 0)
-        soil_vol = creds[user].get("soil_volume", 0)
+        telegram_id = update.effective_user.id
+        user_data = await db.get_user_by_telegram_id(telegram_id)
+        tank_vol = user_data.get("tank_volume", 0) if user_data else 0
+        soil_vol = user_data.get("soil_volume", 0) if user_data else 0
         
         # Check if user has set up volumes
         if tank_vol == 0 or soil_vol == 0:
@@ -163,7 +164,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             return MAIN_MENU
         
         # Get stored food waste total if available
-        total_food_waste = creds[user].get("total_food_waste_kg", 0)
+        total_food_waste = user_data.get("total_food_waste_kg", 0) if user_data else 0
         
         # Create keyboard options
         keyboard = [
@@ -245,9 +246,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     if choice.startswith("update_plant_"):
         new = choice.split("update_plant_")[-1]
-        creds = load_user_credentials()
-        creds[user]["plant_species"] = new
-        save_user_credentials(creds)
+        telegram_id = update.effective_user.id
+        await db.update_user_profile(telegram_id, plant_species=new)
         await q.edit_message_text(
             f"Your plant type has been updated to {new}!",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]])

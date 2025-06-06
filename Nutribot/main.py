@@ -1,5 +1,9 @@
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Fix encoding issues on Windows
 if sys.platform.startswith('win'):

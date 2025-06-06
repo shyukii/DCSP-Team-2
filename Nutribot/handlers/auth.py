@@ -8,7 +8,7 @@ from constants import (
     LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, TANK_VOLUME, SOIL_VOLUME, MAIN_MENU,
     WELCOME_MESSAGE, REGISTRATION_MESSAGE, GLOSSARY_MESSAGE
 )
-from utils.file_utils import load_user_credentials, save_user_credentials
+from services.database import db
 from services.clarifai_segmentation import ClarifaiImageSegmentation
 from handlers.menu import show_main_menu
 
@@ -24,10 +24,45 @@ async def direct_start_command(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    logger.info(f"Start command received from user {update.effective_user.id}")
+    telegram_id = update.effective_user.id
+    logger.info(f"Start command received from user {telegram_id}")
+    
     loading = await update.message.reply_text("🔄 Loading NutriBot...")
     await asyncio.sleep(0.5)
+    
+    # Check if user exists in database
+    existing_user = await db.get_user_by_telegram_id(telegram_id)
+    
     await loading.delete()
+    
+    if existing_user:
+        # Auto-authenticate user
+        context.user_data["username"] = existing_user["username"]
+        context.user_data["telegram_id"] = telegram_id
+        context.user_data["user_db"] = existing_user
+        
+        # Check if profile is complete
+        if await db.is_profile_complete(telegram_id):
+            await update.message.reply_text(
+                f"Welcome back, {existing_user['username']}! 🌱\n"
+                f"You've been automatically authenticated."
+            )
+            return await show_main_menu(update, context, existing_user['username'])
+        else:
+            # Complete profile setup
+            kb = [
+                [InlineKeyboardButton("Lady's Finger", callback_data="ladysfinger"),
+                 InlineKeyboardButton("Spinach",        callback_data="spinach"),
+                 InlineKeyboardButton("Long Bean",      callback_data="longbean")]
+            ]
+            await update.message.reply_text(
+                f"Welcome back, {existing_user['username']}! Let's complete your profile.\n"
+                f"Please select your plant species:",
+                reply_markup=InlineKeyboardMarkup(kb)
+            )
+            return PLANT_SPECIES
+    
+    # New user - show registration/login options
     await update.message.reply_text(WELCOME_MESSAGE, parse_mode="Markdown")
     kb = [
         [InlineKeyboardButton("Register", callback_data="register"),
@@ -63,13 +98,23 @@ async def register_username(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def register_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     pwd = update.message.text
-    user = context.user_data["username"]
-    creds = load_user_credentials()
-    if user in creds:
-        await update.message.reply_text("Username exists—try a different one.")
+    username = context.user_data["username"]
+    telegram_id = update.effective_user.id
+    
+    # Check if username already exists
+    existing_user = await db.get_user_by_username(username)
+    if existing_user:
+        await update.message.reply_text("Username already exists. Please try a different one:")
         return REGISTER_USERNAME
-    creds[user] = {"password": pwd}
-    save_user_credentials(creds)
+    
+    # Create user in database
+    new_user = await db.create_user(telegram_id, username, pwd)
+    if not new_user:
+        await update.message.reply_text("Registration failed. Please try again later.")
+        return ConversationHandler.END
+    
+    context.user_data["telegram_id"] = telegram_id
+    context.user_data["user_db"] = new_user
 
     await update.message.reply_text(REGISTRATION_MESSAGE)
     await update.message.reply_text(GLOSSARY_MESSAGE)
@@ -80,7 +125,7 @@ async def register_password(update: Update, context: ContextTypes.DEFAULT_TYPE) 
          InlineKeyboardButton("Long Bean",      callback_data="longbean")]
     ]
     await update.message.reply_text(
-        f"Registration successful, {user}! Select your plant species:",
+        f"Registration successful, {username}! Select your plant species:",
         reply_markup=InlineKeyboardMarkup(kb)
     )
     return PLANT_SPECIES
@@ -94,25 +139,37 @@ async def login_username(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     pwd = update.message.text
-    user = context.user_data.get("login_username")
-    creds = load_user_credentials()
-
-    if user in creds and creds[user]["password"] == pwd:
-        context.user_data["username"] = user
-        user_data = creds[user]
-        if "plant_species" in user_data and "tank_volume" in user_data and "soil_volume" in user_data:
-            return await show_main_menu(update, context, user)
-        # else, complete setup
+    username = context.user_data.get("login_username")
+    telegram_id = update.effective_user.id
+    
+    # Authenticate user
+    user = await db.authenticate_user(username, pwd)
+    
+    if user:
+        # Update telegram_id if not set or different
+        if user['telegram_id'] != telegram_id:
+            user = await db.update_user_profile(telegram_id, telegram_id=telegram_id)
+        
+        context.user_data["username"] = username
+        context.user_data["telegram_id"] = telegram_id
+        context.user_data["user_db"] = user
+        
+        # Check if profile is complete
+        if await db.is_profile_complete(telegram_id):
+            return await show_main_menu(update, context, username)
+        
+        # Complete setup
         kb = [
             [InlineKeyboardButton("Lady's Finger", callback_data="ladysfinger"),
              InlineKeyboardButton("Spinach",        callback_data="spinach"),
              InlineKeyboardButton("Long Bean",      callback_data="longbean")]
         ]
         await update.message.reply_text(
-            f"Welcome back, {user}! Complete setup—select plant species:",
+            f"Welcome back, {username}! Complete setup—select plant species:",
             reply_markup=InlineKeyboardMarkup(kb)
         )
         return PLANT_SPECIES
+    
     await update.message.reply_text("Invalid credentials, try again.")
     return LOGIN_USERNAME
 
@@ -122,11 +179,11 @@ async def plant_species(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     q = update.callback_query; await q.answer()
     species = q.data
     context.user_data["plant_species"] = species
-
-    user = context.user_data.get("username") or context.user_data.get("login_username")
-    creds = load_user_credentials()
-    creds[user]["plant_species"] = species
-    save_user_credentials(creds)
+    
+    telegram_id = context.user_data.get("telegram_id", update.effective_user.id)
+    
+    # Update in database
+    await db.update_user_profile(telegram_id, plant_species=species)
 
     await q.edit_message_text(f"You selected {species}. Enter your compost tank volume (litres):")
     return TANK_VOLUME
@@ -140,10 +197,10 @@ async def tank_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         await update.message.reply_text("Enter a valid positive number.")
         return TANK_VOLUME
 
-    user = context.user_data.get("username") or context.user_data.get("login_username")
-    creds = load_user_credentials()
-    creds[user]["tank_volume"] = vol
-    save_user_credentials(creds)
+    telegram_id = context.user_data.get("telegram_id", update.effective_user.id)
+    
+    # Update in database
+    await db.update_user_profile(telegram_id, tank_volume=vol)
 
     await update.message.reply_text("Now enter your soil volume (litres):")
     return SOIL_VOLUME
@@ -157,12 +214,13 @@ async def soil_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         await update.message.reply_text("Enter a valid positive number.")
         return SOIL_VOLUME
 
-    user = context.user_data.get("username") or context.user_data.get("login_username")
-    creds = load_user_credentials()
-    creds[user]["soil_volume"] = vol
-    save_user_credentials(creds)
+    telegram_id = context.user_data.get("telegram_id", update.effective_user.id)
+    username = context.user_data.get("username") or context.user_data.get("login_username")
+    
+    # Update in database
+    await db.update_user_profile(telegram_id, soil_volume=vol)
 
-    return await show_main_menu(update, context, user)
+    return await show_main_menu(update, context, username)
 
 # -- cancel / end --
 
