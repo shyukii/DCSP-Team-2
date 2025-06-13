@@ -27,6 +27,7 @@ from telegram.ext import (
 )
 
 from config import Config
+from set_bot_commands import COMMANDS
 from constants import (
     AUTH_CHOICE,
     REGISTER_USERNAME,
@@ -74,8 +75,14 @@ from services.emissions_calculator import (
     handle_co2_callback,
     handle_food_waste_input,
 )
-from handlers.menu import handle_main_menu
-from handlers.speech_handler import handle_voice  # <-- New import
+from handlers.menu import handle_main_menu, back_to_menu_command
+from handlers.speech_handler import handle_voice
+from handlers.ama_helpers import block_commands_during_ama
+
+
+# Set command menu for Telegram
+async def set_bot_commands(application):
+    await application.bot.set_my_commands(COMMANDS)
 
 def main() -> None:
     # Configure logging
@@ -87,7 +94,7 @@ def main() -> None:
 
     # Build the application
     Config.validate_required_env_vars()
-    application = Application.builder().token(Config.TELEGRAM_TOKEN).build()
+    application = Application.builder().token(Config.TELEGRAM_TOKEN).post_init(set_bot_commands).build()
 
     # Conversation flow: auth → setup → main menu → AMA
     conv_handler = ConversationHandler(
@@ -105,8 +112,10 @@ def main() -> None:
                 CallbackQueryHandler(handle_main_menu),
                 MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
             ],
-            AMA:               [MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response),
-                                MessageHandler(filters.VOICE, handle_voice),],
+            AMA:               [CommandHandler(["back","menu"], back_to_menu_command),
+                                MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response),
+                                MessageHandler(filters.VOICE, handle_voice),
+                                MessageHandler(filters.COMMAND, block_commands_during_ama),],
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
             CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
             COMPOST_HELPER_INPUT: [
@@ -117,6 +126,9 @@ def main() -> None:
         fallbacks=[CommandHandler("cancel", cancel)],
         name="nutribot_conversation",
     )
+
+    # Add the conversation handler
+    application.add_handler(conv_handler)
 
     # Non-conversation command handlers (checked before conv_handler)
     application.add_handler(CommandHandler("help", help_command))
@@ -129,9 +141,6 @@ def main() -> None:
 
     # Voice handler (keep this outside conversation as it doesn't need state)
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
-
-    # Add the conversation handler
-    application.add_handler(conv_handler)
 
     # Fallback direct /start (when not in a conversation)
     application.add_handler(CommandHandler("start", direct_start_command))

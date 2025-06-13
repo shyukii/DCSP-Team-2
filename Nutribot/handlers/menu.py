@@ -1,17 +1,29 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from services.database import db
-from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT
+from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT, AMA
 from services.clarifai_segmentation import ClarifaiImageSegmentation
 import os
 
 # Initialize clarifai service
 clarifai = ClarifaiImageSegmentation()
 
-async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username: str) -> int:
+async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username: str = None) -> int:
+    context.user_data.pop("state", None)  # Clear AMA flag if returning
     telegram_id = update.effective_user.id
     user_data = db.get_user_by_telegram_id(telegram_id)
     species = user_data.get("plant_species", "plants") if user_data else "plants"
+    username = username or context.user_data.get("username", "there")  # fallback name
+
+    # Clear AMA flag if returning from LLM mode
+    context.user_data.pop("state", None)
+
+    # If username wasn’t passed in, fall back to stored context
+    username = username or context.user_data.get("username")
+
+    telegram_id = update.effective_user.id
+    user_data  = db.get_user_by_telegram_id(telegram_id)
+    species    = user_data.get("plant_species", "plants") if user_data else "plants"
 
     kb = [
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
@@ -36,6 +48,12 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
             reply_markup=markup
         )
     return MAIN_MENU
+
+async def back_to_menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # Clear AMA flag
+    context.user_data.pop("state", None)
+    # Call the existing menu (no username arg)
+    return await show_main_menu(update, context)
 
 async def handle_photo_from_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle photo processing when user sends image after selecting image_scan from menu"""

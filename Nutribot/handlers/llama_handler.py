@@ -21,11 +21,15 @@ async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     text = raw
 
-    # 3) Check for exit commands
-    if text.lower() in ['/menu','/back','/exit']:
-        user = context.user_data.get("username")
+    # 3a) Allow only /menu and /back to exit AMA mode
+    if text.lower() in ['/menu', '/back']:
         context.user_data.pop("state", None)
-        return await show_main_menu(update, context, user)
+        return await show_main_menu(update, context)
+
+    # 3b) Block all other /commands
+    if text.startswith("/") and text.lower() not in ['/menu', '/back']:
+        await update.message.reply_text("❌ That command isn't available right now. Use /back to return to the menu.")
+        return AMA
 
     # 4) Send the prompt to Llama
     try:

@@ -5,7 +5,7 @@ from services.clarifai_segmentation import ClarifaiImageSegmentation
 from services.emissions_calculator import EmissionsCalculator
 from services.feeding_input import FeedCalculator
 from services.extraction_timing import CompostProcessCalculator
-from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA
 from services.database import db
 from handlers.menu import show_main_menu
 
@@ -160,17 +160,25 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
-        
+
     species = user_data.get("plant_species", "plants")
     tips = {
         "ladysfinger": "🌡️ Keep soil 22-35°C\n💧 Water regularly\n☀️ 6+ hrs sun",
         "spinach":     "🌡️ 15-20°C\n💧 Keep moist\n🌱 Harvest outer leaves",
         "longbean":    "🌿 Provide support\n💧 Water deeply once/week\n☀️ Full sun"
     }.get(species, "Keep soil moist and give sunlight.")
+    
+    # Add inline button for Ask Anything (LLM)
+    keyboard = [
+        [InlineKeyboardButton("🪴 Ask Anything", callback_data="start_llama")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.message.reply_text(
         f"🪴 **{species.capitalize()} Care Guide**\n\n{tips}\n\n"
         "Remember to apply compost when nutrients deplete.",
-        parse_mode="Markdown"
+        parse_mode="Markdown",
+        reply_markup=reply_markup
     )
 
 async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
