@@ -32,21 +32,9 @@ DCSP-Team-2/
 
 3. Install: `pip install -r requirements.txt`
 
-4. Create `.env` file in `Nutribot/` directory with API tokens (refer to below)
+4. Create `.env` file in `Nutribot/` directory with by copying `.env.example`
 
 5. Run: `cd Nutribot && python main.py`
-
-## Environment Variables (.env file)
-
-Create a `.env` file in the `Nutribot/` directory with:
-
-```
-BOT_TOKEN=your_telegram_bot_token
-CLARIFAI_PAT=your_clarifai_api_token
-HUGGINGFACE_API_TOKEN=your_huggingface_token
-REPLICATE_API_TOKEN=your_replicate_token
-FFMPEG_PATH=path_to_ffmpeg_executable
-```
 
 ## Features
 
