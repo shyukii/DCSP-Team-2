@@ -26,3 +26,4 @@ soundfile==0.13.1
 supabase==2.10.0
 transformers @ git+https://github.com/huggingface/transformers.git@7a611f0afd5f77ba4802d46c97433ea16ea3ec8a
 replicate==1.0.7
+torch==2.0.0
