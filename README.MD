@@ -77,6 +77,6 @@ DCSP-Team-2/
 - **Bot not responding:** Check your BOT_TOKEN in the .env file
 - **Voice messages not working:** Ensure FFmpeg is properly installed
 - **Image analysis failing:** Verify your CLARIFAI_PAT token is valid
-- **AI responses not working:** Check your Hugging Face and Replicate API tokens
+- **AI responses not working:** Check your OpenAI API key and Replicate API tokens
 
 To deactivate the virtual environment: `deactivate`

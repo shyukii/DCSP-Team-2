@@ -65,12 +65,11 @@ Shows typing indicator
 ↓
 Calls llama_interface.py: generate_response()
 ↓
-LlamaInterface formats prompt:
-  "<|system|>You are NutriBot...</s>
-   <|user|>How do I care for tomatoes?</s>
-   <|assistant|>"
+LlamaInterface formats messages:
+  [{"role": "system", "content": "You are NutriBot..."},
+   {"role": "user", "content": "How do I care for tomatoes?"}]
 ↓
-Sends to Hugging Face API (zephyr-7b-beta model)
+Sends to OpenAI API (gpt-3.5-turbo model)
 ↓
 Receives AI response
 ↓
@@ -129,20 +128,20 @@ Same flow as text message from here
 
 ## 4. API Integration Details
 
-### Hugging Face API
-- **Endpoint**: `https://api-inference.huggingface.co/models/{model_name}`
+### OpenAI API
+- **Endpoint**: `https://api.openai.com/v1/chat/completions`
 - **Authentication**: Bearer token in headers
 - **Payload Format**:
   ```json
   {
-    "inputs": "formatted_prompt",
-    "parameters": {
-      "max_new_tokens": 500,
-      "temperature": 0.8,
-      "top_p": 0.9,
-      "do_sample": true,
-      "return_full_text": false
-    }
+    "model": "gpt-3.5-turbo",
+    "messages": [
+      {"role": "system", "content": "You are NutriBot..."},
+      {"role": "user", "content": "user_message"}
+    ],
+    "max_tokens": 500,
+    "temperature": 0.8,
+    "top_p": 0.9
   }
   ```
 
