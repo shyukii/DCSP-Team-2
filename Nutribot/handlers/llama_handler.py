@@ -24,6 +24,7 @@ async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # 3a) Allow only /menu and /back to exit AMA mode
     if text.lower() in ['/menu', '/back']:
         context.user_data.pop("state", None)
+        llama.clear_memory()
         return await show_main_menu(update, context)
 
     # 3b) Block all other /commands

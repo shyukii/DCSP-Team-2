@@ -10,19 +10,14 @@ class Config:
     # API Tokens & Keys
     TELEGRAM_TOKEN: str = os.getenv("BOT_TOKEN")
     CLARIFAI_PAT: str = os.getenv("CLARIFAI_PAT")
-    HUGGINGFACE_API_TOKEN: str = os.getenv("HUGGINGFACE_API_TOKEN")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     REPLICATE_API_TOKEN: str = os.getenv("REPLICATE_API_TOKEN")
     SUPABASE_URL: str = os.getenv("SUPABASE_URL")
     SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY")
     
     # AI Models & Endpoints
-    LLAMA_MODEL: str = os.getenv("LLAMA_MODEL", "meta-llama/Meta-Llama-3-8B-Instruct")
-    HUGGINGFACE_API_URL: str = "https://api-inference.huggingface.co/models/{model_name}"
-    FALLBACK_MODELS: List[str] = [
-        "HuggingFaceH4/zephyr-7b-beta",
-        "microsoft/Phi-3-mini-4k-instruct",
-        "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    ]
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini-2025-04-14")
+    OPENAI_API_URL: str = "https://api.openai.com/v1/chat/completions"
     
     # Replicate Models
     REPLICATE_SPEECH_MODEL: str = "cjwbw/seamless_communication:668a4fec05a887143e5fe8d45df25ec4c794dd43169b9a11562309b2d45873b0"
@@ -94,7 +89,7 @@ class Config:
         required_vars = {
             "BOT_TOKEN": cls.TELEGRAM_TOKEN,
             "CLARIFAI_PAT": cls.CLARIFAI_PAT,
-            "HUGGINGFACE_API_TOKEN": cls.HUGGINGFACE_API_TOKEN,
+            "OPENAI_API_KEY": cls.OPENAI_API_KEY,
             "REPLICATE_API_TOKEN": cls.REPLICATE_API_TOKEN,
             "SUPABASE_URL": cls.SUPABASE_URL,
             "SUPABASE_ANON_KEY": cls.SUPABASE_ANON_KEY
@@ -119,8 +114,8 @@ class Config:
 # Backwards compatibility - maintain old variable names for now
 TELEGRAM_TOKEN = Config.TELEGRAM_TOKEN
 CLARIFAI_PAT = Config.CLARIFAI_PAT
-LLAMA_MODEL = Config.LLAMA_MODEL
+OPENAI_MODEL = Config.OPENAI_MODEL
 LOGIN_FILE = Config.LOGIN_FILE
-HUGGINGFACE_API_TOKEN = Config.HUGGINGFACE_API_TOKEN
+OPENAI_API_KEY = Config.OPENAI_API_KEY
 REPLICATE_API_TOKEN = Config.REPLICATE_API_TOKEN
 FFMPEG_PATH = Config.FFMPEG_PATH
