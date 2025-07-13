@@ -1,7 +1,7 @@
 aiohttp==3.12.13
 bcrypt==4.0.1
 charset-normalizer==3.4.2
-clarifai-grpc==11.3.4
+clarifai==10.11.0
 decorator==5.2.1
 ffmpeg-python==0.2.0
 googleapis-common-protos==1.70.0
@@ -25,4 +25,5 @@ seaborn==0.13.2
 soundfile==0.13.1
 supabase==2.10.0
 replicate==1.0.7
+requests==2.32.4
 torch==2.2.0

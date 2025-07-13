@@ -23,10 +23,7 @@ class Config:
     REPLICATE_SPEECH_MODEL: str = "cjwbw/seamless_communication:668a4fec05a887143e5fe8d45df25ec4c794dd43169b9a11562309b2d45873b0"
     
     # Clarifai Configuration
-    CLARIFAI_USER_ID: str = "clarifai"
-    CLARIFAI_APP_ID: str = "main"
-    CLARIFAI_MODEL_ID: str = "image-subject-segmentation"
-    CLARIFAI_MODEL_VERSION: str = "55b2051b75f14577b6fdd5a4fa3fd5a7"
+    CLARIFAI_MODEL_URL: str = "https://clarifai.com/shyueqi/Nuritbot/models/TANKER-SEGMENTER"
     
     # File Paths
     LOGIN_FILE: str = os.getenv("LOGIN_FILE", "loginIDs.json")
