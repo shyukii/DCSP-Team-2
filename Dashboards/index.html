@@ -1,12 +1,78 @@
 <!doctype html>
-<html lang="en">
+<html
+  lang="en"
+  data-theme="forestdash"
+  class="h-full scroll-smooth antialiased"
+>
   <head>
     <meta charset="UTF-8" />
-    <title>Compost Dashboard</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--title>Compost Dashboard</title-->
+
+    <!-- Viewport & Mobile -->
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#13201B" />
+
+    <!-- SEO / Social (adjust content as needed) -->
+    <meta
+      name="description"
+      content="Real-time compost analytics dashboard (moisture, CO₂, status) powered by Supabase."
+    />
+    <!--meta property="og:title" content="Compost Dashboard" /-->
+    <meta
+      property="og:description"
+      content="Real-time compost analytics dashboard."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/favicon.ico" />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- Favicon / Icons (replace with your assets) -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> -->
+
+    <!-- Preconnect (Supabase) -->
+    <link rel="preconnect" href="https://api.supabase.com" crossorigin />
+
+    <!-- Color / Font Rendering Hints -->
+    <meta name="color-scheme" content="dark light" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Optional: preload main font (example) -->
+    <!--
+    <link
+      rel="preload"
+      href="/fonts/Inter-Variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    -->
   </head>
-  <body class="bg-base-200" data-theme="light">
-    <div id="app"></div>
+
+  <body
+    class="h-full min-h-screen bg-base-300 text-base-content selection:bg-accent selection:text-neutral"
+  >
+    <noscript>
+      <div
+        style="
+          padding: 1rem;
+          background: #b91c1c;
+          color: #fff;
+          font-family: system-ui, sans-serif;
+          text-align: center;
+        "
+      >
+        JavaScript is required to run this dashboard.
+      </div>
+    </noscript>
+
+    <div id="app" class="h-full"></div>
+
+    <!-- Entry -->
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

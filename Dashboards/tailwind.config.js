@@ -8,6 +8,23 @@ module.exports = {
   plugins: [require('daisyui')],
   // (optional) DaisyUI themes:
   daisyui: {
-    themes: ["light", "dark", "forest"]
-  }
+  themes: [
+    {
+      forestdash: {
+        "primary": "#2E6F4E",
+        "secondary": "#5DAA73",
+        "accent": "#A6E3B8",
+        "neutral": "#244732",
+        "base-100": "#2F5C42",
+        "base-200": "#2A543B",
+        "base-300": "#254D35",
+        "info": "#7BC6C8",
+        "success": "#68D391",
+        "warning": "#F6C945",
+        "error": "#F87171"
+      }
+    },
+    "forest" // fallback
+  ]
+}
 }
