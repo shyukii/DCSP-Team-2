@@ -1,0 +1,36 @@
+{
+  "name": "dashboards",
+  "version": "1.0.0",
+  "description": "Compost Analytics Dashboard",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.52.0",
+    "chart.js": "^4.5.0",
+    "daisyui": "^4.6.0",
+    "vue": "^3.5.17",
+    "vue-chartjs": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "@vitejs/plugin-vue": "^4.6.2",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.31.0",
+    "eslint-plugin-vue": "^10.3.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.19",
+    "vue-tsc": "^1.8.11"
+  }
+}
