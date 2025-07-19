@@ -52,8 +52,16 @@ node -v
 npm -v
 
 ```bash
+cp .env.example .env # create and fill values
 git clone <REPO_URL> Dashboards
 cd Dashboards
+npm init -y
 npm install
-cp .env.example .env          # create and fill values
+# First install main dependencies
+npm install @supabase/supabase-js@^2.52.0 chart.js@^4.5.0 daisyui@^4.6.0 vue@^3.5.17 vue-chartjs@^5.3.2
+# Then instal dev dependencies
+npm install --save-dev @types/node@^24.0.15 @vitejs/plugin-vue@^4.6.2 @vue/eslint-config-typescript@^14.6.0 \
+autoprefixer@^10.4.21 eslint@^9.31.0 eslint-plugin-vue@^10.3.0 postcss@^8.5.6 prettier@^3.6.2 \
+tailwindcss@^3.4.17 typescript@^5.8.3 vite@^5.4.19 vue-tsc@^1.8.11
+
 npm run dev                   # to run. to check, look at local host link given
