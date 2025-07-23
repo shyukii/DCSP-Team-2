@@ -30,7 +30,7 @@
           <!-- Top Section: KPI Cards + Line Chart (45% height) -->
           <div class="flex gap-4 h-1/2">
             <!-- 4 KPI Cards in 2x2 grid (Left, 40% width) -->
-            <div class="grid grid-cols-2 grid-rows-2 gap-2 w-[45%]">
+            <div class="grid grid-cols-2 grid-rows-2 gap-2.5 w-[45%]">
               <div class="card bg-sage shadow-b">
                 <div class="card-body p-3 h-full">
                   <h2 class="card-title text-xs font-semibold">Title</h2>
