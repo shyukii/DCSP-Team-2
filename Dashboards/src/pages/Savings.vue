@@ -77,22 +77,3 @@
 import { ref } from 'vue'
 const isCollapsed = ref(true)
 </script>
-
-<style scoped>
-.fade-slide-move {
-  transition: all 0.3s ease;
-}
-
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(-8px);
-  position: relative;
-}
-</style>
