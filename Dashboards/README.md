@@ -55,4 +55,5 @@ npm -v
 cp .env.example .env # create and fill values
 cd Dashboards
 npm ci
-npm run dev                   # to run. to check, look at local host link given
+npm run dev          # to run. to check, look at local host link given
+ctrl c               # to stop running
