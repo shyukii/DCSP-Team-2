@@ -2,4 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* (Optional) custom layer overrides */
+/* Optional: custom utility color classes */
+@layer utilities {
+  .bg-deepgreen { background-color: #0A400C; }
+  .bg-sage { background-color: #819067; }
+  .bg-khaki { background-color: #B1AB86; }
+  .text-cream { color: #FEFAE0; }
+  .text-sage { color: #819067; }
+}/* (Optional) custom layer overrides */
+
+/* Optional: custom component overrides */
+@layer components {
+  .card {
+    @apply rounded-md; /* or use rounded-sm / rounded-none */
+  }
+}
+
+@layer utilities {
+  .shadow-b {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+}
