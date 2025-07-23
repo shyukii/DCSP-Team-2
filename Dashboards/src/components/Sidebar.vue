@@ -27,24 +27,27 @@
     <nav class="flex flex-col gap-8 mt-4">
       <transition-group name="fade-slide" tag="div" class="flex flex-col space-y-6 transition-all duration-300">
         <router-link to="/readiness" class="no-underline text-inherit">
-          <div class="flex items-center" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
             <i class="fas fa-leaf text-lg"></i>
             <span v-if="!isCollapsed">Readiness</span>
           </div>
         </router-link>
+
         <router-link to="/feed" class="no-underline text-inherit">
-          <div class="flex items-center" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
             <i class="fas fa-apple-alt text-lg"></i>
             <span v-if="!isCollapsed">Feed</span>
           </div>
         </router-link>
+
         <router-link to="/savings" class="no-underline text-inherit">
-          <div class="flex items-center" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
             <i class="fas fa-chart-line text-lg"></i>
             <span v-if="!isCollapsed">CO₂ Savings</span>
           </div>
         </router-link>
-        <div class="flex items-center" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+
+        <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
           <i class="fas fa-sync text-lg"></i>
           <span v-if="!isCollapsed">Refresh</span>
         </div>
@@ -74,5 +77,13 @@ const isCollapsed = ref(true)
   opacity: 0;
   transform: translateX(-8px);
   position: relative;
+}
+
+/* Hover animation */
+.sidebar-item {
+  @apply transition-all duration-300 ease-in-out;
+}
+.sidebar-item:hover {
+  @apply text-accent scale-[1.05];
 }
 </style>
