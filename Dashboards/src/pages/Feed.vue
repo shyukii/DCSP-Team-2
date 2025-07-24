@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen bg-deepgreen text-cream overflow-hidden">
-    <div class="flex-1 flex flex-col p-6 space-y-4">
+    <div class="flex-1 flex flex-col p-5 space-y-4">
       <!-- Header Section -->
       <div class="flex justify-between items-end">
         <div>
