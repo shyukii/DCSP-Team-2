@@ -3,7 +3,7 @@
     <div class="relative w-full flex">
 
       <!-- Main Content Area -->
-      <div class="flex-1 p-5 flex flex-col space-y-2 h-full">
+      <div class="flex-1 p-5 flex flex-col space-y-4 h-full">
         <!-- Header and Year Selector (aligned together) -->
         <div class="flex justify-between items-end">
           <!-- Left: Title + Subtitle aligned to bottom -->
