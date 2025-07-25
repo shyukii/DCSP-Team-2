@@ -91,7 +91,6 @@ dmypy.json
 *.iws
 
 # Data files
-*.csv
 *.json
 *.db
 *.sqlite
