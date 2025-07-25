@@ -42,6 +42,8 @@ from constants import (
     GREENS_INPUT,
     CO2_FOOD_WASTE_INPUT,
     COMPOST_HELPER_INPUT,
+    ML_CROP_SELECTION,
+    ML_GREENS_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -67,6 +69,8 @@ from handlers.commands import (
     profile_command,
     handle_calculator_choice,
     handle_greens_input,
+    handle_ml_crop_selection,
+    handle_ml_greens_input,
     compost_helper_start,
     compost_helper_input,
 )
@@ -110,6 +114,7 @@ def main() -> None:
             SOIL_VOLUME:       [MessageHandler(filters.TEXT & ~filters.COMMAND, soil_volume)],
             MAIN_MENU:         [
                 CallbackQueryHandler(handle_main_menu),
+                CommandHandler("input", input_command),  # Add /input command support in main menu
                 MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
             ],
             AMA:               [CommandHandler(["back","menu"], back_to_menu_command),
@@ -117,6 +122,8 @@ def main() -> None:
                                 MessageHandler(filters.VOICE, handle_voice),
                                 MessageHandler(filters.COMMAND, block_commands_during_ama),],
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
+            ML_CROP_SELECTION: [CallbackQueryHandler(handle_ml_crop_selection)],
+            ML_GREENS_INPUT:   [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_ml_greens_input)],
             CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
             COMPOST_HELPER_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, compost_helper_input),
@@ -133,7 +140,8 @@ def main() -> None:
     # Non-conversation command handlers (checked before conv_handler)
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
-    application.add_handler(CommandHandler("input", input_command))
+    # Remove standalone input command - should work through conversation flow only
+    # application.add_handler(CommandHandler("input", input_command))  
     application.add_handler(CommandHandler("scan", scan_command))
     application.add_handler(CommandHandler("care", care_command))
     application.add_handler(CommandHandler("co2", co2_calculator_command))

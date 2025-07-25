@@ -9,7 +9,7 @@ from constants import (
     WELCOME_MESSAGE, REGISTRATION_MESSAGE, GLOSSARY_MESSAGE
 )
 from services.database import db
-from services.clarifai_segmentation import ClarifaiImageSegmentation
+# from services.clarifai_segmentation import ClarifaiImageSegmentation  # Unused import - removed to fix Windows compatibility
 from handlers.menu import show_main_menu
 
 logger = logging.getLogger(__name__)

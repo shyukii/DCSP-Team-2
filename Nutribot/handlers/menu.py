@@ -2,11 +2,10 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from services.database import db
 from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT, AMA
-from services.clarifai_segmentation import ClarifaiImageSegmentation
+# from services.clarifai_segmentation import ClarifaiImageSegmentation  # Lazy loaded when needed
 import os
 
-# Initialize clarifai service
-clarifai = ClarifaiImageSegmentation()
+# Remove global clarifai instantiation - use lazy loading instead
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, username: str = None) -> int:
     context.user_data.pop("state", None)  # Clear AMA flag if returning
@@ -74,6 +73,9 @@ async def handle_photo_from_menu(update: Update, context: ContextTypes.DEFAULT_T
     await file.download_to_drive(path)
 
     try:
+        # Lazy load Clarifai only when needed
+        from services.clarifai_segmentation import ClarifaiImageSegmentation
+        clarifai = ClarifaiImageSegmentation()
         top = clarifai.get_top_concepts(path, top_n=5)
         text = "🔍 **Image Analysis Results**\n\n**Top elements:**\n"
         for i,c in enumerate(top,1):
@@ -106,10 +108,15 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     choice = q.data
     user   = context.user_data.get("username")
 
-    # Handle calculator choices
-    if choice in ["use_calculator", "basic_guidelines", "back_to_menu"]:
+    # Handle calculator choices (both basic and ML)
+    if choice in ["use_calculator", "use_ml_calculator", "basic_guidelines", "back_to_menu", "back_to_input"]:
         from handlers.commands import handle_calculator_choice
         return await handle_calculator_choice(update, context)
+    
+    # Handle ML crop selection
+    if choice.startswith("crop_"):
+        from handlers.commands import handle_ml_crop_selection
+        return await handle_ml_crop_selection(update, context)
     
     # Handle CO2 calculator callbacks
     if choice.startswith("co2_") and choice not in ["co2_tracker", "co2_impact", "co2_add"]:
@@ -131,14 +138,18 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     # compost help submenu
     if choice == "compost_feed":
         keyboard = [
-            [InlineKeyboardButton("🧮 Feed Calculator", callback_data="use_calculator")],
+            [InlineKeyboardButton("🧠 ML Smart Recommendations", callback_data="use_ml_calculator")],
+            [InlineKeyboardButton("🧮 Basic Calculator", callback_data="use_calculator")],
             [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await q.edit_message_text(
             "🥕 **Food & Water Input Guide**\n\n"
-            "Choose how you'd like to get feeding recommendations:",
+            "Choose your recommendation method:\n\n"
+            "🧠 **ML Smart**: Crop-specific recommendations based on historical data\n"
+            "🧮 **Basic**: Simple ratio-based calculations\n\n"
+            "Which would you prefer?",
             parse_mode="Markdown",
             reply_markup=reply_markup
         )

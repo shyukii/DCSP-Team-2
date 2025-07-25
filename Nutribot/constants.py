@@ -19,6 +19,8 @@ class ConversationState(IntEnum):
     GET_CURRENT_VOL = 13
     BATCH_PLAN = 14
     COMPOST_HELPER_INPUT = 15
+    ML_CROP_SELECTION = 16
+    ML_GREENS_INPUT = 17
 
 # Export for backward compatibility
 AMA = ConversationState.AMA
@@ -37,6 +39,8 @@ CHECK_READINESS = ConversationState.CHECK_READINESS
 GET_CURRENT_VOL = ConversationState.GET_CURRENT_VOL
 BATCH_PLAN = ConversationState.BATCH_PLAN
 COMPOST_HELPER_INPUT = ConversationState.COMPOST_HELPER_INPUT
+ML_CROP_SELECTION = ConversationState.ML_CROP_SELECTION
+ML_GREENS_INPUT = ConversationState.ML_GREENS_INPUT
 
 # Bot messages
 WELCOME_MESSAGE = """👋 *Hi there! I'm NutriBot, your friendly composting and plant care assistant *🌱♻️

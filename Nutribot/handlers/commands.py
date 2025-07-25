@@ -1,16 +1,18 @@
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-from services.clarifai_segmentation import ClarifaiImageSegmentation
+# from services.clarifai_segmentation import ClarifaiImageSegmentation  # Lazy loaded when needed
 from services.emissions_calculator import EmissionsCalculator
 from services.feeding_input import FeedCalculator
+from services.ML_input import MLCompostRecommendation, get_available_crop_types
 from services.extraction_timing import CompostProcessCalculator
-from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT
 from services.database import db
 from handlers.menu import show_main_menu
 
-clarifai = ClarifaiImageSegmentation()
+# Remove global clarifai instantiation - use lazy loading instead
 feed_calculator = FeedCalculator()
+ml_recommender = MLCompostRecommendation()
 
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -41,26 +43,58 @@ async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     
     # Create inline keyboard for calculator options
     keyboard = [
-        [InlineKeyboardButton("🧮 Feed Calculator", callback_data="use_calculator")],
+        [InlineKeyboardButton("🧠 ML Smart Recommendations", callback_data="use_ml_calculator")],
+        [InlineKeyboardButton("🧮 Basic Calculator", callback_data="use_calculator")],
         [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
         "🥕 **Food & Water Input Guide**\n\n"
-        "Choose how you'd like to get feeding recommendations:",
+        "Choose your recommendation method:\n\n"
+        "🧠 **ML Smart**: Crop-specific recommendations based on historical data\n"
+        "🧮 **Basic**: Simple ratio-based calculations\n\n"
+        "Which would you prefer?",
         parse_mode="Markdown",
         reply_markup=reply_markup
     )
+    
+    # Return conversation state only if we're in a conversation context
+    return MAIN_MENU
 
 async def handle_calculator_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle the calculator choice callback"""
     query = update.callback_query
     await query.answer()
     
-    if query.data == "use_calculator":
+    if query.data == "use_ml_calculator":
+        # Show crop selection for ML recommendations
+        crops = get_available_crop_types()
+        keyboard = []
+        
+        # Create buttons for each crop type (2 per row)
+        for i in range(0, len(crops), 2):
+            row = []
+            row.append(InlineKeyboardButton(f"🌱 {crops[i]}", callback_data=f"crop_{crops[i].replace(' ', '_').lower()}"))
+            if i + 1 < len(crops):
+                row.append(InlineKeyboardButton(f"🌱 {crops[i+1]}", callback_data=f"crop_{crops[i+1].replace(' ', '_').lower()}"))
+            keyboard.append(row)
+        
+        keyboard.append([InlineKeyboardButton("🔙 Back", callback_data="back_to_input")])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
         await query.edit_message_text(
-            "🧮 **Compost Calculator**\n\n"
+            "🧠 **ML Smart Recommendations**\n\n"
+            "Select your target crop type for personalised recommendations:\n\n"
+            "Each crop has different optimal C:N ratios and moisture requirements based on our sensor data analysis.",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        return ML_CROP_SELECTION
+        
+    elif query.data == "use_calculator":
+        await query.edit_message_text(
+            "🧮 **Basic Compost Calculator**\n\n"
             "Please enter the weight of your greens (kitchen scraps, grass clippings, etc.) in kilograms.\n\n"
             "Examples:\n"
             "• 0.5 (for 500g)\n"
@@ -74,6 +108,10 @@ async def handle_calculator_choice(update: Update, context: ContextTypes.DEFAULT
     elif query.data == "back_to_menu":
         username = context.user_data.get("username")
         return await show_main_menu(update, context, username)
+    
+    elif query.data == "back_to_input":
+        # Return to input method selection
+        return await input_command(update, context)
 
 async def handle_greens_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle user input for greens weight"""
@@ -125,6 +163,139 @@ async def handle_greens_input(update: Update, context: ContextTypes.DEFAULT_TYPE
         )
         return GREENS_INPUT
 
+async def handle_ml_crop_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle crop selection for ML recommendations"""
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data.startswith("crop_"):
+        # Extract crop type from callback data
+        crop_key = query.data.replace("crop_", "").replace("_", " ").title()
+        
+        # Convert back to proper crop names
+        crop_mapping = {
+            "Leafy Greens": "Leafy Greens",
+            "Fruit Veggies": "Fruit Veggies", 
+            "Root Vegetables": "Root Vegetables",
+            "Herbs": "Herbs",
+            "Flowering Plants": "Flowering Plants",
+            "Woody Plants": "Woody Plants"
+        }
+        
+        selected_crop = crop_mapping.get(crop_key)
+        if not selected_crop:
+            await query.edit_message_text("❌ Invalid crop selection. Please try again.")
+            return ML_CROP_SELECTION
+        
+        # Store selected crop in context
+        context.user_data["selected_crop"] = selected_crop
+        
+        await query.edit_message_text(
+            f"🌱 **ML Recommendations for {selected_crop}**\n\n"
+            f"Perfect choice! Now please enter the weight of your greens in kilograms.\n\n"
+            f"This will provide recommendations specifically optimised for {selected_crop.lower()} "
+            f"based on historical sensor data.\n\n"
+            f"Examples:\n"
+            f"• 0.03 (for 30g)\n"
+            f"• 0.5 (for 500g)\n"
+            f"• 1.2 (for 1.2kg)\n\n"
+            f"💡 *Tip: Even small amounts work - the ML model will scale appropriately*",
+            parse_mode="Markdown"
+        )
+        return ML_GREENS_INPUT
+    
+    elif query.data == "back_to_input":
+        return await input_command(update, context)
+
+async def handle_ml_greens_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle greens input for ML recommendations"""
+    try:
+        greens_weight_kg = float(update.message.text.strip())
+        
+        if greens_weight_kg <= 0:
+            await update.message.reply_text(
+                "❌ Please enter a positive number for the weight of greens.\n"
+                "Try again with a number like 0.5 or 1.2"
+            )
+            return ML_GREENS_INPUT
+            
+        if greens_weight_kg > 50:  # Sanity check
+            await update.message.reply_text(
+                "❌ That seems like a very large amount! Please enter a reasonable weight (up to 50kg).\n"
+                "Try again with a smaller number."
+            )
+            return ML_GREENS_INPUT
+        
+        # Get selected crop from context
+        selected_crop = context.user_data.get("selected_crop")
+        if not selected_crop:
+            await update.message.reply_text("❌ Crop selection lost. Please start over.")
+            return await input_command(update, context)
+        
+        # Convert kg to grams for ML model
+        greens_weight_grams = greens_weight_kg * 1000
+        
+        # Get ML recommendation
+        try:
+            ml_recommendation = ml_recommender.get_formatted_recommendation(
+                greens_weight_grams, selected_crop
+            )
+            
+            # Create keyboard for actions
+            keyboard = [
+                [InlineKeyboardButton("🧠 Try Different Crop", callback_data="use_ml_calculator")],
+                [InlineKeyboardButton("🧮 Try Basic Calculator", callback_data="use_calculator")],
+                [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(
+                ml_recommendation,
+                parse_mode="Markdown",
+                reply_markup=reply_markup
+            )
+            
+            # Clear the selected crop from context
+            context.user_data.pop("selected_crop", None)
+            
+            # Stay in main menu conversation state
+            return MAIN_MENU
+            
+        except Exception as ml_error:
+            # Fallback to basic calculator if ML fails
+            await update.message.reply_text(
+                f"⚠️ ML recommendation temporarily unavailable. Using basic calculator instead.\n\n"
+                f"Error: {str(ml_error)}"
+            )
+            
+            basic_recommendation = feed_calculator.get_feeding_recommendations(greens_weight_kg)
+            
+            keyboard = [
+                [InlineKeyboardButton("🔄 Try Again", callback_data="use_ml_calculator")],
+                [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(
+                basic_recommendation,
+                parse_mode="Markdown", 
+                reply_markup=reply_markup
+            )
+            
+            return MAIN_MENU
+        
+    except ValueError:
+        await update.message.reply_text(
+            "❌ Please enter a valid number (e.g., 0.5, 1.2, 2.0).\n"
+            f"How many kilograms of greens do you have for {context.user_data.get('selected_crop', 'your crop')}?"
+        )
+        return ML_GREENS_INPUT
+    except Exception as e:
+        await update.message.reply_text(
+            "❌ Sorry, there was an error processing your input. Please try again."
+        )
+        return ML_GREENS_INPUT
+
 async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = context.user_data.get("username")
     if not user:
@@ -137,6 +308,7 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         parse_mode="Markdown"
     )
     context.user_data["expecting_image"] = True
+    context.user_data["scan_mode"] = "direct"  # Flag to indicate direct scan vs menu scan
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = context.user_data.get("username")
@@ -144,12 +316,45 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         await update.message.reply_text("Please /start to login first.")
         return
     
-    # Check if we're in menu mode and expecting an image
+    # Check if we're expecting an image
     if context.user_data.get("expecting_image"):
-        from handlers.menu import handle_photo_from_menu
-        return await handle_photo_from_menu(update, context)
+        # Handle both menu and direct scan modes with lazy loading
+        context.user_data["expecting_image"] = False
+        processing = await update.message.reply_text("🔄 Analysing your image...")
+        
+        # Get photo and download it
+        photo = update.message.photo[-1]
+        file = await context.bot.get_file(photo.file_id)
+        path = f"temp_{update.effective_user.id}.jpg"
+        await file.download_to_drive(path)
+
+        try:
+            # Lazy load Clarifai only when needed
+            from services.clarifai_segmentation import ClarifaiImageSegmentation
+            clarifai = ClarifaiImageSegmentation()
+            top = clarifai.get_top_concepts(path, top_n=5)
+            text = "🔍 **Image Analysis Results**\n\n**Top elements:**\n"
+            for i, c in enumerate(top, 1):
+                text += f"{i}. {c['name'].title()}: {round(c['value']*100, 1)}%\n"
+            text += "\n💡 Ask me questions about what you see!"
+        except Exception as e:
+            text = "⚠️ Could not analyse image. Try a clearer photo or check your connection."
+        
+        try:
+            import os
+            os.remove(path)  # Clean up temp file
+        except:
+            pass
+        
+        await processing.edit_text(text, parse_mode="Markdown")
+        
+        # Clean up scan mode flag
+        context.user_data.pop("scan_mode", None)
+        
+        # Return to main menu if this was from menu, otherwise stay in current state
+        return MAIN_MENU
     
-    # Otherwise, use the regular /scan command flow
+    # Otherwise, prompt user to use /scan first
     await update.message.reply_text("Use /scan first to analyze images.")
     return
 
