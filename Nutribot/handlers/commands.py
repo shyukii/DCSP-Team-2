@@ -9,6 +9,7 @@ from services.extraction_timing import CompostProcessCalculator
 from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT
 from services.database import db
 from handlers.menu import show_main_menu
+from utils.message_utils import get_cached_user_data
 
 # Remove global clarifai instantiation - use lazy loading instead
 feed_calculator = FeedCalculator()
@@ -17,7 +18,7 @@ ml_recommender = MLCompostRecommendation()
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
-    user_data = db.get_user_by_telegram_id(telegram_id)
+    user_data = get_cached_user_data(telegram_id, context)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -35,7 +36,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     telegram_id = update.effective_user.id
-    user_data = db.get_user_by_telegram_id(telegram_id)
+    user_data = get_cached_user_data(telegram_id, context)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -360,7 +361,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
-    user_data = db.get_user_by_telegram_id(telegram_id)
+    user_data = get_cached_user_data(telegram_id, context)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -388,7 +389,7 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     telegram_id = update.effective_user.id
-    user_data = db.get_user_by_telegram_id(telegram_id)
+    user_data = get_cached_user_data(telegram_id, context)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
@@ -410,7 +411,7 @@ async def co2_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
     telegram_id = update.effective_user.id
-    user_data = db.get_user_by_telegram_id(telegram_id)
+    user_data = get_cached_user_data(telegram_id, context)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")

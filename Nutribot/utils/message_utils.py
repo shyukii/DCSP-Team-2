@@ -2,6 +2,7 @@
 Utility functions for common message patterns and keyboard creation
 """
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
 from typing import List, Dict, Optional
 from config import Config
 
@@ -92,3 +93,32 @@ def validate_positive_number(text: str, max_value: Optional[float] = None) -> tu
         return True, value
     except ValueError:
         return False, 0.0
+
+def get_cached_user_data(telegram_id: int, context: ContextTypes.DEFAULT_TYPE) -> Optional[Dict]:
+    """
+    Get user data from cache or database. 
+    Caches result in context.user_data to avoid repeated DB calls.
+    
+    Args:
+        telegram_id: Telegram user ID
+        context: Bot context containing user_data cache
+        
+    Returns:
+        User data dict or None if user not found
+    """
+    # Check cache first
+    cached_data = context.user_data.get("profile_data")
+    if cached_data:
+        return cached_data
+    
+    # Fetch from database and cache
+    from services.database import db
+    user_data = db.get_user_by_telegram_id(telegram_id)
+    if user_data:
+        context.user_data["profile_data"] = user_data
+    
+    return user_data
+
+def clear_user_cache(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Clear cached user data. Call after profile updates."""
+    context.user_data.pop("profile_data", None)

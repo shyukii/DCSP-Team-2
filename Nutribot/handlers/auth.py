@@ -11,6 +11,7 @@ from constants import (
 from services.database import db
 # from services.clarifai_segmentation import ClarifaiImageSegmentation  # Unused import - removed to fix Windows compatibility
 from handlers.menu import show_main_menu
+from utils.message_utils import clear_user_cache
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +185,9 @@ async def plant_species(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     
     # Update in database
     db.update_user_profile(telegram_id, plant_species=species)
+    
+    # Clear cache since we updated the profile
+    clear_user_cache(context)
 
     await q.edit_message_text(f"You selected {species}. Enter your compost tank volume (litres):")
     return TANK_VOLUME
@@ -201,6 +205,9 @@ async def tank_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     
     # Update in database
     db.update_user_profile(telegram_id, tank_volume=vol)
+    
+    # Clear cache since we updated the profile
+    clear_user_cache(context)
 
     await update.message.reply_text("Now enter your soil volume (litres):")
     return SOIL_VOLUME
@@ -219,6 +226,9 @@ async def soil_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     
     # Update in database
     db.update_user_profile(telegram_id, soil_volume=vol)
+    
+    # Clear cache since we updated the profile
+    clear_user_cache(context)
 
     return await show_main_menu(update, context, username)
 
