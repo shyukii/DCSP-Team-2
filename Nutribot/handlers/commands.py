@@ -6,7 +6,7 @@ from services.emissions_calculator import EmissionsCalculator
 from services.feeding_input import FeedCalculator
 from services.ML_input import MLCompostRecommendation, get_available_crop_types
 from services.extraction_timing import CompostProcessCalculator
-from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION
 from services.database import db
 from handlers.menu import show_main_menu
 from utils.message_utils import get_cached_user_data
@@ -297,19 +297,78 @@ async def handle_ml_greens_input(update: Update, context: ContextTypes.DEFAULT_T
         )
         return ML_GREENS_INPUT
 
-async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = context.user_data.get("username")
     if not user:
         await update.message.reply_text("Please /start to login first.")
         return
+    
+    # Create inline keyboard for scan type selection
+    keyboard = [
+        [InlineKeyboardButton("🪣 Analyze Compost Tank", callback_data="scan_compost")],
+        [InlineKeyboardButton("🌱 Analyze Plant", callback_data="scan_plant")],
+        [InlineKeyboardButton("🔙 Back", callback_data="scan_back")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
     await update.message.reply_text(
         "📸 **Image Analysis**\n\n"
-        "Send a photo of your compost or plants!\n"
-        "Ensure good lighting and focus.",
-        parse_mode="Markdown"
+        "What would you like to analyze?\n\n"
+        "🪣 **Compost Tank**: Analyze compost composition and quality\n"
+        "🌱 **Plant**: Analyze plant health and identify issues\n\n"
+        "Choose your analysis type:",
+        parse_mode="Markdown",
+        reply_markup=reply_markup
     )
-    context.user_data["expecting_image"] = True
     context.user_data["scan_mode"] = "direct"  # Flag to indicate direct scan vs menu scan
+    return SCAN_TYPE_SELECTION
+
+async def handle_scan_type_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle the scan type selection callback"""
+    query = update.callback_query
+    await query.answer()
+    
+    if query.data == "scan_compost":
+        # Set scan type to compost
+        context.user_data["scan_type"] = "compost"
+        await query.edit_message_text(
+            "🪣 **Compost Tank Analysis**\n\n"
+            "Send a photo of your compost tank!\n\n"
+            "💡 **Tips for best results:**\n"
+            "• Good lighting\n"
+            "• Clear focus on compost contents\n"
+            "• Avoid shadows\n\n"
+            "📸 Ready to analyze your compost composition and quality.",
+            parse_mode="Markdown"
+        )
+        context.user_data["expecting_image"] = True
+        return MAIN_MENU
+        
+    elif query.data == "scan_plant":
+        # Set scan type to plant
+        context.user_data["scan_type"] = "plant"
+        await query.edit_message_text(
+            "🌱 **Plant Analysis**\n\n"
+            "Send a photo of your plant!\n\n"
+            "💡 **Tips for best results:**\n"
+            "• Natural lighting preferred\n"
+            "• Include leaves and stems\n"
+            "• Close-up for detail\n\n"
+            "📸 Ready to analyze plant health and identify issues.",
+            parse_mode="Markdown"
+        )
+        context.user_data["expecting_image"] = True
+        return MAIN_MENU
+        
+    elif query.data == "scan_back":
+        # Return to previous state based on scan_mode
+        if context.user_data.get("scan_mode") == "direct":
+            await query.edit_message_text("Analysis cancelled.")
+            return
+        else:
+            # Return to main menu
+            username = context.user_data.get("username")
+            return await show_main_menu(update, context, username)
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = context.user_data.get("username")
@@ -330,14 +389,22 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         await file.download_to_drive(path)
 
         try:
+            # Get scan type from context (default to compost for backward compatibility)
+            scan_type = context.user_data.get("scan_type", "compost")
+            
             # Lazy load Clarifai only when needed
             from services.clarifai_segmentation import ClarifaiImageSegmentation
-            clarifai = ClarifaiImageSegmentation()
+            clarifai = ClarifaiImageSegmentation(model_type=scan_type)
             top = clarifai.get_top_concepts(path, top_n=5)
-            text = "🔍 **Image Analysis Results**\n\n**Top elements:**\n"
+            
+            # Create analysis results text with scan type indicator
+            scan_emoji = "🪣" if scan_type == "compost" else "🌱"
+            scan_name = "Compost Tank" if scan_type == "compost" else "Plant"
+            
+            text = f"{scan_emoji} **{scan_name} Analysis Results**\n\n**Top elements detected:**\n"
             for i, c in enumerate(top, 1):
                 text += f"{i}. {c['name'].title()}: {round(c['value']*100, 1)}%\n"
-            text += "\n💡 Ask me questions about what you see!"
+            text += f"\n💡 Ask me questions about your {scan_name.lower()}!"
         except Exception as e:
             text = "⚠️ Could not analyse image. Try a clearer photo or check your connection."
         
@@ -349,8 +416,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         
         await processing.edit_text(text, parse_mode="Markdown")
         
-        # Clean up scan mode flag
+        # Clean up scan flags
         context.user_data.pop("scan_mode", None)
+        context.user_data.pop("scan_type", None)
         
         # Return to main menu if this was from menu, otherwise stay in current state
         return MAIN_MENU

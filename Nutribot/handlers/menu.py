@@ -2,7 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from services.database import db
 from utils.message_utils import get_cached_user_data, clear_user_cache
-from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT, AMA
+from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT, AMA, SCAN_TYPE_SELECTION
 # from services.clarifai_segmentation import ClarifaiImageSegmentation  # Lazy loaded when needed
 import os
 
@@ -121,6 +121,11 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice.startswith("co2_") and choice not in ["co2_tracker", "co2_impact", "co2_add"]:
         from services.emissions_calculator import handle_co2_callback
         return await handle_co2_callback(update, context)
+    
+    # Handle scan type selection callbacks
+    if choice in ["scan_compost", "scan_plant", "scan_back"]:
+        from handlers.commands import handle_scan_type_choice
+        return await handle_scan_type_choice(update, context)
 
     if choice == "start_llama":
         await q.edit_message_text(
@@ -239,19 +244,25 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return MAIN_MENU
 
     if choice == "image_scan":
-        # Create back button
-        kb = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+        # Create inline keyboard for scan type selection
+        keyboard = [
+            [InlineKeyboardButton("🪣 Analyze Compost Tank", callback_data="scan_compost")],
+            [InlineKeyboardButton("🌱 Analyze Plant", callback_data="scan_plant")],
+            [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Send instruction message and set expecting_image flag
         await q.edit_message_text(
             "📸 **Image Analysis**\n\n"
-            "Send a photo of your compost or plants!\n"
-            "Ensure good lighting and focus.",
+            "What would you like to analyze?\n\n"
+            "🪣 **Compost Tank**: Analyze compost composition and quality\n"
+            "🌱 **Plant**: Analyze plant health and identify issues\n\n"
+            "Choose your analysis type:",
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(kb)
+            reply_markup=reply_markup
         )
-        context.user_data["expecting_image"] = True
-        return MAIN_MENU
+        context.user_data["scan_mode"] = "menu"  # Flag to indicate menu scan vs direct scan
+        return SCAN_TYPE_SELECTION
 
     # profile updates
 

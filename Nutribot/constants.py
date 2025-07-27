@@ -20,6 +20,7 @@ class ConversationState(IntEnum):
     COMPOST_HELPER_INPUT = 14
     ML_CROP_SELECTION = 15
     ML_GREENS_INPUT = 16
+    SCAN_TYPE_SELECTION = 17
 
 # Export for backward compatibility
 AMA = ConversationState.AMA
@@ -39,6 +40,7 @@ BATCH_PLAN = ConversationState.BATCH_PLAN
 COMPOST_HELPER_INPUT = ConversationState.COMPOST_HELPER_INPUT
 ML_CROP_SELECTION = ConversationState.ML_CROP_SELECTION
 ML_GREENS_INPUT = ConversationState.ML_GREENS_INPUT
+SCAN_TYPE_SELECTION = ConversationState.SCAN_TYPE_SELECTION
 
 # Bot messages
 WELCOME_MESSAGE = """👋 *Hi there! I'm NutriBot, your friendly composting and plant care assistant *🌱♻️

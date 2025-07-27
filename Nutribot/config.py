@@ -23,7 +23,8 @@ class Config:
     REPLICATE_SPEECH_MODEL: str = "cjwbw/seamless_communication:668a4fec05a887143e5fe8d45df25ec4c794dd43169b9a11562309b2d45873b0"
     
     # Clarifai Configuration
-    CLARIFAI_MODEL_URL: str = "https://clarifai.com/shyueqi/Nuritbot/models/TANKER-SEGMENTER"
+    CLARIFAI_COMPOST_MODEL_URL: str = "https://clarifai.com/shyueqi/Nuritbot/models/TANKER-SEGMENTER"
+    CLARIFAI_PLANT_MODEL_URL: str = "https://clarifai.com/s10257235/NutriBot-Image-Classification/models/Image-Classification-Model"
     
     # File Paths
     LOGIN_FILE: str = os.getenv("LOGIN_FILE", "loginIDs.json")
@@ -114,3 +115,5 @@ LOGIN_FILE = Config.LOGIN_FILE
 OPENAI_API_KEY = Config.OPENAI_API_KEY
 REPLICATE_API_TOKEN = Config.REPLICATE_API_TOKEN
 FFMPEG_PATH = Config.FFMPEG_PATH
+# Legacy - use specific model URLs instead
+CLARIFAI_MODEL_URL = Config.CLARIFAI_COMPOST_MODEL_URL

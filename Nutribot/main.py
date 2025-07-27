@@ -43,6 +43,7 @@ from constants import (
     COMPOST_HELPER_INPUT,
     ML_CROP_SELECTION,
     ML_GREENS_INPUT,
+    SCAN_TYPE_SELECTION,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -71,6 +72,7 @@ from handlers.commands import (
     handle_ml_greens_input,
     compost_helper_start,
     compost_helper_input,
+    handle_scan_type_choice,
 )
 from services.emissions_calculator import (
     co2_calculator_command,
@@ -126,6 +128,7 @@ def main() -> None:
                 MessageHandler(filters.TEXT & ~filters.COMMAND, compost_helper_input),
                 CallbackQueryHandler(handle_main_menu, pattern="^back_to_menu$")
             ],
+            SCAN_TYPE_SELECTION: [CallbackQueryHandler(handle_scan_type_choice)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         name="nutribot_conversation",
