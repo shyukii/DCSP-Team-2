@@ -37,7 +37,7 @@
                     <h2 class="card-title text-xs font-semibold">Income</h2>
                     <p class="text-sm font-medium">$163.2K</p>
                   </div>
-                  <div class="h-10 mt-3">
+                  <div class="flex-1 mt-3">
                     <Line :data="miniLineData1" :options="miniLineOptions" />
                   </div>
                 </div>
@@ -49,7 +49,7 @@
                     <h2 class="card-title text-xs font-semibold">Expenses</h2>
                     <p class="text-sm font-medium">$89.3K</p>
                   </div>
-                  <div class="h-10 mt-3">
+                  <div class="flex-1 mt-3">
                     <Line :data="miniLineData2" :options="miniLineOptions" />
                   </div>
                 </div>
@@ -61,7 +61,7 @@
                     <h2 class="card-title text-xs font-semibold">Savings</h2>
                     <p class="text-sm font-medium">$90.2K</p>
                   </div>
-                  <div class="h-10 mt-3">
+                  <div class="flex-1 mt-3">
                     <Line :data="miniLineData3" :options="miniLineOptions" />
                   </div>
                 </div>
@@ -73,7 +73,7 @@
                     <h2 class="card-title text-xs font-semibold">Saving %</h2>
                     <p class="text-sm font-medium">55%</p>
                   </div>
-                  <div class="h-10 mt-3">
+                  <div class="flex-1 mt-3">
                     <Line :data="miniLineData4" :options="miniLineOptions" />
                   </div>
                 </div>
@@ -408,7 +408,7 @@ const miniLineOptions: ChartOptions<'line'> = {
     y: {
       display: false,
       min: 0,
-      max: 50 
+      max: 100   
     }
   }
 }
