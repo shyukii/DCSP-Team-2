@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Required for shadcn-vue: CSS Variables */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 47.4% 11.2%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 47.4% 11.2%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --radius: 0.5rem;
+}
+
 /* Optional: custom utility color classes */
 @layer utilities {
   .bg-deepgreen { background-color: #101B2D; }
@@ -9,17 +33,14 @@
   .bg-khaki { background-color: #B1AB86; }
   .text-cream { color: #fff; }
   .text-sage { color: #B2D2FB; }
-}/* (Optional) custom layer overrides */
+  .shadow-b {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+}
 
 /* Optional: custom component overrides */
 @layer components {
   .card {
-    @apply rounded-md; /* or use rounded-sm / rounded-none */
-  }
-}
-
-@layer utilities {
-  .shadow-b {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    @apply rounded-md;
   }
 }

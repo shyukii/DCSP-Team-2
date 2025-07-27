@@ -197,7 +197,7 @@ const doughnutData1 = {
   labels: ['Greens', 'Browns', 'Others'],
   datasets: [{
     data: [40, 45, 15],
-    backgroundColor: ['#ABC1F0', '#4A70A1', '#101B2D'],
+    backgroundColor: ['#ABC1F0', '#6797DF', '#4971A5'],
     borderWidth: 0
   }]
 }
@@ -206,7 +206,7 @@ const doughnutData2 = {
   labels: ['Nitrogen', 'Phosphorus', 'Potassium'],
   datasets: [{
     data: [30, 45, 25],
-    backgroundColor: ['#ABC1F0', '#4A70A1', '#101B2D'],
+    backgroundColor: ['#ABC1F0', '#6797DF', '#4971A5'],
     borderWidth: 0
   }]
 }
