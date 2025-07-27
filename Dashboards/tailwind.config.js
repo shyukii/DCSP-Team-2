@@ -13,7 +13,7 @@ module.exports = {
       forestdash: {
         "primary": "#2E6F4E",
         "secondary": "#5DAA73",
-        "accent": "#A6E3B8",
+        "accent": "#B2D2FB",
         "neutral": "#244732",
         "base-100": "#2F5C42",
         "base-200": "#2A543B",
@@ -21,7 +21,8 @@ module.exports = {
         "info": "#7BC6C8",
         "success": "#68D391",
         "warning": "#F6C945",
-        "error": "#F87171"
+        "error": "#F87171",
+        "hehe": "#FFF"
       }
     },
     "forest" // fallback

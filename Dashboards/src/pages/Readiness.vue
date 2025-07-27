@@ -9,19 +9,19 @@
           <!-- Left: Title + Subtitle aligned to bottom -->
           <div class="flex flex-col justify-end leading-tight">
             <h1 class="text-3xl font-bold">
-              <span class="opacity-70">Compost</span> Readiness Overview
+              <span class="text-sage">Compost</span> Readiness Overview
             </h1>
-            <p class="text-sm opacity-70 mt-1">
+            <p class="text-sm text-sage mt-1">
               Monitor key indicators like soil condition, temperature and moisture levels to assess compost maturity in real time.
             </p>
           </div>
 
           <!-- Right: Slicer Buttons -->
           <div class="flex space-x-2">
-            <button class="btn bg-sage text-white px-10 py-2 text-sm rounded-md">Slicer</button>
-            <button class="btn bg-sage text-white px-10 py-2 text-sm rounded-md">Slicer</button>
-            <button class="btn bg-sage text-white px-10 py-2 text-sm rounded-md">Slicer</button>
-            <button class="btn bg-sage text-white px-10 py-2 text-sm rounded-md">Slicer</button>
+            <button class="btn bg-sage hover:bg-[#B2D2FB]/25 border-transparent text-white px-10 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
+            <button class="btn bg-sage hover:bg-[#B2D2FB]/25 border-transparent text-white px-10 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
+            <button class="btn bg-sage hover:bg-[#B2D2FB]/25 border-transparent text-white px-10 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
+            <button class="btn bg-sage hover:bg-[#B2D2FB]/25 border-transparent text-white px-10 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
           </div>
         </div>
 
@@ -32,37 +32,60 @@
             <!-- 4 KPI Cards in 2x2 grid (Left, 40% width) -->
             <div class="grid grid-cols-2 grid-rows-2 gap-2.5 w-[45%]">
               <div class="card bg-sage shadow-b">
-                <div class="card-body p-3 h-full">
-                  <h2 class="card-title text-xs font-semibold">Title</h2>
-                  <p class="text-sm font-medium">Value</p>
+                <div class="card-body p-3 h-full flex flex-col justify-between">
+                  <div>
+                    <h2 class="card-title text-xs font-semibold">Income</h2>
+                    <p class="text-sm font-medium">$163.2K</p>
+                  </div>
+                  <div class="h-10 mt-3">
+                    <Line :data="miniLineData1" :options="miniLineOptions" />
+                  </div>
                 </div>
               </div>
+
               <div class="card bg-sage shadow-b">
-                <div class="card-body p-3 h-full">
-                  <h2 class="card-title text-xs font-semibold">Title</h2>
-                  <p class="text-sm font-medium">Value</p>
+                <div class="card-body p-3 h-full flex flex-col justify-between">
+                  <div>
+                    <h2 class="card-title text-xs font-semibold">Expenses</h2>
+                    <p class="text-sm font-medium">$89.3K</p>
+                  </div>
+                  <div class="h-10 mt-3">
+                    <Line :data="miniLineData2" :options="miniLineOptions" />
+                  </div>
                 </div>
               </div>
+
               <div class="card bg-sage shadow-b">
-                <div class="card-body p-3 h-full">
-                  <h2 class="card-title text-xs font-semibold">Title</h2>
-                  <p class="text-sm font-medium">Value</p>
+                <div class="card-body p-3 h-full flex flex-col justify-between">
+                  <div>
+                    <h2 class="card-title text-xs font-semibold">Savings</h2>
+                    <p class="text-sm font-medium">$90.2K</p>
+                  </div>
+                  <div class="h-10 mt-3">
+                    <Line :data="miniLineData3" :options="miniLineOptions" />
+                  </div>
                 </div>
               </div>
+
               <div class="card bg-sage shadow-b">
-                <div class="card-body p-3 h-full">
-                  <h2 class="card-title text-xs font-semibold">Title</h2>
-                  <p class="text-sm font-medium">Value</p>
+                <div class="card-body p-3 h-full flex flex-col justify-between">
+                  <div>
+                    <h2 class="card-title text-xs font-semibold">Saving %</h2>
+                    <p class="text-sm font-medium">55%</p>
+                  </div>
+                  <div class="h-10 mt-3">
+                    <Line :data="miniLineData4" :options="miniLineOptions" />
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Right: Line Chart (60% width) -->
             <div class="card bg-sage shadow-b flex-1">
-              <div class="card-body h-full">
-                <h2 class="card-title">Title</h2>
-                <div class="h-full flex items-center justify-center text-opacity-50">
-                  [ Line Chart Placeholder ]
+              <div class="card-body h-full p-3 flex flex-col">
+                <h2 class="card-title text-xs font-semibold mb-2">Readiness Trend</h2>
+                <div class="flex-1 h-full">
+                  <VueApexCharts type="area" height="100%" :options="lineChartOptions" :series="lineChartSeries" />
                 </div>
               </div>
             </div>
@@ -70,22 +93,29 @@
 
           <!-- Bottom Section: 2 Charts (Expenses 65%, Savings 35%) - 50% height -->
           <div class="flex gap-4 h-1/2">
-            <!-- Left: Expenses Pie Chart -->
+            <!-- Bottom Section: 2 Doughnut Charts Side by Side in 1 Card -->
             <div class="card bg-sage shadow-b w-[65%]">
-              <div class="card-body h-full">
-                <h2 class="card-title">Title</h2>
-                <div class="h-full flex items-center justify-center text-opacity-50">
-                  [ Pie Chart Placeholder ]
+              <div class="card-body h-full p-3 flex flex-col">
+                <h2 class="card-title text-xs font-semibold mb-2">Feed Composition | Nutrient Balance</h2>
+                <div class="flex justify-between items-center flex-1 gap-4">
+                  <!-- Doughnut 1 -->
+                  <div class="w-1/2 h-full">
+                    <Doughnut :data="doughnutData1" :options="doughnutOptions" />
+                  </div>
+                  <!-- Doughnut 2 -->
+                  <div class="w-1/2 h-full">
+                    <Doughnut :data="doughnutData2" :options="doughnutOptions" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Right: Savings Pie Chart -->
+            <!-- Right: Savings Bar Chart -->
             <div class="card bg-sage shadow-b w-[35%]">
-              <div class="card-body h-full">
-                <h2 class="card-title">Title</h2>
-                <div class="h-full flex items-center justify-center text-opacity-50">
-                  [ Bar Chart Placeholder ]
+              <div class="card-body h-full p-3 flex flex-col">
+                <h2 class="card-title text-xs font-semibold mb-2">Readiness vs Threshold</h2>
+                <div class="flex-1">
+                  <VChart class="w-full h-full" :option="echartsOptions" autoresize />
                 </div>
               </div>
             </div>
@@ -98,5 +128,288 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+
+// Chart.js for line & doughnut
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement
+} from 'chart.js'
+import { Line, Doughnut } from 'vue-chartjs'
+import type { ChartOptions } from 'chart.js'
+import VueApexCharts from 'vue3-apexcharts'
+
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  ArcElement
+)
+
+// ECharts for overlapping bar chart
+import { use } from 'echarts/core'
+import { BarChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import VChart from 'vue-echarts'
+
+use([
+  BarChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  CanvasRenderer
+])
+
 const isCollapsed = ref(true)
+
+
+// =======================
+// 📊 Chart Data
+// =======================
+
+// Line Chart: Readiness % over time
+const lineChartSeries = [
+  {
+    name: 'Readiness %',
+    data: [55, 30, 68, 86]
+  }
+]
+
+// Doughnut Chart: Feed Composition
+const doughnutData1 = {
+  labels: ['Greens', 'Browns', 'Others'],
+  datasets: [{
+    data: [40, 45, 15],
+    backgroundColor: ['#ABC1F0', '#4A70A1', '#101B2D'],
+    borderWidth: 0
+  }]
+}
+
+const doughnutData2 = {
+  labels: ['Nitrogen', 'Phosphorus', 'Potassium'],
+  datasets: [{
+    data: [30, 45, 25],
+    backgroundColor: ['#ABC1F0', '#4A70A1', '#101B2D'],
+    borderWidth: 0
+  }]
+}
+
+const miniLineData1 = {
+  labels: ['1', '2', '3', '4'],
+  datasets: [{
+    data: [10, 10, 70, 70],
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 2,
+    fill: true,
+    tension: 0,                 // Disable smoothness
+    stepped: true              // ✅ Make it a step chart
+  }]
+}
+const miniLineData2 = {
+  labels: ['1', '2', '3', '4'],
+  datasets: [{
+    data: [90, 85, 65, 60],
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fill: true,
+    tension: 0,                 // Disable smoothness
+    stepped: true
+  }]
+}
+const miniLineData3 = {
+  labels: ['1', '2', '3', '4'],
+  datasets: [{
+    data: [40, 55, 75, 90],
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fill: true,
+    tension: 0,                 // Disable smoothness
+    stepped: true
+  }]
+}
+const miniLineData4 = {
+  labels: ['1', '2', '3', '4'],
+  datasets: [{
+    data: [20, 30, 45, 55],
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    fill: true,
+    tension: 0,                 // Disable smoothness
+    stepped: true
+  }]
+}
+
+// ECharts Bar Chart (Readiness vs Threshold with overlap)
+const echartsOptions = {
+  backgroundColor: 'transparent',
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' }
+  },
+  legend: {
+    textStyle: { color: '#ffffff' },
+    top: 0
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true
+  },
+  xAxis: {
+    type: 'category',
+    data: ['Tank 1', 'Tank 2'],
+    axisLabel: { color: '#ffffff' },
+    axisLine: { lineStyle: { color: '#212C42' } }
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: { color: '#ffffff' },
+    splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+    axisLine: { lineStyle: { color: '#ffffff' } }
+  },
+  series: [
+    {
+      name: 'Threshold',
+      type: 'bar',
+      data: [80, 85],
+      barGap: '-75%', // ✅ true overlap
+      barWidth: 100,
+      itemStyle: { color: '#ABC1F0' }
+    },
+    {
+      name: 'Readiness',
+      type: 'bar',
+      data: [60, 70],
+      barWidth: 100,
+      itemStyle: { color: '#4A70A1' }
+    }
+  ]
+}
+
+
+// =======================
+// ⚙️ Chart.js Options
+// =======================
+
+const lineChartOptions = {
+  chart: {
+    type: 'area',
+    toolbar: { show: false },
+    zoom: { enabled: false },
+    foreColor: '#ffffff',
+    offsetX: 10,
+    offsetY: 10,
+    parentHeightOffset: 0 // ✅ prevents clipping
+  },
+  stroke: {
+    curve: 'smooth',
+    width: 3,
+    colors: ['#ffffff']
+  },
+  fill: {
+    type: 'solid',
+    opacity: 0.15,
+    colors: ['#B0C2F2']
+  },
+  xaxis: {
+    categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    tickPlacement: 'on', // aligns point with label center
+    labels: {
+      style: { colors: '#ffffff' },
+      offsetX: 0 // shift labels slightly right to prevent clipping
+    },
+    axisBorder: { show: false },
+    axisTicks: { show: false }
+  },
+  yaxis: {
+    min: 0,
+    show: false
+  },
+  grid: {
+    padding: {
+      left: 20,   // Add space on the left
+      right: 15,  // Add space on the right
+      top: 0,
+      bottom: 0
+    },
+    show: false
+  },
+  dataLabels: {
+    enabled: false
+  },
+  markers: {
+    size: 0
+  },
+  tooltip: {
+    enabled: true,
+    shared: false,
+    theme: 'dark',   // ✅ match your dark theme
+    style: {
+      fontSize: '12px'
+    },
+    marker: {
+      show: false
+    }
+  }
+}
+
+const doughnutOptions: ChartOptions<'doughnut'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '80%',
+  layout: {
+    padding: {
+      top: 0,
+      bottom: 20,
+      left: 0,
+      right: 0
+    }
+  },
+  plugins: {
+    legend: {
+      position: 'right',
+      labels: { color: '#ffffff' }
+    }
+  }
+}
+
+const miniLineOptions: ChartOptions<'line'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  elements: {
+    line: { tension: 0 },
+    point: { radius: 0 }
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: { enabled: false }
+  },
+  scales: {
+    x: { display: false },
+    y: {
+      display: false,
+      min: 0,
+      max: 50 
+    }
+  }
+}
 </script>

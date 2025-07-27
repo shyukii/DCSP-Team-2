@@ -9,19 +9,19 @@
           <!-- Title + Subtitle -->
           <div class="flex flex-col justify-end leading-tight">
             <h1 class="text-3xl font-bold">
-              <span class="opacity-70">CO₂</span> Savings Impact
+              <span class="text-sage">CO₂</span> Savings Impact
             </h1>
-            <p class="text-sm opacity-70 mt-1">
+            <p class="text-sm text-sage mt-1">
               Track estimated CO₂ reduction through composting efforts and monitor your sustainability impact.
             </p>
           </div>
 
           <!-- Slicer Buttons -->
           <div class="flex space-x-2">
-            <button class="btn bg-transparent border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
-            <button class="btn bg-transparent border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
-            <button class="btn bg-transparent border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
-            <button class="btn bg-transparent border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none">Slicer</button>
           </div>
         </div>
 

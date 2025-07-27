@@ -37,6 +37,28 @@ A Vue 3 + Vite + TailwindCSS + DaisyUI dashboard for real‑time compost sensor 
 | Dev Quality | ESLint, Prettier, vue-tsc |
 
 ---
+## Connection to Supabase Database
+Create a tsconfig.json at the root and paste this code
+
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "ESNext"],
+    "allowJs": false,
+    "checkJs": false,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}
+
 
 ## 🚀 Quick Start
 

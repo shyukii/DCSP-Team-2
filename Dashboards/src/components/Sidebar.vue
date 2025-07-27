@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="relative bg-deepgreen pt-8 pb-4 transition-all duration-300 overflow-hidden border-r-2 border-[#849974]/50"
+    class="relative bg-deepgreen pt-8 pb-4 transition-all duration-300 overflow-hidden border-r-4 border-[#293446]"
     :class="isCollapsed ? 'w-16' : 'w-44'"
     @mouseenter="isCollapsed = false"
     @mouseleave="isCollapsed = true"
@@ -16,8 +16,8 @@
       >
         <img src="/logo.png" alt="Logo"
           class="transition-all duration-300 object-contain"
-          :class="isCollapsed ? 'w-12 h-12' : 'w-10 h-10'" />
-        <span v-show="!isCollapsed" class="font-bold text-lg transition-all duration-300">
+          :class="isCollapsed ? 'w-12 h-12' : 'w-10 h-12'" />
+        <span v-show="!isCollapsed" class="font-bold text-lg transition-all duration-300 text-cream">
           NutricycleAI
         </span>
       </div>
@@ -81,7 +81,7 @@ const isCollapsed = ref(true)
 
 /* Hover animation */
 .sidebar-item {
-  @apply transition-all duration-300 ease-in-out;
+  @apply transition-all duration-300 ease-in-out rounded-md px-3 py-2 hover:bg-[#212C42];
 }
 .sidebar-item:hover {
   @apply text-accent scale-[1.05];
