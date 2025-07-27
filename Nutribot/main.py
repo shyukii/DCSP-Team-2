@@ -34,7 +34,6 @@ from constants import (
     REGISTER_PASSWORD,
     LOGIN_USERNAME,
     LOGIN_PASSWORD,
-    PLANT_SPECIES,
     TANK_VOLUME,
     SOIL_VOLUME,
     MAIN_MENU,
@@ -53,7 +52,6 @@ from handlers.auth import (
     register_password,
     login_username,
     login_password,
-    plant_species,
     tank_volume,
     soil_volume,
     cancel,
@@ -109,7 +107,6 @@ def main() -> None:
             REGISTER_PASSWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, register_password)],
             LOGIN_USERNAME:    [MessageHandler(filters.TEXT & ~filters.COMMAND, login_username)],
             LOGIN_PASSWORD:    [MessageHandler(filters.TEXT & ~filters.COMMAND, login_password)],
-            PLANT_SPECIES:     [CallbackQueryHandler(plant_species)],
             TANK_VOLUME:       [MessageHandler(filters.TEXT & ~filters.COMMAND, tank_volume)],
             SOIL_VOLUME:       [MessageHandler(filters.TEXT & ~filters.COMMAND, soil_volume)],
             MAIN_MENU:         [

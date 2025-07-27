@@ -5,7 +5,7 @@ import logging
 
 from constants import (
     AMA, AUTH_CHOICE, REGISTER_USERNAME, REGISTER_PASSWORD,
-    LOGIN_USERNAME, LOGIN_PASSWORD, PLANT_SPECIES, TANK_VOLUME, SOIL_VOLUME, MAIN_MENU,
+    LOGIN_USERNAME, LOGIN_PASSWORD, TANK_VOLUME, SOIL_VOLUME, MAIN_MENU,
     WELCOME_MESSAGE, REGISTRATION_MESSAGE, GLOSSARY_MESSAGE
 )
 from services.database import db
@@ -51,17 +51,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             return await show_main_menu(update, context, existing_user['username'])
         else:
             # Complete profile setup
-            kb = [
-                [InlineKeyboardButton("Lady's Finger", callback_data="ladysfinger"),
-                 InlineKeyboardButton("Spinach",        callback_data="spinach"),
-                 InlineKeyboardButton("Long Bean",      callback_data="longbean")]
-            ]
             await update.message.reply_text(
                 f"Welcome back, {existing_user['username']}! Let's complete your profile.\n"
-                f"Please select your plant species:",
-                reply_markup=InlineKeyboardMarkup(kb)
+                f"Enter your compost tank volume (litres):"
             )
-            return PLANT_SPECIES
+            return TANK_VOLUME
     
     # New user - show registration/login options
     await update.message.reply_text(WELCOME_MESSAGE, parse_mode="Markdown")
@@ -120,16 +114,10 @@ async def register_password(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await update.message.reply_text(REGISTRATION_MESSAGE)
     await update.message.reply_text(GLOSSARY_MESSAGE)
 
-    kb = [
-        [InlineKeyboardButton("Lady's Finger", callback_data="ladysfinger"),
-         InlineKeyboardButton("Spinach",        callback_data="spinach"),
-         InlineKeyboardButton("Long Bean",      callback_data="longbean")]
-    ]
     await update.message.reply_text(
-        f"Registration successful, {username}! Select your plant species:",
-        reply_markup=InlineKeyboardMarkup(kb)
+        f"Registration successful, {username}! Enter your compost tank volume (litres):"
     )
-    return PLANT_SPECIES
+    return TANK_VOLUME
 
 # -- login flow --
 
@@ -160,37 +148,15 @@ async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return await show_main_menu(update, context, username)
         
         # Complete setup
-        kb = [
-            [InlineKeyboardButton("Lady's Finger", callback_data="ladysfinger"),
-             InlineKeyboardButton("Spinach",        callback_data="spinach"),
-             InlineKeyboardButton("Long Bean",      callback_data="longbean")]
-        ]
         await update.message.reply_text(
-            f"Welcome back, {username}! Complete setup—select plant species:",
-            reply_markup=InlineKeyboardMarkup(kb)
+            f"Welcome back, {username}! Complete setup—enter your compost tank volume (litres):"
         )
-        return PLANT_SPECIES
+        return TANK_VOLUME
     
     await update.message.reply_text("Invalid credentials, try again.")
     return LOGIN_USERNAME
 
 # -- setup callbacks --
-
-async def plant_species(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    q = update.callback_query; await q.answer()
-    species = q.data
-    context.user_data["plant_species"] = species
-    
-    telegram_id = context.user_data.get("telegram_id", update.effective_user.id)
-    
-    # Update in database
-    db.update_user_profile(telegram_id, plant_species=species)
-    
-    # Clear cache since we updated the profile
-    clear_user_cache(context)
-
-    await q.edit_message_text(f"You selected {species}. Enter your compost tank volume (litres):")
-    return TANK_VOLUME
 
 async def tank_volume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:

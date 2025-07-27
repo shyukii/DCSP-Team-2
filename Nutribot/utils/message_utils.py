@@ -24,14 +24,6 @@ def create_back_menu_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")
     ]])
 
-def create_plant_selection_keyboard() -> InlineKeyboardMarkup:
-    """Create plant species selection keyboard."""
-    species = Config.PLANT_SPECIES
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(species[0], callback_data="ladysfinger"),
-         InlineKeyboardButton(species[1], callback_data="spinach"),
-         InlineKeyboardButton(species[2], callback_data="longbean")]
-    ])
 
 def create_keyboard_from_options(options: List[Dict[str, str]], columns: int = 1) -> InlineKeyboardMarkup:
     """
@@ -66,13 +58,11 @@ def create_keyboard_from_options(options: List[Dict[str, str]], columns: int = 1
 
 def format_user_profile(user_data: Dict) -> str:
     """Format user profile data for display."""
-    species = user_data.get("plant_species", "unknown")
     tank_vol = user_data.get("tank_volume", 0)
     soil_vol = user_data.get("soil_volume", 0)
     
     return (
         f"👤 **Your Profile**\n\n"
-        f"🪴 Plant: {species.capitalize()}\n"
         f"🪣 Tank Volume: {tank_vol} L\n"
         f"🌱 Soil Volume: {soil_vol} L"
     )

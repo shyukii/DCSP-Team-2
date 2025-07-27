@@ -74,8 +74,6 @@ class Config:
     # Database Configuration
     DATABASE_TABLE: str = "users"
     
-    # Plant Species Options
-    PLANT_SPECIES: List[str] = ["Lady's Finger", "Spinach", "Long Bean"]
     
     # Logging Configuration
     LOGGING_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

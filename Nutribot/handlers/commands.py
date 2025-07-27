@@ -367,12 +367,7 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("Please /start to login first.")
         return
 
-    species = user_data.get("plant_species", "plants")
-    tips = {
-        "ladysfinger": "🌡️ Keep soil 22-35°C\n💧 Water regularly\n☀️ 6+ hrs sun",
-        "spinach":     "🌡️ 15-20°C\n💧 Keep moist\n🌱 Harvest outer leaves",
-        "longbean":    "🌿 Provide support\n💧 Water deeply once/week\n☀️ Full sun"
-    }.get(species, "Keep soil moist and give sunlight.")
+    tips = "🌡️ Keep soil moist and well-drained\n💧 Water regularly but avoid overwatering\n☀️ Provide adequate sunlight\n🌱 Monitor for pests and diseases"
     
     # Add inline button for Ask Anything (LLM)
     keyboard = [
@@ -417,17 +412,14 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text("Please /start to login first.")
         return
         
-    species = user_data.get("plant_species", "unknown")
     tank_vol = user_data.get("tank_volume", 0)
     soil_vol = user_data.get("soil_volume", 0)
     kb = [
-        [InlineKeyboardButton("Change Plant", callback_data="change_plant")],
         [InlineKeyboardButton("Change Volume", callback_data="change_volume")],
         [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
     ]
     await update.message.reply_text(
         f"👤 **Your Profile**\n\n"
-        f"🪴 Plant: {species}\n"
         f"🪣 Tank Volume: {tank_vol} L\n"
         f"🌱 Soil Volume: {soil_vol} L\n\n"
         "What to update?",

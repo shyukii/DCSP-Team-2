@@ -79,7 +79,6 @@ class DatabaseService:
         if not user:
             return False
         return all([
-            user.get('plant_species'),
             user.get('tank_volume') is not None,
             user.get('soil_volume') is not None
         ])

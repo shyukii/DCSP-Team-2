@@ -12,7 +12,6 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     context.user_data.pop("state", None)  # Clear AMA flag if returning
     telegram_id = update.effective_user.id
     user_data = get_cached_user_data(telegram_id, context)
-    species = user_data.get("plant_species", "plants") if user_data else "plants"
     username = username or context.user_data.get("username", "there")  # fallback name
 
     # Clear AMA flag if returning from LLM mode
@@ -23,7 +22,6 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 
     telegram_id = update.effective_user.id
     user_data  = get_cached_user_data(telegram_id, context)
-    species    = user_data.get("plant_species", "plants") if user_data else "plants"
 
     kb = [
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
@@ -37,13 +35,13 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 
     if update.callback_query:
         await update.callback_query.edit_message_text(
-            f"Setup complete, {username}! Your {species} data is saved.\n\n"
+            f"Setup complete, {username}! Your compost setup is saved.\n\n"
             "What would you like to do?",
             reply_markup=markup
         )
     else:
         await update.message.reply_text(
-            f"Welcome, {username}! Let's care for your {species}.\n\n"
+            f"Welcome, {username}! Let's care for your compost.\n\n"
             "Choose an option:",
             reply_markup=markup
         )
@@ -256,15 +254,6 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return MAIN_MENU
 
     # profile updates
-    if choice == "change_plant":
-        kb = [
-            [InlineKeyboardButton("Lady's Finger", callback_data="update_plant_ladysfinger"),
-             InlineKeyboardButton("Spinach",       callback_data="update_plant_spinach"),
-             InlineKeyboardButton("Long Bean",     callback_data="update_plant_longbean")],
-            [InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]
-        ]
-        await q.edit_message_text("Select your new plant type:", reply_markup=InlineKeyboardMarkup(kb))
-        return MAIN_MENU
 
     if choice == "change_volume":
         kb = [[InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]]
@@ -274,18 +263,6 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         return MAIN_MENU
 
-    if choice.startswith("update_plant_"):
-        new = choice.split("update_plant_")[-1]
-        telegram_id = update.effective_user.id
-        db.update_user_profile(telegram_id, plant_species=new)
-        
-        # Clear cache since we updated the profile
-        clear_user_cache(context)
-        await q.edit_message_text(
-            f"Your plant type has been updated to {new}!",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Profile", callback_data="back_to_profile")]])
-        )
-        return MAIN_MENU
 
     if choice == "back_to_profile":
         from handlers.commands import profile_command
