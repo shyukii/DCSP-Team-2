@@ -37,8 +37,8 @@
                     <h2 class="card-title text-xs font-semibold">Income</h2>
                     <p class="text-sm font-medium">$163.2K</p>
                   </div>
-                  <div class="flex-1 mt-3">
-                    <Line :data="miniLineData1" :options="miniLineOptions" />
+                  <div class="h-20 mt-3">
+                    <VChart :option="miniLineOptions1" autoresize class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -49,8 +49,8 @@
                     <h2 class="card-title text-xs font-semibold">Expenses</h2>
                     <p class="text-sm font-medium">$89.3K</p>
                   </div>
-                  <div class="flex-1 mt-3">
-                    <Line :data="miniLineData2" :options="miniLineOptions" />
+                  <div class="h-20 mt-3">
+                    <VChart :option="miniLineOptions2" autoresize class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -61,8 +61,8 @@
                     <h2 class="card-title text-xs font-semibold">Savings</h2>
                     <p class="text-sm font-medium">$90.2K</p>
                   </div>
-                  <div class="flex-1 mt-3">
-                    <Line :data="miniLineData3" :options="miniLineOptions" />
+                  <div class="h-20 mt-3">
+                    <VChart :option="miniLineOptions3" autoresize class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -73,8 +73,8 @@
                     <h2 class="card-title text-xs font-semibold">Saving %</h2>
                     <p class="text-sm font-medium">55%</p>
                   </div>
-                  <div class="flex-1 mt-3">
-                    <Line :data="miniLineData4" :options="miniLineOptions" />
+                  <div class="h-20 mt-3">
+                    <VChart :option="miniLineOptions4" autoresize class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -141,7 +141,7 @@ import {
   LinearScale,
   ArcElement
 } from 'chart.js'
-import { Line, Doughnut } from 'vue-chartjs'
+import { Doughnut } from 'vue-chartjs'
 import type { ChartOptions } from 'chart.js'
 import VueApexCharts from 'vue3-apexcharts'
 
@@ -156,9 +156,9 @@ ChartJS.register(
   ArcElement
 )
 
-// ECharts for overlapping bar chart
+// ECharts for bar + KPI line charts
 import { use } from 'echarts/core'
-import { BarChart } from 'echarts/charts'
+import { BarChart, LineChart } from 'echarts/charts'
 import {
   TitleComponent,
   TooltipComponent,
@@ -170,6 +170,7 @@ import VChart from 'vue-echarts'
 
 use([
   BarChart,
+  LineChart,
   TitleComponent,
   TooltipComponent,
   GridComponent,
@@ -184,7 +185,6 @@ const isCollapsed = ref(true)
 // 📊 Chart Data
 // =======================
 
-// Line Chart: Readiness % over time
 const lineChartSeries = [
   {
     name: 'Readiness %',
@@ -211,51 +211,36 @@ const doughnutData2 = {
   }]
 }
 
-const miniLineData1 = {
-  labels: ['1', '2', '3', '4'],
-  datasets: [{
-    data: [10, 10, 70, 70],
-    borderColor: '#ffffff',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 2,
-    fill: true,
-    tension: 0,                 // Disable smoothness
-    stepped: true              // ✅ Make it a step chart
+// ✅ ECharts Mini Line Area Charts for KPI cards
+const baseMiniLineOption = {
+  grid: { top: 0, left: 0, right: 0, bottom: 0 },
+  xAxis: { type: 'category', show: false, data: ['1', '2', '3', '4'] },
+  yAxis: { type: 'value', show: false, min: 0, max: 100 },
+  tooltip: { show: false },
+  series: [{
+    type: 'line',
+    data: [],
+    step: 'end',
+    areaStyle: { color: 'rgba(176, 194, 242, 0.15)' },
+    lineStyle: { color: '#ffffff', width: 2 },
+    symbol: 'none'
   }]
 }
-const miniLineData2 = {
-  labels: ['1', '2', '3', '4'],
-  datasets: [{
-    data: [90, 85, 65, 60],
-    borderColor: '#ffffff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    fill: true,
-    tension: 0,                 // Disable smoothness
-    stepped: true
-  }]
+
+function cloneMiniLine(data: number[]) {
+  return {
+    ...baseMiniLineOption,
+    series: [{
+      ...baseMiniLineOption.series[0],
+      data
+    }]
+  }
 }
-const miniLineData3 = {
-  labels: ['1', '2', '3', '4'],
-  datasets: [{
-    data: [40, 55, 75, 90],
-    borderColor: '#ffffff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    fill: true,
-    tension: 0,                 // Disable smoothness
-    stepped: true
-  }]
-}
-const miniLineData4 = {
-  labels: ['1', '2', '3', '4'],
-  datasets: [{
-    data: [20, 30, 45, 55],
-    borderColor: '#ffffff',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    fill: true,
-    tension: 0,                 // Disable smoothness
-    stepped: true
-  }]
-}
+
+const miniLineOptions1 = cloneMiniLine([10, 10, 70, 70])
+const miniLineOptions2 = cloneMiniLine([90, 85, 65, 60])
+const miniLineOptions3 = cloneMiniLine([40, 55, 75, 90])
+const miniLineOptions4 = cloneMiniLine([20, 30, 45, 55])
 
 // ECharts Bar Chart (Readiness vs Threshold with overlap)
 const echartsOptions = {
@@ -305,9 +290,8 @@ const echartsOptions = {
   ]
 }
 
-
 // =======================
-// ⚙️ Chart.js Options
+// ⚙️ Chart.js + Apex Options
 // =======================
 
 const lineChartOptions = {
@@ -335,7 +319,7 @@ const lineChartOptions = {
     tickPlacement: 'on', // aligns point with label center
     labels: {
       style: { colors: '#ffffff' },
-      offsetX: 0 // shift labels slightly right to prevent clipping
+      offsetX: 0
     },
     axisBorder: { show: false },
     axisTicks: { show: false }
@@ -346,8 +330,8 @@ const lineChartOptions = {
   },
   grid: {
     padding: {
-      left: 20,   // Add space on the left
-      right: 15,  // Add space on the right
+      left: 20,
+      right: 15,
       top: 0,
       bottom: 0
     },
@@ -362,7 +346,7 @@ const lineChartOptions = {
   tooltip: {
     enabled: true,
     shared: false,
-    theme: 'dark',   // ✅ match your dark theme
+    theme: 'dark',
     style: {
       fontSize: '12px'
     },
@@ -408,8 +392,10 @@ const miniLineOptions: ChartOptions<'line'> = {
     y: {
       display: false,
       min: 0,
-      max: 100   
+      max: 100
     }
   }
 }
 </script>
+
+

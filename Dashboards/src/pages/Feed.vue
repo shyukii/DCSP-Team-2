@@ -119,13 +119,13 @@ const comparisonBarOptions = {
       name: 'Greens',
       type: 'bar',
       data: [120, 200, 150, 80],
-      itemStyle: { color: '#9C7BF9' }
+      itemStyle: { color: '#AACEFE' }
     },
     {
       name: 'Browns',
       type: 'bar',
       data: [90, 180, 110, 60],
-      itemStyle: { color: '#F6C2EF' }
+      itemStyle: { color: '#4A70A1' }
     }
   ]
 }
