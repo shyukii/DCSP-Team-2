@@ -131,3 +131,81 @@ class LlamaInterface:
         except Exception as e:
             logger.error(f"Error generating response: {e}")
             return "Sorry, I encountered an error while processing your request. Please try again."
+
+    async def analyze_image_with_vision(self, base64_image: str, prompt: str, max_length: int = 500) -> str:
+        """
+        Analyze an image using OpenAI's Vision API (GPT-4V)
+        
+        Args:
+            base64_image: Base64 encoded image data
+            prompt: Analysis prompt for the AI
+            max_length: Maximum length of response
+            
+        Returns:
+            Analysis response text
+        """
+        try:
+            # Create system message for vision analysis
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                                "detail": "high"
+                            }
+                        }
+                    ]
+                }
+            ]
+            
+            # Prepare payload for OpenAI Vision API
+            payload = {
+                "model": "gpt-4o",  # Use GPT-4 with vision capabilities
+                "messages": messages,
+                "max_tokens": max_length,
+                "temperature": Config.AI_TEMPERATURE,
+                "top_p": Config.AI_TOP_P
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    self.api_url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=Config.HTTP_TIMEOUT + 10)  # Extra time for vision
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        
+                        if 'choices' in result and len(result['choices']) > 0:
+                            return result['choices'][0]['message']['content'].strip()
+                        else:
+                            logger.error(f"Unexpected vision API response format: {result}")
+                            return "Sorry, I received an unexpected response format during image analysis."
+                    
+                    elif response.status == 401:
+                        logger.error("OpenAI Vision API authentication failed")
+                        return "Sorry, there's an authentication issue with the vision analysis."
+                    
+                    elif response.status == 429:
+                        logger.error("OpenAI Vision API rate limit exceeded")
+                        return "Sorry, the vision analysis service is temporarily busy. Please try again in a moment."
+                    
+                    else:
+                        error_text = await response.text()
+                        logger.error(f"OpenAI Vision API Error {response.status}: {error_text}")
+                        return "Sorry, I encountered an error during image analysis. Please try again."
+                        
+        except asyncio.TimeoutError:
+            logger.error("Vision API request timed out")
+            return "Sorry, the image analysis took too long. Please try again."
+        except Exception as e:
+            logger.error(f"Error in vision analysis: {e}")
+            return "Sorry, I encountered an error while analyzing the image. Please try again."

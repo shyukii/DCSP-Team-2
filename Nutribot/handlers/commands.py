@@ -1,4 +1,5 @@
 import os
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 # from services.clarifai_segmentation import ClarifaiImageSegmentation  # Lazy loaded when needed
@@ -12,6 +13,7 @@ from handlers.menu import show_main_menu
 from utils.message_utils import get_cached_user_data
 
 # Remove global clarifai instantiation - use lazy loading instead
+logger = logging.getLogger(__name__)
 feed_calculator = FeedCalculator()
 ml_recommender = MLCompostRecommendation()
 
@@ -392,21 +394,48 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             # Get scan type from context (default to compost for backward compatibility)
             scan_type = context.user_data.get("scan_type", "compost")
             
-            # Lazy load Clarifai only when needed
-            from services.clarifai_segmentation import ClarifaiImageSegmentation
-            clarifai = ClarifaiImageSegmentation(model_type=scan_type)
-            top = clarifai.get_top_concepts(path, top_n=5)
+            # Use the new dual analysis system
+            from handlers.image_handler import image_analyzer
             
-            # Create analysis results text with scan type indicator
-            scan_emoji = "🪣" if scan_type == "compost" else "🌱"
-            scan_name = "Compost Tank" if scan_type == "compost" else "Plant"
+            # Update processing message to indicate dual analysis
+            await processing.edit_text("🔄 Performing technical analysis...")
             
-            text = f"{scan_emoji} **{scan_name} Analysis Results**\n\n**Top elements detected:**\n"
-            for i, c in enumerate(top, 1):
-                text += f"{i}. {c['name'].title()}: {round(c['value']*100, 1)}%\n"
-            text += f"\n💡 Ask me questions about your {scan_name.lower()}!"
+            # Get dual analysis results
+            analysis_result = await image_analyzer.analyze_image_with_ai_advice(path, scan_type)
+            
+            # Show Clarifai results first (if available)
+            if analysis_result["clarifai_success"]:
+                scan_emoji = "🪣" if scan_type == "compost" else "🌱"
+                scan_name = "Compost Tank" if scan_type == "compost" else "Plant"
+                
+                clarifai_text = f"{scan_emoji} **{scan_name} Analysis Results**\n\n**Top elements detected:**\n"
+                for i, c in enumerate(analysis_result["clarifai_results"], 1):
+                    clarifai_text += f"{i}. {c['name'].title()}: {round(c['value']*100, 1)}%\n"
+                clarifai_text += f"\n💡 Generating expert insights..."
+                
+                await processing.edit_text(clarifai_text, parse_mode="Markdown")
+            else:
+                # If Clarifai fails, update message
+                await processing.edit_text("🔄 Analyzing image with AI vision...")
+            
+            # Send the comprehensive AI analysis as a new message
+            if analysis_result["combined_message"]:
+                await update.message.reply_text(
+                    analysis_result["combined_message"], 
+                    parse_mode="Markdown"
+                )
+            else:
+                # Fallback message
+                await update.message.reply_text(
+                    "⚠️ Unable to analyze the image at this time. Please try again with a clearer photo."
+                )
+                
         except Exception as e:
-            text = "⚠️ Could not analyse image. Try a clearer photo or check your connection."
+            logger.error(f"Image analysis error: {str(e)}")
+            await processing.edit_text(
+                "⚠️ Could not analyse image. Try a clearer photo or check your connection.",
+                parse_mode="Markdown"
+            )
         
         try:
             import os

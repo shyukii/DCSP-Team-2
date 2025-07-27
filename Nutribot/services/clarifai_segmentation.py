@@ -8,17 +8,21 @@ class ClarifaiImageSegmentation:
     A class for performing image subject segmentation using Clarifai's new Model API.
     Supports different models for compost and plant analysis.
     """
-    def __init__(self, model_type: str = "compost", pat: str = Config.CLARIFAI_PAT):
-        self.pat = pat
+    def __init__(self, model_type: str = "compost", pat: str = None):
         self.model_type = model_type
         
-        # Select appropriate model URL based on type
+        # Select appropriate model URL and PAT based on type
         if model_type == "plant":
             self.model_url = Config.CLARIFAI_PLANT_MODEL_URL
+            self.pat = pat or Config.CLARIFAI_PLANT_PAT or Config.CLARIFAI_PAT
         elif model_type == "compost":
             self.model_url = Config.CLARIFAI_COMPOST_MODEL_URL
+            self.pat = pat or Config.CLARIFAI_TANK_PAT or Config.CLARIFAI_PAT
         else:
             raise ValueError(f"Invalid model_type: {model_type}. Use 'compost' or 'plant'")
+        
+        if not self.pat:
+            raise ValueError(f"No Clarifai PAT found for {model_type} model. Check environment variables.")
         
         self.model = Model(url=self.model_url, pat=self.pat)
 

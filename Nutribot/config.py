@@ -9,7 +9,9 @@ class Config:
     
     # API Tokens & Keys
     TELEGRAM_TOKEN: str = os.getenv("BOT_TOKEN")
-    CLARIFAI_PAT: str = os.getenv("CLARIFAI_PAT")
+    CLARIFAI_PAT: str = os.getenv("CLARIFAI_PAT")  # Legacy/fallback
+    CLARIFAI_TANK_PAT: str = os.getenv("CLARIFAI_TANK_PAT")
+    CLARIFAI_PLANT_PAT: str = os.getenv("CLARIFAI_PLANT_PAT")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     REPLICATE_API_TOKEN: str = os.getenv("REPLICATE_API_TOKEN")
     SUPABASE_URL: str = os.getenv("SUPABASE_URL")
@@ -84,12 +86,16 @@ class Config:
         """Validate that all required environment variables are set"""
         required_vars = {
             "BOT_TOKEN": cls.TELEGRAM_TOKEN,
-            "CLARIFAI_PAT": cls.CLARIFAI_PAT,
             "OPENAI_API_KEY": cls.OPENAI_API_KEY,
             "REPLICATE_API_TOKEN": cls.REPLICATE_API_TOKEN,
             "SUPABASE_URL": cls.SUPABASE_URL,
             "SUPABASE_ANON_KEY": cls.SUPABASE_ANON_KEY
         }
+        
+        # Check Clarifai PATs - at least one should be available
+        clarifai_pats = [cls.CLARIFAI_TANK_PAT, cls.CLARIFAI_PLANT_PAT, cls.CLARIFAI_PAT]
+        if not any(clarifai_pats):
+            required_vars["CLARIFAI_PAT or CLARIFAI_TANK_PAT or CLARIFAI_PLANT_PAT"] = None
         
         missing_vars = [var_name for var_name, var_value in required_vars.items() if not var_value]
         
