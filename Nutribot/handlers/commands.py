@@ -443,8 +443,6 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         except:
             pass
         
-        await processing.edit_text(text, parse_mode="Markdown")
-        
         # Clean up scan flags
         context.user_data.pop("scan_mode", None)
         context.user_data.pop("scan_type", None)
