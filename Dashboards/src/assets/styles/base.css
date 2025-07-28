@@ -28,11 +28,11 @@
 
 /* Optional: custom utility color classes */
 @layer utilities {
-  .bg-deepgreen { background-color: #101B2D; }
-  .bg-sage { background-color: #212C42; }
+  .bg-deepgreen { background-color: #3E5F44; }
+  .bg-sage { background-color: #5E936C; }
   .bg-khaki { background-color: #B1AB86; }
-  .text-cream { color: #fff; }
-  .text-sage { color: #B2D2FB; }
+  .text-cream { color: #E8FFD7; }
+  .text-sage { color: #D1F0D2; }
   .shadow-b {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }

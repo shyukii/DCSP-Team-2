@@ -1,7 +1,7 @@
 <template>
   <aside
-    class="relative bg-deepgreen pt-8 pb-4 transition-all duration-300 overflow-hidden border-r-4 border-[#293446]"
-    :class="isCollapsed ? 'w-16' : 'w-44'"
+    class="relative bg-deepgreen pt-8 pb-4 transition-all duration-300 overflow-hidden border-r-4 border-[#5E936C]"
+    :class="isCollapsed ? 'w-16' : 'w-48'"
     @mouseenter="isCollapsed = false"
     @mouseleave="isCollapsed = true"
   >
@@ -81,7 +81,7 @@ const isCollapsed = ref(true)
 
 /* Hover animation */
 .sidebar-item {
-  @apply transition-all duration-300 ease-in-out rounded-md px-3 py-2 hover:bg-[#212C42];
+  @apply transition-all duration-300 ease-in-out rounded-md px-3 py-2 hover:bg-[#5E936C];
 }
 .sidebar-item:hover {
   @apply text-accent scale-[1.05];

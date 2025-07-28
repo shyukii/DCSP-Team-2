@@ -14,10 +14,10 @@
             </p>
           </div>
           <div class="flex space-x-2">
-            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
-            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
-            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
-            <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
+            <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md hover:bg-sage/20 transition">Slicer</button>
           </div>
         </div>
 
@@ -44,12 +44,7 @@
         <!-- Line Chart -->
         <div class="card bg-sage shadow-b flex-1 p-4">
           <h2 class="text-sm font-semibold mb-2">Moisture Over Time</h2>
-          <VueApexCharts
-            type="line"
-            height="260"
-            :options="lineChartOptions"
-            :series="lineChartSeries"
-          />
+          
         </div>
 
         <!-- Bottom Row: Pie & Bar -->
@@ -58,14 +53,14 @@
           <div class="card bg-sage shadow-b w-1/2 p-4">
             <h2 class="text-sm font-semibold mb-2">Compost Composition</h2>
             <div class="relative w-full h-[230px]"> <!-- 🔸 Adjust height here -->
-              <Doughnut :data="pieData" :options="pieOptions" />
+              
             </div>
           </div>
 
           <!-- Bar -->
           <div class="card bg-sage shadow-b w-1/2 p-4">
             <h2 class="text-sm font-semibold mb-2">CO₂ Reduction by Month</h2>
-            <VChart :option="barOptions" class="h-full" />
+            
           </div>
         </div>
       </div>
