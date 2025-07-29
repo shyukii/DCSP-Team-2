@@ -7,10 +7,10 @@
         <div class="flex justify-between items-end">
           <div class="flex flex-col justify-end leading-tight">
             <h1 class="text-3xl font-bold">
-              <span class="text-sage">CO₂</span> Savings Impact
+              <span class="text-sage">CO₂E</span> Savings Impact
             </h1>
             <p class="text-sm text-sage mt-1">
-              Track estimated CO₂ reduction through composting efforts and monitor your sustainability impact.
+              Track estimated CO₂E reduction through composting efforts and monitor your sustainability impact.
             </p>
           </div>
           <div class="flex space-x-2">
