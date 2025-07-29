@@ -365,8 +365,12 @@ async def handle_scan_type_choice(update: Update, context: ContextTypes.DEFAULT_
     elif query.data == "scan_back":
         # Return to previous state based on scan_mode
         if context.user_data.get("scan_mode") == "direct":
-            await query.edit_message_text("Analysis cancelled.")
-            return
+            # Clean up scan flags
+            context.user_data.pop("scan_mode", None)
+            context.user_data.pop("scan_type", None)
+            # Return to main menu for direct scan
+            username = context.user_data.get("username")
+            return await show_main_menu(update, context, username)
         else:
             # Return to main menu
             username = context.user_data.get("username")
@@ -429,6 +433,25 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 await update.message.reply_text(
                     "⚠️ Unable to analyze the image at this time. Please try again with a clearer photo."
                 )
+            
+            # Add follow-up options after analysis
+            scan_type = context.user_data.get("scan_type", "compost")
+            scan_emoji = "🪣" if scan_type == "compost" else "🌱"
+            scan_name = "Compost Tank" if scan_type == "compost" else "Plant"
+            
+            keyboard = [
+                [InlineKeyboardButton(f"📸 Scan Another {scan_name}", callback_data=f"scan_{scan_type}")],
+                [InlineKeyboardButton("📸 Switch Analysis Type", callback_data="image_scan")],
+                [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(
+                f"{scan_emoji} **Analysis Complete!**\n\n"
+                "What would you like to do next?",
+                parse_mode="Markdown",
+                reply_markup=reply_markup
+            )
                 
         except Exception as e:
             logger.error(f"Image analysis error: {str(e)}")

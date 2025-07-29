@@ -28,7 +28,7 @@ class ClarifaiImageSegmentation:
 
     def analyse_image(self, image_path: str) -> List[Dict[str, Union[str, float]]]:
         """
-        Analyse an image file and return segmentation results.
+        Analyse an image file and return segmentation/classification results.
         """
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")
@@ -37,35 +37,61 @@ class ClarifaiImageSegmentation:
         model_prediction = self.model.predict_by_filepath(image_path)
         
         results = []
-        regions = model_prediction.outputs[0].data.regions
-        for region in regions:
-            for concept in region.data.concepts:
-                # Accessing and rounding the concept's percentage of image covered
+        output_data = model_prediction.outputs[0].data
+        
+        # Handle segmentation models (compost) - results in regions
+        if hasattr(output_data, 'regions') and output_data.regions:
+            for region in output_data.regions:
+                for concept in region.data.concepts:
+                    name = concept.name
+                    value = round(concept.value, 4)
+                    results.append({
+                        'name': name,
+                        'value': value
+                    })
+        
+        # Handle classification models (plant) - results in direct concepts
+        elif hasattr(output_data, 'concepts') and output_data.concepts:
+            for concept in output_data.concepts:
                 name = concept.name
                 value = round(concept.value, 4)
                 results.append({
                     'name': name,
                     'value': value
                 })
+        
         return results
 
     def analyse_image_by_url(self, image_url: str) -> List[Dict[str, Union[str, float]]]:
         """
-        Analyse an image by URL and return segmentation results.
+        Analyse an image by URL and return segmentation/classification results.
         """
         model_prediction = self.model.predict_by_url(image_url)
         
         results = []
-        regions = model_prediction.outputs[0].data.regions
-        for region in regions:
-            for concept in region.data.concepts:
-                # Accessing and rounding the concept's percentage of image covered
+        output_data = model_prediction.outputs[0].data
+        
+        # Handle segmentation models (compost) - results in regions
+        if hasattr(output_data, 'regions') and output_data.regions:
+            for region in output_data.regions:
+                for concept in region.data.concepts:
+                    name = concept.name
+                    value = round(concept.value, 4)
+                    results.append({
+                        'name': name,
+                        'value': value
+                    })
+        
+        # Handle classification models (plant) - results in direct concepts
+        elif hasattr(output_data, 'concepts') and output_data.concepts:
+            for concept in output_data.concepts:
                 name = concept.name
                 value = round(concept.value, 4)
                 results.append({
                     'name': name,
                     'value': value
                 })
+        
         return results
 
     def analyse_and_print(self, image_path: str) -> None:
