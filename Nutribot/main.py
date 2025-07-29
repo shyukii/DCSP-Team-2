@@ -146,6 +146,7 @@ def main() -> None:
     application.add_handler(CommandHandler("care", care_command))
     application.add_handler(CommandHandler("co2", co2_calculator_command))
     application.add_handler(CommandHandler("profile", profile_command))
+    application.add_handler(CommandHandler(["back", "menu"], back_to_menu_command))
     
     # CO2 calculator callback handlers
     application.add_handler(CallbackQueryHandler(handle_co2_callback, pattern="^co2_"))
