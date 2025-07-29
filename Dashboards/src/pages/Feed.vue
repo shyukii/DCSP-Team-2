@@ -14,10 +14,10 @@
 
         <!-- Right: Slicer Buttons -->
         <div class="flex space-x-2">
-          <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
-          <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
-          <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
-          <button class="btn bg-transparent hover:bg-[#B2D2FB]/25 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
+          <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
+          <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
+          <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
+          <button class="btn bg-transparent hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md">Slicer</button>
         </div>
       </div>
 
@@ -47,7 +47,7 @@
           <!-- Middle Card: Bar Chart -->
           <div class="card bg-sage shadow-b flex-1 p-4">
             <h2 class="text-sm font-semibold mb-2">Feed Comparison by Source</h2>
-            <VChart :option="comparisonBarOptions" class="h-full" />
+            
           </div>
 
           <!-- Bottom Card: Circular Segments -->

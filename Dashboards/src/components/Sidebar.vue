@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="relative bg-deepgreen pt-8 pb-4 transition-all duration-300 overflow-hidden border-r-4 border-[#293446]"
+    class="relative bg-deepgreen pt-8 pb-4 transition-all duration-300 overflow-hidden border-r-2 border-[#5E936C]"
     :class="isCollapsed ? 'w-16' : 'w-44'"
     @mouseenter="isCollapsed = false"
     @mouseleave="isCollapsed = true"
@@ -10,8 +10,8 @@
       <div
         class="transition-all duration-300"
         :class="isCollapsed
-          ? 'flex justify-center items-start mt-[-15px] mb-4 h-14'
-          : 'flex items-center justify-start space-x-2 px-2 mb-6'"
+          ? 'flex justify-center items-start mt-[-15px] mb-4 h-10'
+          : 'flex items-center justify-start space-x-2 px-2 mb-4'"
         :key="isCollapsed ? 'collapsed' : 'expanded'"
       >
         <img src="/logo.png" alt="Logo"
@@ -24,30 +24,30 @@
     </transition>
 
     <!-- Nav Items -->
-    <nav class="flex flex-col gap-8 mt-4">
-      <transition-group name="fade-slide" tag="div" class="flex flex-col space-y-6 transition-all duration-300">
+    <nav class="flex flex-col mt-2">
+      <transition-group name="fade-slide" tag="div" class="flex flex-col transition-all duration-300">
         <router-link to="/readiness" class="no-underline text-inherit">
-          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-10 space-x-3'">
             <i class="fas fa-leaf text-lg"></i>
             <span v-if="!isCollapsed">Readiness</span>
           </div>
         </router-link>
 
         <router-link to="/feed" class="no-underline text-inherit">
-          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-10 space-x-3'">
             <i class="fas fa-apple-alt text-lg"></i>
             <span v-if="!isCollapsed">Feed</span>
           </div>
         </router-link>
 
         <router-link to="/savings" class="no-underline text-inherit">
-          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-10 space-x-3'">
             <i class="fas fa-chart-line text-lg"></i>
             <span v-if="!isCollapsed">CO₂ Savings</span>
           </div>
         </router-link>
 
-        <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-6 space-x-3'">
+        <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px- space-x-3'">
           <i class="fas fa-sync text-lg"></i>
           <span v-if="!isCollapsed">Refresh</span>
         </div>
@@ -81,9 +81,10 @@ const isCollapsed = ref(true)
 
 /* Hover animation */
 .sidebar-item {
-  @apply transition-all duration-300 ease-in-out rounded-md px-3 py-2 hover:bg-[#212C42];
+  @apply transition-all duration-300 ease-in-out px-3 py-3;
 }
+
 .sidebar-item:hover {
-  @apply text-accent scale-[1.05];
+  @apply bg-[#5E936C] text-accent scale-[1.02];
 }
 </style>
