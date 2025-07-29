@@ -198,6 +198,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         
         # Get stored food waste total if available
         total_food_waste = user_data.get("total_food_waste_kg", 0) if user_data else 0
+        if total_food_waste is None:
+            total_food_waste = 0
         
         # Create keyboard options
         keyboard = [
