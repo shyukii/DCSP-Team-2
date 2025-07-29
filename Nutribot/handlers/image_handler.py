@@ -112,7 +112,7 @@ class ImageAnalysisHandler:
             ])
             
             if scan_type == "compost":
-                prompt = f"""You are a composting expert. Based on these technical analysis results from an image classification model:
+                prompt = f"""You are a composting expert. Based on these technical analysis results from an image segmentation model:
 
 {results_text}
 
@@ -163,20 +163,20 @@ Keep the response concise and practical for home gardeners."""
             if scan_type == "compost":
                 prompt = """You are a composting expert analyzing this compost image. Provide a visual assessment covering:
 
-1. **Visual Observations**: What you see in terms of color, texture, moisture, decomposition stage
-2. **Quality Assessment**: Overall compost health and maturity
-3. **Issues Identified**: Any problems like improper ratios, moisture issues, or contamination
-4. **Recommendations**: Specific actions to improve the compost
+1. Visual Observations: What you see in terms of color, texture, moisture, decomposition stage
+2. Quality Assessment: Overall compost health and maturity
+3. Issues Identified: Any problems like improper ratios, moisture issues, or contamination
+4. Recommendations: Specific actions to improve the compost
 
 Be practical and specific in your advice for home composters."""
 
             else:  # plant
                 prompt = """You are a plant health specialist analyzing this plant image. Provide a visual assessment covering:
 
-1. **Visual Observations**: Leaf color, texture, growth patterns, any visible symptoms
-2. **Health Assessment**: Overall plant condition and vitality
-3. **Issues Identified**: Signs of disease, pests, nutrient deficiencies, or stress
-4. **Care Recommendations**: Specific actions for plant health improvement
+1. Visual Observations: Leaf color, texture, growth patterns, any visible symptoms
+2. Health Assessment: Overall plant condition and vitality
+3. Issues Identified: Signs of disease, pests, nutrient deficiencies, or stress
+4. Care Recommendations: Specific actions for plant health improvement
 
 Be practical and specific in your advice for home gardeners."""
             
@@ -213,19 +213,19 @@ Be practical and specific in your advice for home gardeners."""
                 for item in result["clarifai_results"]:
                     message += f"• {item['name'].title()}: {round(item['value']*100, 1)}%\n"
             
-            message += "\n\n👁️ **Visual Assessment:**\n"
+            message += "\n\n👁️ Visual Assessment:\n"
             message += result["vision_analysis"]
             
         # Case 2: Only Vision successful
         elif result["vision_success"]:
             message = f"{scan_emoji} **{scan_name} Visual Analysis Complete**\n\n"
-            message += "👁️ **Expert Assessment:**\n"
+            message += "👁️ Expert Assessment:\n"
             message += result["vision_analysis"]
             
         # Case 3: Only Clarifai successful
         elif result["clarifai_success"]:
-            message = f"{scan_emoji} **{scan_name} Technical Analysis Complete**\n\n"
-            message += "📊 **Analysis Results:**\n"
+            message = f"{scan_emoji} {scan_name} Technical Analysis Complete\n\n"
+            message += "📊 Analysis Results:\n"
             if result["clarifai_interpretation"]:
                 message += result["clarifai_interpretation"]
             else:
