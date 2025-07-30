@@ -48,8 +48,11 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     return MAIN_MENU
 
 async def back_to_menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    # Clear AMA flag
+    # Clear various state flags
     context.user_data.pop("state", None)
+    context.user_data.pop("scan_mode", None)
+    context.user_data.pop("scan_type", None)
+    context.user_data.pop("expecting_image", None)
     # Call the existing menu (no username arg)
     return await show_main_menu(update, context)
 
@@ -108,7 +111,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     user   = context.user_data.get("username")
 
     # Handle calculator choices (both basic and ML)
-    if choice in ["use_calculator", "use_ml_calculator", "basic_guidelines", "back_to_menu", "back_to_input"]:
+    if choice in ["use_calculator", "use_ml_calculator", "basic_guidelines", "back_to_input"]:
         from handlers.commands import handle_calculator_choice
         return await handle_calculator_choice(update, context)
     
@@ -123,7 +126,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return await handle_co2_callback(update, context)
     
     # Handle scan type selection callbacks
-    if choice in ["scan_compost", "scan_plant", "scan_back"]:
+    if choice in ["scan_compost", "scan_plant"]:
         from handlers.commands import handle_scan_type_choice
         return await handle_scan_type_choice(update, context)
 
@@ -286,7 +289,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         from constants import HELP_MESSAGE
         await q.edit_message_text(
             HELP_MESSAGE,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]])
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]])
         )
         return MAIN_MENU
 
@@ -296,6 +299,6 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     # fallback for unimplemented
     await q.edit_message_text(
         f"You selected {choice}. This feature is coming soon!",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]])
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]])
     )
     return MAIN_MENU

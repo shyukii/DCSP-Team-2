@@ -108,10 +108,6 @@ async def handle_calculator_choice(update: Update, context: ContextTypes.DEFAULT
         )
         return GREENS_INPUT
         
-    elif query.data == "back_to_menu":
-        username = context.user_data.get("username")
-        return await show_main_menu(update, context, username)
-    
     elif query.data == "back_to_input":
         # Return to input method selection
         return await input_command(update, context)
@@ -309,7 +305,7 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     keyboard = [
         [InlineKeyboardButton("🪣 Analyze Compost Tank", callback_data="scan_compost")],
         [InlineKeyboardButton("🌱 Analyze Plant", callback_data="scan_plant")],
-        [InlineKeyboardButton("🔙 Back", callback_data="scan_back")]
+        [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -362,20 +358,6 @@ async def handle_scan_type_choice(update: Update, context: ContextTypes.DEFAULT_
         context.user_data["expecting_image"] = True
         return MAIN_MENU
         
-    elif query.data == "scan_back":
-        # Return to previous state based on scan_mode
-        if context.user_data.get("scan_mode") == "direct":
-            # Clean up scan flags
-            context.user_data.pop("scan_mode", None)
-            context.user_data.pop("scan_type", None)
-            # Return to main menu for direct scan
-            username = context.user_data.get("username")
-            return await show_main_menu(update, context, username)
-        else:
-            # Return to main menu
-            username = context.user_data.get("username")
-            return await show_main_menu(update, context, username)
-
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = context.user_data.get("username")
     if not user:
@@ -534,7 +516,7 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     soil_vol = user_data.get("soil_volume", 0)
     kb = [
         [InlineKeyboardButton("Change Volume", callback_data="change_volume")],
-        [InlineKeyboardButton("Back to Menu", callback_data="back_to_menu")]
+        [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
     ]
     await update.message.reply_text(
         f"👤 **Your Profile**\n\n"

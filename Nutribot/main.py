@@ -114,6 +114,7 @@ def main() -> None:
             MAIN_MENU:         [
                 CallbackQueryHandler(handle_main_menu),
                 CommandHandler("input", input_command),  # Add /input command support in main menu
+                CommandHandler(["back", "menu"], back_to_menu_command),  # Add /back command support
                 MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
             ],
             AMA:               [CommandHandler(["back","menu"], back_to_menu_command),
@@ -128,7 +129,10 @@ def main() -> None:
                 MessageHandler(filters.TEXT & ~filters.COMMAND, compost_helper_input),
                 CallbackQueryHandler(handle_main_menu, pattern="^back_to_menu$")
             ],
-            SCAN_TYPE_SELECTION: [CallbackQueryHandler(handle_scan_type_choice)],
+            SCAN_TYPE_SELECTION: [
+                CallbackQueryHandler(handle_scan_type_choice),
+                CommandHandler(["back", "menu"], back_to_menu_command)
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
         name="nutribot_conversation",
