@@ -134,8 +134,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         from handlers.commands import handle_ml_crop_selection
         return await handle_ml_crop_selection(update, context)
     
-    # Handle CO2 calculator callbacks
-    if choice.startswith("co2_") and choice not in ["co2_tracker", "co2_impact", "co2_add"]:
+    # Handle CO2 calculator callbacks (old calculator patterns only)
+    if choice.startswith("co2_") and choice not in ["co2_tracker", "co2_personal", "co2_global"]:
         from services.emissions_calculator import handle_co2_callback
         return await handle_co2_callback(update, context)
     
@@ -222,46 +222,117 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             )
             return MAIN_MENU
         
-        # Get stored food waste total if available
-        total_food_waste = user_data.get("total_food_waste_kg", 0) if user_data else 0
-        if total_food_waste is None:
-            total_food_waste = 0
-        
-        # Create keyboard options
+        # Create keyboard for impact choice
         keyboard = [
-            [InlineKeyboardButton("🧮 Calculate New Savings", callback_data="co2_calculate")],
-            [InlineKeyboardButton("📊 View Total Impact", callback_data="co2_view_total")],
-            [InlineKeyboardButton("🔄 Reset Counter", callback_data="co2_reset")],
+            [InlineKeyboardButton("👤 My Composting Impact", callback_data="co2_personal")],
+            [InlineKeyboardButton("🌍 All NutriBot Users Impact", callback_data="co2_global")],
             [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Calculate current savings
-        if total_food_waste > 0:
+        await q.edit_message_text(
+            "🌍 **CO₂ Impact Calculator**\n\n"
+            "Choose which impact you'd like to see:\n\n"
+            "👤 **My Impact**: Your personal composting CO₂ savings\n"
+            "🌍 **Global Impact**: Combined CO₂ savings of all NutriBot users\n\n"
+            "Which would you like to view?",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        
+        return MAIN_MENU
+    
+    if choice == "co2_personal":
+        # Calculate personal CO2 impact from feeding logs
+        telegram_id = update.effective_user.id
+        user_data = get_cached_user_data(telegram_id, context)
+        tank_vol = user_data.get("tank_volume", 0) if user_data else 0
+        soil_vol = user_data.get("soil_volume", 0) if user_data else 0
+        
+        # Get user's total food waste from feeding logs
+        user_food_waste = db.get_user_total_food_waste(telegram_id)
+        
+        if user_food_waste > 0:
             from services.emissions_calculator import EmissionsCalculator
             result = EmissionsCalculator.calculate_co2_saved_from_food_waste(
-                total_food_waste, tank_vol, soil_vol
+                user_food_waste, tank_vol, soil_vol
             )
             impact = EmissionsCalculator.get_environmental_impact_summary(
                 result['total_co2_saved_kg']
             )
             
             message = (
-                f"🌍 **CO₂ Savings Calculator**\n\n"
-                f"📈 **Your Impact So Far:**\n"
-                f"• Food waste composted: {total_food_waste:.1f} kg\n"
-                f"• CO₂ saved: {result['total_co2_saved_kg']:.1f} kg\n"
-                f"• Equivalent to planting {impact['trees_equivalent']} trees 🌳\n"
-                f"• Or saving {impact['petrol_litres_equivalent']} litres of petrol ⛽\n\n"
-                f"What would you like to do?"
+                f"👤 **Your Personal CO₂ Impact**\n\n"
+                f"📊 **Your Composting Results:**\n"
+                f"• Food waste composted: {user_food_waste:.2f} kg\n"
+                f"• CO₂ saved: {result['total_co2_saved_kg']:.2f} kg\n\n"
+                f"🌳 **Environmental Equivalent:**\n"
+                f"• Trees planted: {impact['trees_equivalent']} trees\n"
+                f"• Petrol saved: {impact['petrol_litres_equivalent']} litres\n"
+                f"• Car miles offset: {impact['car_miles_equivalent']} miles\n\n"
+                f"🎉 **Great job helping the environment!**"
             )
         else:
             message = (
-                "🌍 **CO₂ Savings Calculator**\n\n"
-                "Start tracking your environmental impact!\n"
-                "Calculate how much CO₂ you save by composting food waste.\n\n"
-                "What would you like to do?"
+                "👤 **Your Personal CO₂ Impact**\n\n"
+                "📝 You haven't logged any feeding data yet!\n\n"
+                "Start using the 📦 Compost Feeding feature to track your environmental impact.\n\n"
+                "Every gram of food waste you compost makes a difference! 🌱"
             )
+        
+        # Add back to menu button
+        keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await q.edit_message_text(
+            message,
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        
+        return MAIN_MENU
+    
+    if choice == "co2_global":
+        # Calculate global CO2 impact from all users' feeding logs
+        telegram_id = update.effective_user.id
+        user_data = get_cached_user_data(telegram_id, context)
+        tank_vol = user_data.get("tank_volume", 0) if user_data else 0
+        soil_vol = user_data.get("soil_volume", 0) if user_data else 0
+        
+        # Get total food waste from all users
+        global_food_waste = db.get_all_users_total_food_waste()
+        
+        if global_food_waste > 0:
+            from services.emissions_calculator import EmissionsCalculator
+            result = EmissionsCalculator.calculate_co2_saved_from_food_waste(
+                global_food_waste, tank_vol, soil_vol
+            )
+            impact = EmissionsCalculator.get_environmental_impact_summary(
+                result['total_co2_saved_kg']
+            )
+            
+            message = (
+                f"🌍 **All NutriBot Users CO₂ Impact**\n\n"
+                f"📊 **Community Results:**\n"
+                f"• Total food waste composted: {global_food_waste:.2f} kg\n"
+                f"• Total CO₂ saved: {result['total_co2_saved_kg']:.2f} kg\n\n"
+                f"🌳 **Collective Environmental Impact:**\n"
+                f"• Equivalent to planting {impact['trees_equivalent']} trees\n"
+                f"• Petrol saved: {impact['petrol_litres_equivalent']} litres\n"
+                f"• Car miles offset: {impact['car_miles_equivalent']} miles\n\n"
+                f"🎉 **Amazing collective impact by the NutriBot community!**"
+            )
+        else:
+            message = (
+                "🌍 **All NutriBot Users CO₂ Impact**\n\n"
+                "📝 The community hasn't logged any feeding data yet!\n\n"
+                "Be the first to start tracking environmental impact using the 📦 Compost Feeding feature.\n\n"
+                "Together we can make a difference! 🌱"
+            )
+        
+        # Add back to menu button
+        keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
         await q.edit_message_text(
             message,

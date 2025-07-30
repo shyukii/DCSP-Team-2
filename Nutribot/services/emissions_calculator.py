@@ -85,43 +85,25 @@ async def co2_calculator_command(update: Update, context: ContextTypes.DEFAULT_T
         )
         return
     
-    # Get stored food waste total if available
-    total_food_waste = user_data.get("total_food_waste_kg", 0)
+    # Get food waste total from feeding logs
+    total_food_waste = db.get_user_total_food_waste(telegram_id)
     
-    # Create keyboard options
+    # Create keyboard options (same as main menu CO2 tracker)
     keyboard = [
-        [InlineKeyboardButton("🧮 Calculate New Savings", callback_data="co2_calculate")],
-        [InlineKeyboardButton("📊 View Total Impact", callback_data="co2_view_total")],
-        [InlineKeyboardButton("🔄 Reset Counter", callback_data="co2_reset")],
+        [InlineKeyboardButton("👤 My Composting Impact", callback_data="co2_personal")],
+        [InlineKeyboardButton("🌍 All NutriBot Users Impact", callback_data="co2_global")],
         [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Calculate current savings
-    if total_food_waste > 0:
-        result = EmissionsCalculator.calculate_co2_saved_from_food_waste(
-            total_food_waste, tank_vol, soil_vol
-        )
-        impact = EmissionsCalculator.get_environmental_impact_summary(
-            result['total_co2_saved_kg']
-        )
-        
-        message = (
-            f"🌍 **CO₂ Savings Calculator**\n\n"
-            f"📈 **Your Impact So Far:**\n"
-            f"• Food waste composted: {total_food_waste:.1f} kg\n"
-            f"• CO₂ saved: {result['total_co2_saved_kg']:.1f} kg\n"
-            f"• Equivalent to planting {impact['trees_equivalent']} trees 🌳\n"
-            f"• Or saving {impact['petrol_litres_equivalent']} litres of petrol ⛽\n\n"
-            f"What would you like to do?"
-        )
-    else:
-        message = (
-            "🌍 **CO₂ Savings Calculator**\n\n"
-            "Start tracking your environmental impact!\n"
-            "Calculate how much CO₂ you save by composting food waste.\n\n"
-            "What would you like to do?"
-        )
+    # Create message (same as main menu CO2 tracker)
+    message = (
+        "🌍 **CO₂ Impact Calculator**\n\n"
+        "Choose which impact you'd like to see:\n\n"
+        "👤 **My Impact**: Your personal composting CO₂ savings\n"
+        "🌍 **Global Impact**: Combined CO₂ savings of all NutriBot users\n\n"
+        "Which would you like to view?"
+    )
     
     await update.message.reply_text(
         message,

@@ -132,5 +132,44 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Error getting feeding logs for telegram_id {telegram_id}: {e}")
             return []
+    
+    def get_user_total_food_waste(self, telegram_id: int) -> float:
+        """
+        Calculate total food waste (greens + browns) for a specific user from feeding logs
+        
+        Args:
+            telegram_id: User's telegram ID
+            
+        Returns:
+            Total food waste in kg
+        """
+        try:
+            response = self.supabase.table('feeding_logs').select("greens, browns").eq('telegram_id', telegram_id).execute()
+            if not response.data:
+                return 0.0
+            
+            total_grams = sum(log.get('greens', 0) + log.get('browns', 0) for log in response.data)
+            return round(total_grams / 1000, 2)  # Convert grams to kg
+        except Exception as e:
+            logger.error(f"Error calculating total food waste for telegram_id {telegram_id}: {e}")
+            return 0.0
+    
+    def get_all_users_total_food_waste(self) -> float:
+        """
+        Calculate total food waste (greens + browns) for all NutriBot users from feeding logs
+        
+        Returns:
+            Total food waste across all users in kg
+        """
+        try:
+            response = self.supabase.table('feeding_logs').select("greens, browns").execute()
+            if not response.data:
+                return 0.0
+            
+            total_grams = sum(log.get('greens', 0) + log.get('browns', 0) for log in response.data)
+            return round(total_grams / 1000, 2)  # Convert grams to kg
+        except Exception as e:
+            logger.error(f"Error calculating total food waste for all users: {e}")
+            return 0.0
 
 db = DatabaseService()

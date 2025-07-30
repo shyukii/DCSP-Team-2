@@ -39,7 +39,6 @@ from constants import (
     MAIN_MENU,
     AMA,
     GREENS_INPUT,
-    CO2_FOOD_WASTE_INPUT,
     COMPOST_HELPER_INPUT,
     ML_CROP_SELECTION,
     ML_GREENS_INPUT,
@@ -76,11 +75,7 @@ from handlers.commands import (
     handle_scan_type_choice,
     handle_feeding_log_input,
 )
-from services.emissions_calculator import (
-    co2_calculator_command,
-    handle_co2_callback,
-    handle_food_waste_input,
-)
+from services.emissions_calculator import co2_calculator_command
 from handlers.menu import handle_main_menu, back_to_menu_command, back_to_menu_callback
 from handlers.speech_handler import handle_voice
 from handlers.ama_helpers import block_commands_during_ama
@@ -142,7 +137,6 @@ def setup_handlers():
             GREENS_INPUT:      [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_greens_input)],
             ML_CROP_SELECTION: [CallbackQueryHandler(handle_ml_crop_selection)],
             ML_GREENS_INPUT:   [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_ml_greens_input)],
-            CO2_FOOD_WASTE_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_food_waste_input)],
             COMPOST_HELPER_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, compost_helper_input),
                 CallbackQueryHandler(handle_main_menu, pattern="^back_to_menu$")
@@ -173,8 +167,7 @@ def setup_handlers():
     application.add_handler(CommandHandler("profile", profile_command))
     application.add_handler(CommandHandler(["back", "menu"], back_to_menu_command))
     
-    # CO2 calculator callback handlers
-    application.add_handler(CallbackQueryHandler(handle_co2_callback, pattern="^co2_"))
+    # Note: CO2 callbacks (co2_personal, co2_global) are now handled by the main menu handler
 
     # Voice handler
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
