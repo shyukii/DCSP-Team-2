@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 # Removed unused imports: EmissionsCalculator, FeedCalculator
 from services.ML_input import MLCompostRecommendation
 from services.extraction_timing import CompostProcessCalculator
-from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION, FEEDING_LOG_INPUT
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION, FEEDING_LOG_INPUT, PLANT_MOISTURE_INPUT
 from services.database import db
 from handlers.menu import show_main_menu
 from utils.message_utils import get_cached_user_data
@@ -700,6 +700,25 @@ async def handle_view_logs(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     username = context.user_data.get("username") or context.user_data.get("login_username")
     return await show_main_menu(query, context, username)
 
+async def watering_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle /watering command - direct access to plant moisture projection"""
+    telegram_id = update.effective_user.id
+    user_data = get_cached_user_data(telegram_id, context)
+    
+    if not user_data:
+        await update.message.reply_text("Please /start to login first.")
+        return
+    
+    await update.message.reply_text(
+        "💧 **Plant Moisture Projection**\n\n"
+        "📏 Using your soil moisture meter, please measure your plant's current moisture percentage.\n\n"
+        "Enter the moisture percentage (0-100):\n"
+        "_Example_: `45` for 45% moisture",
+        parse_mode="Markdown"
+    )
+    
+    return PLANT_MOISTURE_INPUT
+
 async def back_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     Handle 'back' intent (e.g. from voice).
@@ -773,3 +792,67 @@ async def compost_helper_input(update, context):
 
     # return to main menu
     return await show_main_menu(update, context, context.user_data["username"])
+
+async def handle_plant_moisture_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle plant moisture percentage input and generate projections"""
+    try:
+        moisture_input = update.message.text.strip()
+        
+        # Import the plant moisture service
+        from services.plant_moisture import PlantMoistureProjection
+        moisture_service = PlantMoistureProjection()
+        
+        # Validate input
+        is_valid, moisture_value = moisture_service.validate_moisture_percentage(moisture_input)
+        
+        if not is_valid:
+            await update.message.reply_text(
+                "❌ Please enter a valid moisture percentage between 0 and 100.\n"
+                "Examples: `45`, `67%`, `32.5`\n\n"
+                "Please try again:"
+            )
+            return PLANT_MOISTURE_INPUT
+        
+        # Generate moisture projection
+        projection_data = moisture_service.generate_moisture_projection(moisture_value)
+        
+        # Create dashboard message
+        dashboard_text = f"💧 **Plant Moisture Dashboard**\n\n"
+        dashboard_text += f"📊 **Current Status:**\n"
+        dashboard_text += f"• Current moisture: {moisture_value}%\n"
+        dashboard_text += f"• {projection_data['next_watering_day']}\n\n"
+        
+        dashboard_text += f"📅 **7-Day Projection:**\n"
+        for proj in projection_data['projections'][:5]:  # Show first 5 days
+            status_emoji = {"critical": "🚨", "low": "⚠️", "moderate": "📊", "good": "✅"}
+            emoji = status_emoji.get(proj['status'], "📊")
+            dashboard_text += f"{emoji} {proj['day_name']}: {proj['moisture_percentage']}%\n"
+        
+        dashboard_text += f"\n🎯 **Recommendation:**\n"
+        dashboard_text += f"{projection_data['overall_recommendation']}\n\n"
+        
+        # Add care tips
+        tips = moisture_service.get_moisture_tips(moisture_value)
+        dashboard_text += f"💡 **Care Tips:**\n{tips}"
+        
+        # Create back to menu button
+        keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(
+            dashboard_text,
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        
+        # Return to main menu state
+        return MAIN_MENU
+        
+    except Exception as e:
+        logger.error(f"Error processing plant moisture input: {e}")
+        await update.message.reply_text(
+            "❌ An error occurred while processing your moisture data. Please try again."
+        )
+        # Return to main menu on error
+        username = context.user_data.get("username") or context.user_data.get("login_username")
+        return await show_main_menu(update, context, username)

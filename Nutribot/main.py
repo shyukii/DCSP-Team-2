@@ -44,6 +44,7 @@ from constants import (
     ML_GREENS_INPUT,
     SCAN_TYPE_SELECTION,
     FEEDING_LOG_INPUT,
+    PLANT_MOISTURE_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -74,6 +75,8 @@ from handlers.commands import (
     compost_helper_input,
     handle_scan_type_choice,
     handle_feeding_log_input,
+    handle_plant_moisture_input,
+    watering_command,
 )
 from services.emissions_calculator import co2_calculator_command
 from handlers.menu import handle_main_menu, back_to_menu_command, back_to_menu_callback
@@ -150,6 +153,10 @@ def setup_handlers():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_feeding_log_input),
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
             ],
+            PLANT_MOISTURE_INPUT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_plant_moisture_input),
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel), CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")],
         name="nutribot_conversation",
@@ -165,6 +172,7 @@ def setup_handlers():
     application.add_handler(CommandHandler("care", care_command))
     application.add_handler(CommandHandler("co2", co2_calculator_command))
     application.add_handler(CommandHandler("profile", profile_command))
+    application.add_handler(CommandHandler("watering", watering_command))
     application.add_handler(CommandHandler(["back", "menu"], back_to_menu_command))
     
     # Note: CO2 callbacks (co2_personal, co2_global) are now handled by the main menu handler

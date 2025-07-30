@@ -27,6 +27,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
          InlineKeyboardButton("💩 Compost Extraction", callback_data="compost_extract")],
         [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
+        [InlineKeyboardButton("💧 Plant Watering", callback_data="plant_watering")],
         [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
         [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
         [InlineKeyboardButton("❓ Help",         callback_data="help_commands")]
@@ -362,6 +363,22 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         context.user_data["scan_mode"] = "menu"  # Flag to indicate menu scan vs direct scan
         return SCAN_TYPE_SELECTION
+
+    if choice == "plant_watering":
+        # Create back to menu button
+        kb = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(kb)
+        
+        await q.edit_message_text(
+            "💧 **Plant Moisture Projection**\n\n"
+            "📏 Using your soil moisture meter, please measure your plant's current moisture percentage.\n\n"
+            "Enter the moisture percentage (0-100):\n"
+            "_Example_: `45` for 45% moisture",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        from constants import PLANT_MOISTURE_INPUT
+        return PLANT_MOISTURE_INPUT
 
     # profile updates
 

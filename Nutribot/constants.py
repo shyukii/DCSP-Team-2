@@ -22,6 +22,7 @@ class ConversationState(IntEnum):
     ML_GREENS_INPUT = 16
     SCAN_TYPE_SELECTION = 17
     FEEDING_LOG_INPUT = 18
+    PLANT_MOISTURE_INPUT = 19
 
 # Export for backward compatibility
 AMA = ConversationState.AMA
@@ -43,6 +44,7 @@ ML_CROP_SELECTION = ConversationState.ML_CROP_SELECTION
 ML_GREENS_INPUT = ConversationState.ML_GREENS_INPUT
 SCAN_TYPE_SELECTION = ConversationState.SCAN_TYPE_SELECTION
 FEEDING_LOG_INPUT = ConversationState.FEEDING_LOG_INPUT
+PLANT_MOISTURE_INPUT = ConversationState.PLANT_MOISTURE_INPUT
 
 # Bot messages
 WELCOME_MESSAGE = """👋 *Hi there! I'm NutriBot, your friendly composting and plant care assistant *🌱♻️
@@ -82,6 +84,7 @@ HELP_MESSAGE = """Here is what I can do for you:
 /input  — Get food & water guidance  
 /scan   — Upload compost or plant image for analysis  
 /care   — Get compost or plant care advice  
+/watering — Plant moisture projection & watering schedule
 /co2    — View your CO₂ emissions impact  
 /profile— Update your compost setup  
 /help   — Show this commands list
@@ -103,4 +106,5 @@ KEYWORD_TRIGGERS = {
     "compost_extract":["compost extraction", "estimate compost", "compost helper","compost readiness","ready","extract","extract my compost"],
     "image_scan":     ["image scan", "analyse image", "scan compost"],
     "help_commands":  ["help commands", "list commands", "what can i do"],
+    "watering":       ["watering", "plant watering", "moisture", "plant moisture", "water my plant"],
 }

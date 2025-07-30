@@ -9,5 +9,6 @@ COMMANDS = [
     BotCommand("co2", "Estimate CO2 impact"),
     BotCommand("profile", "View or edit profile"),
     BotCommand("back", "Return to main menu"),
+    BotCommand("watering", "Plant moisture projection"),
     BotCommand("compost_helper", "Get compost yield estimate"),
 ]
