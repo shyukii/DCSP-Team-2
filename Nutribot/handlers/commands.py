@@ -3,9 +3,8 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 # from services.clarifai_segmentation import ClarifaiImageSegmentation  # Lazy loaded when needed
-from services.emissions_calculator import EmissionsCalculator
-from services.feeding_input import FeedCalculator
-from services.ML_input import MLCompostRecommendation, get_available_crop_types
+# Removed unused imports: EmissionsCalculator, FeedCalculator
+from services.ML_input import MLCompostRecommendation
 from services.extraction_timing import CompostProcessCalculator
 from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION
 from services.database import db
@@ -14,7 +13,7 @@ from utils.message_utils import get_cached_user_data
 
 # Remove global clarifai instantiation - use lazy loading instead
 logger = logging.getLogger(__name__)
-feed_calculator = FeedCalculator()
+# Removed unused feed_calculator instance
 ml_recommender = MLCompostRecommendation()
 
 
@@ -55,7 +54,7 @@ async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     await update.message.reply_text(
         "🥕 **Food & Water Input Guide**\n\n"
         "Choose your recommendation method:\n\n"
-        "🧠 **ML Smart**: Crop-specific recommendations based on historical data\n"
+        "🧠 **ML Smart**: Crop-specific recommendations with soil volume-based water calculations\n"
         "🧮 **Basic**: Simple ratio-based calculations\n\n"
         "Which would you prefer?",
         parse_mode="Markdown",
@@ -72,7 +71,7 @@ async def handle_calculator_choice(update: Update, context: ContextTypes.DEFAULT
     
     if query.data == "use_ml_calculator":
         # Show crop selection for ML recommendations
-        crops = get_available_crop_types()
+        crops = ml_recommender.get_available_crop_types()
         keyboard = []
         
         # Create buttons for each crop type (2 per row)
@@ -89,7 +88,7 @@ async def handle_calculator_choice(update: Update, context: ContextTypes.DEFAULT
         await query.edit_message_text(
             "🧠 **ML Smart Recommendations**\n\n"
             "Select your target crop type for personalised recommendations:\n\n"
-            "Each crop has different optimal C:N ratios and moisture requirements based on our sensor data analysis.",
+            "Each crop has different optimal C:N ratios based on ML analysis.",
             parse_mode="Markdown",
             reply_markup=reply_markup
         )
@@ -131,8 +130,25 @@ async def handle_greens_input(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
             return GREENS_INPUT
         
-        # Calculate optimal ratios using the FeedCalculator
-        recommendations = feed_calculator.get_feeding_recommendations(greens_weight)
+        # Calculate basic ratios (simple 3:1 brown:green ratio)
+        greens_grams = greens_weight * 1000
+        browns_grams = greens_grams * 3  # Basic 3:1 ratio
+        water_ml = (greens_grams + browns_grams) * 0.6  # 60% moisture
+        
+        recommendations = f"""🧮 **Basic Calculator Results**
+
+🔢 **For {greens_weight}kg of greens:**
+
+🌿 **Greens:** {greens_weight}kg (your input)
+🍂 **Browns:** {browns_grams/1000:.1f}kg
+💧 **Water:** {water_ml/1000:.1f}L
+
+📊 **Basic Guidelines:**
+• 3:1 brown to green ratio
+• ~60% moisture content
+• Turn weekly for best results
+
+💡 *For crop-specific recommendations, try ML Smart mode!*"""
         
         # Create keyboard for actions
         keyboard = [
@@ -171,34 +187,27 @@ async def handle_ml_crop_selection(update: Update, context: ContextTypes.DEFAULT
         # Extract crop type from callback data
         crop_key = query.data.replace("crop_", "").replace("_", " ").title()
         
-        # Convert back to proper crop names
-        crop_mapping = {
-            "Leafy Greens": "Leafy Greens",
-            "Fruit Veggies": "Fruit Veggies", 
-            "Root Vegetables": "Root Vegetables",
-            "Herbs": "Herbs",
-            "Flowering Plants": "Flowering Plants",
-            "Woody Plants": "Woody Plants"
-        }
-        
-        selected_crop = crop_mapping.get(crop_key)
-        if not selected_crop:
+        # Validate crop using ML model
+        available_crops = ml_recommender.get_available_crop_types()
+        if crop_key not in available_crops:
             await query.edit_message_text("❌ Invalid crop selection. Please try again.")
             return ML_CROP_SELECTION
+        
+        selected_crop = crop_key
         
         # Store selected crop in context
         context.user_data["selected_crop"] = selected_crop
         
         await query.edit_message_text(
-            f"🌱 **ML Recommendations for {selected_crop}**\n\n"
+            f"🧠 **ML Recommendations for {selected_crop}**\n\n"
             f"Perfect choice! Now please enter the weight of your greens in kilograms.\n\n"
             f"This will provide recommendations specifically optimised for {selected_crop.lower()} "
-            f"based on historical sensor data.\n\n"
+            f"using your registered soil volume for water calculations.\n\n"
             f"Examples:\n"
             f"• 0.03 (for 30g)\n"
             f"• 0.5 (for 500g)\n"
             f"• 1.2 (for 1.2kg)\n\n"
-            f"💡 *Tip: Even small amounts work - the ML model will scale appropriately*",
+            f"💡 *Tip: Water amount will be calculated as 50% of your soil volume*",
             parse_mode="Markdown"
         )
         return ML_GREENS_INPUT
@@ -234,10 +243,15 @@ async def handle_ml_greens_input(update: Update, context: ContextTypes.DEFAULT_T
         # Convert kg to grams for ML model
         greens_weight_grams = greens_weight_kg * 1000
         
+        # Get user soil volume for water calculation
+        telegram_id = update.effective_user.id
+        user_data = get_cached_user_data(telegram_id, context)
+        soil_volume = user_data.get("soil_volume", 0) if user_data else 0
+        
         # Get ML recommendation
         try:
             ml_recommendation = ml_recommender.get_formatted_recommendation(
-                greens_weight_grams, selected_crop
+                greens_weight_grams, selected_crop, soil_volume
             )
             
             # Create keyboard for actions
@@ -267,7 +281,24 @@ async def handle_ml_greens_input(update: Update, context: ContextTypes.DEFAULT_T
                 f"Error: {str(ml_error)}"
             )
             
-            basic_recommendation = feed_calculator.get_feeding_recommendations(greens_weight_kg)
+            # Basic calculator fallback
+            greens_grams = greens_weight_kg * 1000
+            browns_grams = greens_grams * 3  # Basic 3:1 ratio
+            water_ml = (greens_grams + browns_grams) * 0.6  # 60% moisture
+            
+            basic_recommendation = f"""🧮 **Basic Calculator (Fallback)**
+
+🔢 **For {greens_weight_kg}kg of greens:**
+
+🌿 **Greens:** {greens_weight_kg}kg
+🍂 **Browns:** {browns_grams/1000:.1f}kg
+💧 **Water:** {water_ml/1000:.1f}L
+
+📊 **Basic Guidelines:**
+• 3:1 brown to green ratio
+• ~60% moisture content
+
+💡 *Try again later for ML recommendations!*"""
             
             keyboard = [
                 [InlineKeyboardButton("🔄 Try Again", callback_data="use_ml_calculator")],
