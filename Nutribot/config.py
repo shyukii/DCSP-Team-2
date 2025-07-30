@@ -33,6 +33,10 @@ class Config:
     FFMPEG_PATH: str = os.getenv("FFMPEG_PATH", r"C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe")
     TEMP_AUDIO_DIR: str = "temp/"
     
+    # Webhook Configuration
+    WEBHOOK_URL: str = os.getenv("WEBHOOK_URL")
+    WEBHOOK_PORT: int = int(os.getenv("WEBHOOK_PORT", "8000"))
+    
     # API Timeouts & Limits
     HTTP_TIMEOUT: int = 30
     MAX_AUDIO_DURATION: int = 120

@@ -88,20 +88,32 @@ from handlers.ama_helpers import block_commands_during_ama
 async def set_bot_commands(application):
     await application.bot.set_my_commands(COMMANDS)
 
-def main() -> None:
-    # Configure logging
-    logging.basicConfig(
-        format=Config.LOGGING_FORMAT,
-        level=logging.INFO,
-    )
-    logger = logging.getLogger(__name__)
-
-    # Build the application
-    Config.validate_required_env_vars()
-    application = Application.builder().token(Config.TELEGRAM_TOKEN).post_init(set_bot_commands).build()
-
+async def setup_webhook(application):
+    """Set up webhook for the bot"""
+    await application.initialize()
+    await application.start()
     
+    # Set webhook URL
+    webhook_url = f"{Config.WEBHOOK_URL}/webhook"
+    await application.bot.set_webhook(url=webhook_url)
+    
+    print(f"Webhook set to: {webhook_url}")
+    print(f"Bot is ready to receive updates via webhook")
 
+# Global application instance
+application = None
+
+def create_application():
+    """Create and configure the application"""
+    Config.validate_required_env_vars()
+    return Application.builder().token(Config.TELEGRAM_TOKEN).post_init(set_bot_commands).build()
+
+def setup_handlers():
+    """Set up all conversation and command handlers"""
+    global application
+    if application is None:
+        return
+        
     # Conversation flow: auth → setup → main menu → AMA
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start_conversation)],
@@ -116,9 +128,9 @@ def main() -> None:
             MAIN_MENU:         [
                 CallbackQueryHandler(handle_main_menu),
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"), 
-                CommandHandler("input", input_command),  # Add /input command support in main menu
-                CommandHandler(["back", "menu"], back_to_menu_command),  # Add /back command support
-                MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
+                CommandHandler("input", input_command),
+                CommandHandler(["back", "menu"], back_to_menu_command),
+                MessageHandler(filters.PHOTO, handle_photo)
             ],
             AMA:               [CommandHandler(["back","menu"], back_to_menu_command),
                                 MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response),
@@ -134,7 +146,7 @@ def main() -> None:
             ],
             SCAN_TYPE_SELECTION: [
                 CallbackQueryHandler(handle_scan_type_choice),
-                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),  # Add this line
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),
                 CommandHandler(["back", "menu"], back_to_menu_command)
             ],
         },
@@ -145,11 +157,9 @@ def main() -> None:
     # Add the conversation handler
     application.add_handler(conv_handler)
 
-    # Non-conversation command handlers (checked before conv_handler)
+    # Non-conversation command handlers
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
-    # Remove standalone input command - should work through conversation flow only
-    # application.add_handler(CommandHandler("input", input_command))  
     application.add_handler(CommandHandler("scan", scan_command))
     application.add_handler(CommandHandler("care", care_command))
     application.add_handler(CommandHandler("co2", co2_calculator_command))
@@ -159,14 +169,33 @@ def main() -> None:
     # CO2 calculator callback handlers
     application.add_handler(CallbackQueryHandler(handle_co2_callback, pattern="^co2_"))
 
-    # Voice handler (keep this outside conversation as it doesn't need state)
+    # Voice handler
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
-    # Fallback direct /start (when not in a conversation)
+    # Fallback direct /start
     application.add_handler(CommandHandler("start", direct_start_command))
 
-    # Start polling
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+def main() -> None:
+    # Configure logging
+    logging.basicConfig(
+        format=Config.LOGGING_FORMAT,
+        level=logging.INFO,
+    )
+    logger = logging.getLogger(__name__)
+
+    # Build the application
+    global application
+    application = create_application()
+    
+    # Set up all handlers
+    setup_handlers()
+
+    # Set up webhook if URL is provided
+    if Config.WEBHOOK_URL:
+        asyncio.run(setup_webhook(application))
+    else:
+        # Fallback to polling for local development
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
