@@ -68,7 +68,7 @@ def transcribe_audio(wav_path: str) -> str:
                 "audio": file_upload.urls["get"],  # Use the URL from the File object
                 "model": "base",           
                 "language": "auto",        
-                "translate": True,         
+                "translate": False,         
                 "temperature": 0,          
                 "suppress_tokens": "-1",   
                 "initial_prompt": "",      

@@ -71,7 +71,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-        await update.message.reply_text(f"🗣️ You said (in English): “{transcription}”")
+        await update.message.reply_text(f"🗣️ You said: “{transcription}”")
 
         if not context.user_data.get("username"):
             await update.message.reply_text(

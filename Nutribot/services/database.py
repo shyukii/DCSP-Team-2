@@ -97,8 +97,15 @@ class DatabaseService:
             Created feeding log entry or None if failed
         """
         try:
+            # Get the user to retrieve the username
+            user = self.get_user_by_telegram_id(telegram_id)
+            if not user:
+                logger.error(f"User not found for telegram_id {telegram_id}")
+                return None
+            
             response = self.supabase.table('feeding_logs').insert({
                 'telegram_id': telegram_id,
+                'username': user['username'],  # Add username to the feeding log
                 'greens': greens,
                 'browns': browns,
                 'water': water
