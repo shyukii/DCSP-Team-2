@@ -143,6 +143,15 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice in ["scan_compost", "scan_plant"]:
         from handlers.commands import handle_scan_type_choice
         return await handle_scan_type_choice(update, context)
+    
+    # Handle feeding log callbacks
+    if choice == "log_feeding":
+        from handlers.commands import handle_log_feeding_choice
+        return await handle_log_feeding_choice(update, context)
+    
+    if choice == "view_logs":
+        from handlers.commands import handle_view_logs
+        return await handle_view_logs(update, context)
 
     if choice == "start_llama":
         await q.edit_message_text(

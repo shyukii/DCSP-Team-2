@@ -44,6 +44,7 @@ from constants import (
     ML_CROP_SELECTION,
     ML_GREENS_INPUT,
     SCAN_TYPE_SELECTION,
+    FEEDING_LOG_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -73,6 +74,7 @@ from handlers.commands import (
     compost_helper_start,
     compost_helper_input,
     handle_scan_type_choice,
+    handle_feeding_log_input,
 )
 from services.emissions_calculator import (
     co2_calculator_command,
@@ -128,6 +130,7 @@ def setup_handlers():
             MAIN_MENU:         [
                 CallbackQueryHandler(handle_main_menu),
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"), 
+                CallbackQueryHandler(handle_calculator_choice, pattern="^(use_ml_calculator|use_calculator)$"),
                 CommandHandler("input", input_command),
                 CommandHandler(["back", "menu"], back_to_menu_command),
                 MessageHandler(filters.PHOTO, handle_photo)
@@ -148,6 +151,10 @@ def setup_handlers():
                 CallbackQueryHandler(handle_scan_type_choice),
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),
                 CommandHandler(["back", "menu"], back_to_menu_command)
+            ],
+            FEEDING_LOG_INPUT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_feeding_log_input),
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel), CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")],

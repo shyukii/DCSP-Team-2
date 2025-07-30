@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 # Removed unused imports: EmissionsCalculator, FeedCalculator
 from services.ML_input import MLCompostRecommendation
 from services.extraction_timing import CompostProcessCalculator
-from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION, FEEDING_LOG_INPUT
 from services.database import db
 from handlers.menu import show_main_menu
 from utils.message_utils import get_cached_user_data
@@ -152,6 +152,7 @@ async def handle_greens_input(update: Update, context: ContextTypes.DEFAULT_TYPE
         
         # Create keyboard for actions
         keyboard = [
+            [InlineKeyboardButton("📝 Log Actual Feeding", callback_data="log_feeding")],
             [InlineKeyboardButton("🔄 Calculate Again", callback_data="use_calculator")],
             [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
         ]
@@ -256,6 +257,7 @@ async def handle_ml_greens_input(update: Update, context: ContextTypes.DEFAULT_T
             
             # Create keyboard for actions
             keyboard = [
+                [InlineKeyboardButton("📝 Log Actual Feeding", callback_data="log_feeding")],
                 [InlineKeyboardButton("🧠 Try Different Crop", callback_data="use_ml_calculator")],
                 [InlineKeyboardButton("🧮 Try Basic Calculator", callback_data="use_calculator")],
                 [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
@@ -567,6 +569,136 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(kb)
     )
+
+async def handle_log_feeding_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle the 'Log Actual Feeding' button click"""
+    query = update.callback_query
+    await query.answer()
+    
+    # Send a new message instead of editing the recommendation
+    await update.effective_message.reply_text(
+        "📝 **Log Your Actual Feeding**\n\n"
+        "Please enter the actual amounts you added to your compost in this format:\n"
+        "`greens;browns;water`\n\n"
+        "**Example:** `30;54;50`\n"
+        "• Greens: 30g\n"
+        "• Browns: 54g  \n"
+        "• Water: 50ml\n\n"
+        "💡 *Enter the values separated by semicolons*",
+        parse_mode="Markdown"
+    )
+    
+    return FEEDING_LOG_INPUT
+
+async def handle_feeding_log_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle the actual feeding amounts input"""
+    try:
+        # Parse the input
+        input_text = update.message.text.strip()
+        parts = input_text.split(';')
+        
+        if len(parts) != 3:
+            await update.message.reply_text(
+                "❌ Please enter three values separated by semicolons.\n"
+                "Format: `greens;browns;water`\n"
+                "Example: `30;54;50`"
+            )
+            return FEEDING_LOG_INPUT
+        
+        try:
+            greens = float(parts[0])
+            browns = float(parts[1])
+            water = float(parts[2])
+        except ValueError:
+            await update.message.reply_text(
+                "❌ Please enter valid numbers.\n"
+                "Format: `greens;browns;water`\n" 
+                "Example: `30;54;50`"
+            )
+            return FEEDING_LOG_INPUT
+        
+        # Validate values are positive
+        if greens < 0 or browns < 0 or water < 0:
+            await update.message.reply_text(
+                "❌ Please enter positive values only.\n"
+                "All amounts should be greater than or equal to 0."
+            )
+            return FEEDING_LOG_INPUT
+        
+        # Save to database
+        telegram_id = update.effective_user.id
+        feeding_log = db.create_feeding_log(telegram_id, greens, browns, water)
+        
+        if feeding_log:
+            await update.message.reply_text(
+                f"✅ **Feeding Logged Successfully!**\n\n"
+                f"📊 **Your Entry:**\n"
+                f"🌿 Greens: {greens}g\n"  
+                f"🍂 Browns: {browns}g\n"
+                f"💧 Water: {water}ml\n\n"
+                f"📅 Logged at: {feeding_log.get('created_at', 'just now')}\n\n"
+                f"Great job tracking your composting! 🌱",
+                parse_mode="Markdown"
+            )
+            
+            # Return to main menu
+            username = context.user_data.get("username") or context.user_data.get("login_username")
+            return await show_main_menu(update, context, username)
+        else:
+            await update.message.reply_text(
+                "❌ Failed to save feeding log. Please try again later."
+            )
+            # Return to main menu even on failure
+            username = context.user_data.get("username") or context.user_data.get("login_username")
+            return await show_main_menu(update, context, username)
+        
+    except Exception as e:
+        logger.error(f"Error processing feeding log input: {e}")
+        await update.message.reply_text(
+            "❌ An error occurred while saving your feeding log. Please try again."
+        )
+        # Return to main menu on error
+        username = context.user_data.get("username") or context.user_data.get("login_username")
+        return await show_main_menu(update, context, username)
+
+async def handle_view_logs(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle viewing recent feeding logs"""
+    query = update.callback_query
+    await query.answer()
+    
+    telegram_id = update.effective_user.id
+    logs = db.get_user_feeding_logs(telegram_id, limit=5)
+    
+    if not logs:
+        # Send new message instead of editing the recommendation
+        await update.effective_message.reply_text(
+            "📋 **No Feeding Logs Found**\n\n"
+            "You haven't logged any feedings yet.\n"
+            "Start tracking your compost inputs using the 📝 Log Feeding feature!",
+            parse_mode="Markdown"
+        )
+        # Return to main menu
+        username = context.user_data.get("username") or context.user_data.get("login_username")
+        return await show_main_menu(query, context, username)
+    
+    # Format the logs
+    log_text = "📋 **Your Recent Feeding Logs**\n\n"
+    for i, log in enumerate(logs, 1):
+        created_date = log.get('created_at', '')[:10] if log.get('created_at') else 'Unknown'
+        log_text += f"**{i}. {created_date}**\n"
+        log_text += f"🌿 Greens: {log.get('greens', 0)}g\n"
+        log_text += f"🍂 Browns: {log.get('browns', 0)}g\n" 
+        log_text += f"💧 Water: {log.get('water', 0)}ml\n\n"
+    
+    # Send new message instead of editing the recommendation
+    await update.effective_message.reply_text(
+        log_text,
+        parse_mode="Markdown"
+    )
+    
+    # Return to main menu
+    username = context.user_data.get("username") or context.user_data.get("login_username")
+    return await show_main_menu(query, context, username)
 
 async def back_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """

@@ -82,5 +82,48 @@ class DatabaseService:
             user.get('tank_volume') is not None,
             user.get('soil_volume') is not None
         ])
+    
+    def create_feeding_log(self, telegram_id: int, greens: float, browns: float, water: float) -> Optional[Dict[str, Any]]:
+        """
+        Create a new feeding log entry
+        
+        Args:
+            telegram_id: User's telegram ID
+            greens: Amount of greens added (in grams)
+            browns: Amount of browns added (in grams)  
+            water: Amount of water added (in ml)
+            
+        Returns:
+            Created feeding log entry or None if failed
+        """
+        try:
+            response = self.supabase.table('feeding_logs').insert({
+                'telegram_id': telegram_id,
+                'greens': greens,
+                'browns': browns,
+                'water': water
+            }).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Error creating feeding log for telegram_id {telegram_id}: {e}")
+            return None
+    
+    def get_user_feeding_logs(self, telegram_id: int, limit: int = 10) -> list:
+        """
+        Get recent feeding logs for a user
+        
+        Args:
+            telegram_id: User's telegram ID
+            limit: Number of recent logs to retrieve
+            
+        Returns:
+            List of feeding log entries
+        """
+        try:
+            response = self.supabase.table('feeding_logs').select("*").eq('telegram_id', telegram_id).order('created_at', desc=True).limit(limit).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"Error getting feeding logs for telegram_id {telegram_id}: {e}")
+            return []
 
 db = DatabaseService()
