@@ -79,7 +79,7 @@ from services.emissions_calculator import (
     handle_co2_callback,
     handle_food_waste_input,
 )
-from handlers.menu import handle_main_menu, back_to_menu_command
+from handlers.menu import handle_main_menu, back_to_menu_command, back_to_menu_callback
 from handlers.speech_handler import handle_voice
 from handlers.ama_helpers import block_commands_during_ama
 
@@ -100,6 +100,8 @@ def main() -> None:
     Config.validate_required_env_vars()
     application = Application.builder().token(Config.TELEGRAM_TOKEN).post_init(set_bot_commands).build()
 
+    
+
     # Conversation flow: auth → setup → main menu → AMA
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start_conversation)],
@@ -113,6 +115,7 @@ def main() -> None:
             SOIL_VOLUME:       [MessageHandler(filters.TEXT & ~filters.COMMAND, soil_volume)],
             MAIN_MENU:         [
                 CallbackQueryHandler(handle_main_menu),
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"), 
                 CommandHandler("input", input_command),  # Add /input command support in main menu
                 CommandHandler(["back", "menu"], back_to_menu_command),  # Add /back command support
                 MessageHandler(filters.PHOTO, handle_photo)  # Add photo handling to MAIN_MENU state
@@ -131,10 +134,11 @@ def main() -> None:
             ],
             SCAN_TYPE_SELECTION: [
                 CallbackQueryHandler(handle_scan_type_choice),
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),  # Add this line
                 CommandHandler(["back", "menu"], back_to_menu_command)
             ],
         },
-        fallbacks=[CommandHandler("cancel", cancel)],
+        fallbacks=[CommandHandler("cancel", cancel), CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")],
         name="nutribot_conversation",
     )
 

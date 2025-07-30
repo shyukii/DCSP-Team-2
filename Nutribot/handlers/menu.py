@@ -56,6 +56,20 @@ async def back_to_menu_command(update: Update, context: ContextTypes.DEFAULT_TYP
     # Call the existing menu (no username arg)
     return await show_main_menu(update, context)
 
+async def back_to_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle back to menu callback queries"""
+    query = update.callback_query
+    await query.answer()
+    
+    # Get username from context
+    username = context.user_data.get("username") or context.user_data.get("login_username")
+    if not username:
+        await query.edit_message_text("🔒 Please /start and login first.")
+        return
+    
+    # Show main menu
+    return await show_main_menu(update, context, username)
+
 async def handle_photo_from_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle photo processing when user sends image after selecting image_scan from menu"""
     user = context.user_data.get("username")
@@ -294,6 +308,12 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return MAIN_MENU
 
     if choice == "back_to_menu":
+        # Clear any temporary states
+        context.user_data.pop("scan_mode", None)
+        context.user_data.pop("scan_type", None)
+        context.user_data.pop("expecting_image", None)
+        context.user_data.pop("selected_crop", None)
+        
         return await show_main_menu(update, context, user)
 
     # fallback for unimplemented

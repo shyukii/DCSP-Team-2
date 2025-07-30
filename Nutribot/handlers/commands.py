@@ -326,6 +326,16 @@ async def handle_scan_type_choice(update: Update, context: ContextTypes.DEFAULT_
     query = update.callback_query
     await query.answer()
     
+    # Handle back_to_menu first
+    if query.data == "back_to_menu":
+        from handlers.menu import show_main_menu
+        username = context.user_data.get("username") or context.user_data.get("login_username")
+        # Clear scan states
+        context.user_data.pop("scan_mode", None)
+        context.user_data.pop("scan_type", None)
+        context.user_data.pop("expecting_image", None)
+        return await show_main_menu(update, context, username)
+    
     if query.data == "scan_compost":
         # Set scan type to compost
         context.user_data["scan_type"] = "compost"
