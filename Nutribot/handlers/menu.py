@@ -24,11 +24,11 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     user_data  = get_cached_user_data(telegram_id, context)
 
     kb = [
-        [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed"),
-         InlineKeyboardButton("💩 Compost Extraction", callback_data="compost_extract")],
-        [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
-        [InlineKeyboardButton("💧 Plant Watering", callback_data="plant_watering")],
+        [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed")],
+        [InlineKeyboardButton("💩 Compost Extraction", callback_data="compost_extract")],
         [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
+        [InlineKeyboardButton("💧 Plant Watering", callback_data="plant_watering")],
+        [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
         [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
         [InlineKeyboardButton("❓ Help",         callback_data="help_commands")]
     ]
