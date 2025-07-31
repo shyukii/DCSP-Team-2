@@ -1,332 +1,378 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-          <Leaf class="text-green-600" :size="40" />
-          CO₂E Savings Dashboard
-          <Globe class="text-blue-600" :size="40" />
-        </h1>
-        <p v-if="selectedUser" class="text-xl text-gray-700 mb-2">
-          Viewing <span class="font-semibold text-green-600">{{ selectedUser }}</span>'s environmental impact 👋
-        </p>
-        <p class="text-gray-600 text-lg">Track environmental impact through composting</p>
-        <p v-if="lastUpdated" class="text-sm text-gray-500 mt-2">
-          Last updated: {{ formatDateTime(lastUpdated) }}
-        </p>
-      </div>
+  <div class="flex h-screen bg-deepgreen text-cream overflow-hidden">
+    <div class="relative w-full flex">
+      <!-- Main Content Area -->
+      <div class="flex-1 p-5 flex flex-col space-y-4 h-full">
+        <!-- Header and User Selector -->
+        <div class="flex justify-between items-end">
+          <!-- Left: Title + Subtitle -->
+          <div class="flex flex-col justify-end leading-tight">
+            <h1 class="text-3xl font-bold">
+              <span class="text-sage">CO₂E Savings</span> Dashboard
+            </h1>
+            <p class="text-sm text-sage mt-1">
+              Track environmental impact through composting and monitor CO₂ savings across all users.
+            </p>
+          </div>
 
-      <!-- User Selector -->
-      <div class="max-w-md mx-auto mb-8">
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">Select a User</h2>
-          
-          <div class="relative">
+          <!-- Right: User Selector Dropdown -->
+          <div class="flex space-x-2 items-center">
             <select 
               v-model="selectedUser" 
               @change="onUserChange"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
+              class="bg-sage hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none min-w-48"
             >
-              <option value="">Choose a user...</option>
-              <optgroup label="Users with Composting Data" v-if="usersWithData.length > 0">
+              <option value="" class="bg-deepgreen text-cream">Choose a user...</option>
+              <optgroup label="Users with Data" v-if="usersWithData.length > 0" class="bg-deepgreen text-cream">
                 <option 
                   v-for="user in usersWithData" 
                   :key="user.username" 
                   :value="user.username"
+                  class="bg-deepgreen text-cream"
                 >
                   {{ user.username }} ({{ user.feedingLogsCount }} logs)
                 </option>
               </optgroup>
-              <optgroup label="Users without Data" v-if="usersWithoutData.length > 0">
+              <optgroup label="Users without Data" v-if="usersWithoutData.length > 0" class="bg-deepgreen text-cream">
                 <option 
                   v-for="user in usersWithoutData" 
                   :key="user.username" 
                   :value="user.username"
+                  class="bg-deepgreen text-cream"
                 >
                   {{ user.username }} (No data yet)
                 </option>
               </optgroup>
             </select>
-            <ChevronDown class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" :size="20" />
-          </div>
-          
-          <div v-if="userStats" class="mt-4 text-sm text-gray-600 text-center">
-            Total: {{ userStats.totalUsers }} users • 
-            With data: {{ userStats.usersWithData }} • 
-            Need to start: {{ userStats.usersWithoutData }}
+            
+            <button 
+              @click="selectedView = selectedView === 'personal' ? 'global' : 'personal'"
+              :class="[
+                'btn bg-sage hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none',
+                selectedView === 'global' ? 'bg-[#5E936C]' : ''
+              ]"
+            >
+              {{ selectedView === 'personal' ? 'Personal' : 'Global' }} View
+            </button>
+            
+            <button 
+              @click="fetchUserData"
+              :disabled="isLoading"
+              class="btn bg-sage hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none"
+            >
+              {{ isLoading ? 'Loading...' : 'Refresh' }}
+            </button>
           </div>
         </div>
-      </div>
-      <div v-if="isLoading" class="flex items-center justify-center min-h-96">
-        <div class="text-center">
-          <RefreshCw class="animate-spin text-green-600 mx-auto mb-4" :size="48" />
-          <p class="text-gray-600 text-lg">Loading your composting data...</p>
-        </div>
-      </div>
 
-      <!-- No Data State -->
-      <div v-else-if="!hasData" class="max-w-4xl mx-auto">
-        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
-          <div class="mb-6">
-            <Database class="mx-auto text-gray-400" :size="80" />
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex items-center justify-center flex-1">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sage mx-auto mb-4"></div>
+            <p class="text-sage text-lg">Loading composting data...</p>
           </div>
-          
-          <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-            No Composting Data Found
-          </h2>
-          
-          <p class="text-gray-600 text-lg mb-6">
-            Start tracking your environmental impact by logging your compost materials!
-          </p>
-          
-          <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
-            <div class="flex items-start">
-              <MessageCircle class="text-blue-500 mt-1 mr-3" :size="24" />
-              <div class="text-left">
-                <h3 class="text-blue-800 font-semibold mb-2">
-                  Hey {{ userData.username || 'there' }}! 👋 Here's how to get started:
-                </h3>
-                <ol class="text-blue-700 space-y-2">
-                  <li>1. Open your NutriBot Telegram chatbot</li>
-                  <li>2. Use the <strong>Compost Feeding</strong> feature</li>
-                  <li>3. Log your greens, browns, and water amounts</li>
-                  <li>4. Return here to see your CO₂ impact!</li>
+        </div>
+
+        <!-- No Data State -->
+        <div v-else-if="!hasData && selectedUser" class="flex items-center justify-center flex-1">
+          <div class="card bg-sage shadow-b max-w-2xl w-full">
+            <div class="card-body p-6 text-center">
+              <h2 class="text-xl font-semibold mb-4">No Composting Data Found</h2>
+              <p class="text-sm mb-6">{{ selectedUser }} hasn't started logging compost materials yet.</p>
+              
+              <div class="bg-deepgreen/20 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold mb-2">Getting Started:</h3>
+                <ol class="text-sm text-left space-y-1">
+                  <li>1. Open NutriBot Telegram chatbot</li>
+                  <li>2. Use the Compost Feeding feature</li>
+                  <li>3. Log greens, browns, and water amounts</li>
+                  <li>4. Return here to see CO₂ impact!</li>
                 </ol>
               </div>
+              
+              <div class="grid grid-cols-3 gap-4 text-xs">
+                <div class="bg-deepgreen/20 p-3 rounded">
+                  <div class="font-semibold">🥬 Greens</div>
+                  <div>Food scraps, fresh leaves</div>
+                </div>
+                <div class="bg-deepgreen/20 p-3 rounded">
+                  <div class="font-semibold">🍂 Browns</div>
+                  <div>Dry leaves, paper, cardboard</div>
+                </div>
+                <div class="bg-deepgreen/20 p-3 rounded">
+                  <div class="font-semibold">💧 Water</div>
+                  <div>Moisture for decomposition</div>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-sm">
-            <div class="bg-green-50 p-4 rounded-lg">
-              <div class="text-green-600 font-semibold mb-1">🥬 Greens</div>
-              <div class="text-green-700">Food scraps, fresh leaves</div>
-            </div>
-            <div class="bg-amber-50 p-4 rounded-lg">
-              <div class="text-amber-600 font-semibold mb-1">🍂 Browns</div>
-              <div class="text-amber-700">Dry leaves, paper, cardboard</div>
-            </div>
-            <div class="bg-blue-50 p-4 rounded-lg">
-              <div class="text-blue-600 font-semibold mb-1">💧 Water</div>
-              <div class="text-blue-700">Moisture for decomposition</div>
-            </div>
-          </div>
-
-          <button 
-            @click="fetchUserData"
-            :disabled="isLoading"
-            class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 mx-auto"
-          >
-            <RefreshCw :class="{'animate-spin': isLoading}" :size="16" />
-            {{ isLoading ? 'Checking for Data...' : 'Refresh Data' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Dashboard with Data -->
-      <div v-else-if="selectedUser && hasData">
-        <!-- View Toggle -->
-        <div class="flex justify-center mb-6">
-          <div class="bg-white rounded-lg p-1 shadow-md">
-            <button
-              @click="selectedView = 'personal'"
-              :class="[
-                'px-6 py-2 rounded-md transition-all flex items-center gap-2',
-                selectedView === 'personal' 
-                  ? 'bg-green-500 text-white shadow-md' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              ]"
-            >
-              <User :size="16" />
-              Personal Impact
-            </button>
-            <button
-              @click="selectedView = 'global'"
-              :class="[
-                'px-6 py-2 rounded-md transition-all flex items-center gap-2',
-                selectedView === 'global' 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              ]"
-            >
-              <Globe :size="16" />
-              Global Impact
-            </button>
           </div>
         </div>
 
-        <!-- Refresh Button -->
-        <div class="flex justify-center mb-6">
-          <button 
-            @click="fetchUserData"
-            :disabled="isLoading"
-            class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <RefreshCw :class="{'animate-spin': isLoading}" :size="16" />
-            Refresh Data
-          </button>
-        </div>
-
-        <!-- Personal View -->
-        <div v-if="selectedView === 'personal'">
-          <!-- Personal Stats Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-green-100 rounded-lg">
-                  <Leaf class="text-green-600" :size="24" />
-                </div>
-                <TrendingUp class="text-green-500" :size="20" />
+        <!-- No User Selected -->
+        <div v-else-if="!selectedUser" class="flex items-center justify-center flex-1">
+          <div class="card bg-sage shadow-b max-w-md w-full">
+            <div class="card-body p-6 text-center">
+              <h2 class="text-xl font-semibold mb-4">Select a User</h2>
+              <p class="text-sm">Choose a user from the dropdown above to view their CO₂ savings data.</p>
+              <div class="mt-4 text-xs text-sage">
+                <p>Total: {{ userStats?.totalUsers || 0 }} users</p>
+                <p>With data: {{ userStats?.usersWithData || 0 }} • Need to start: {{ userStats?.usersWithoutData || 0 }}</p>
               </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Total Food Waste</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ userData.totalFoodWasteKg.toFixed(2) }} kg</p>
-              <p class="text-xs text-gray-500 mt-1">{{ userData.feedingLogsCount }} feeding logs</p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-blue-100 rounded-lg">
-                  <Globe class="text-blue-600" :size="24" />
-                </div>
-                <TrendingUp class="text-blue-500" :size="20" />
-              </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">CO₂ Saved</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ userData.totalCO2SavedKg.toFixed(2) }} kg</p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-emerald-100 rounded-lg">
-                  <TreePine class="text-emerald-600" :size="24" />
-                </div>
-                <TrendingUp class="text-emerald-500" :size="20" />
-              </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Trees Equivalent</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ userData.treesEquivalent.toFixed(1) }}</p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-amber-100 rounded-lg">
-                  <Car class="text-amber-600" :size="24" />
-                </div>
-                <TrendingUp class="text-amber-500" :size="20" />
-              </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Car Miles Offset</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ userData.carMilesEquivalent.toFixed(0) }}</p>
             </div>
           </div>
+        </div>
 
-          <!-- Charts Row -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <!-- Monthly Trend Chart -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <h2 class="text-xl font-semibold text-gray-800 mb-4">Monthly CO₂ Savings Trend</h2>
-              <div class="h-80">
-                <!-- You'll need to install a Vue chart library like vue-chartjs or @vue/compat for charts -->
-                <div class="flex items-center justify-center h-full bg-gray-50 rounded-lg">
-                  <p class="text-gray-500">Chart Component - Install vue-chartjs or similar</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent Feeding Logs -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Feeding Logs</h2>
-              <div class="space-y-3">
-                <div 
-                  v-for="(log, index) in feedingLogs.slice(0, 5)" 
-                  :key="index"
-                  class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <div class="font-medium text-gray-800">{{ formatDate(log.created_at) }}</div>
-                    <div class="text-sm text-gray-600">
-                      🥬 {{ log.greens }}g • 🍂 {{ log.browns }}g • 💧 {{ log.water }}ml
+        <!-- Main Dashboard Content -->
+        <div v-else-if="hasData" class="flex flex-1 flex-col gap-4">
+          
+          <!-- Personal View -->
+          <div v-if="selectedView === 'personal'" class="flex flex-1 flex-col gap-4">
+            <!-- Top Section: KPI Cards + Monthly Trend Chart -->
+            <div class="flex gap-4 h-1/2">
+              <!-- 4 KPI Cards in 2x2 grid -->
+              <div class="grid grid-cols-2 grid-rows-2 gap-2.5 w-[45%]">
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Total Food Waste</h2>
+                      <p class="text-sm font-medium">{{ userData.totalFoodWasteKg.toFixed(2) }} kg</p>
+                      <p class="text-xs text-sage mt-1">{{ userData.feedingLogsCount }} feeding logs</p>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <div class="font-semibold text-green-600">{{ calculateLogFoodWaste(log).toFixed(2) }} kg</div>
-                    <div class="text-xs text-gray-500">{{ calculateLogCO2(log).toFixed(2) }} kg CO₂</div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">CO₂ Saved</h2>
+                      <p class="text-sm font-medium">{{ userData.totalCO2SavedKg.toFixed(2) }} kg</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Trees Equivalent</h2>
+                      <p class="text-sm font-medium">{{ userData.treesEquivalent.toFixed(1) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Car Miles Offset</h2>
+                      <p class="text-sm font-medium">{{ userData.carMilesEquivalent.toFixed(0) }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div class="mt-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                <p class="text-green-800 font-medium">🌱 Keep it up, {{ selectedUser }}!</p>
-                <p class="text-green-700 text-sm mt-1">
-                  Continue logging compost materials in the NutriBot to track environmental impact.
-                </p>
+
+              <!-- Right: Monthly Trend Chart -->
+              <div class="card bg-sage shadow-b flex-1">
+                <div class="card-body h-full p-3 flex flex-col">
+                  <h2 class="card-title text-xs font-semibold mb-2">Monthly CO₂ Savings Trend</h2>
+                  <div class="flex-1 h-full flex items-center justify-center">
+                    <p class="text-xs text-sage">Chart Component Integration Needed</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Section: Recent Logs + Impact Breakdown -->
+            <div class="flex gap-4 h-1/2">
+              <!-- Recent Feeding Logs -->
+              <div class="card bg-sage shadow-b w-[65%]">
+                <div class="card-body h-full p-3 flex flex-col">
+                  <h2 class="card-title text-xs font-semibold mb-2">Recent Feeding Logs</h2>
+                  <div class="flex-1 overflow-y-auto space-y-2">
+                    <div 
+                      v-for="(log, index) in feedingLogs.slice(0, 8)" 
+                      :key="index"
+                      class="bg-deepgreen/20 rounded p-2 flex justify-between items-center"
+                    >
+                      <div class="flex-1">
+                        <div class="text-xs font-medium">{{ formatDate(log.created_at) }}</div>
+                        <div class="text-xs text-sage">
+                          🥬 {{ log.greens }}g • 🍂 {{ log.browns }}g • 💧 {{ log.water }}ml
+                        </div>
+                      </div>
+                      <div class="text-right text-xs">
+                        <div class="font-medium">{{ calculateLogFoodWaste(log).toFixed(2) }} kg</div>
+                        <div class="text-sage">{{ calculateLogCO2(log).toFixed(2) }} kg CO₂</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-3 p-2 bg-deepgreen/20 rounded text-center">
+                    <p class="text-xs font-medium">🌱 Keep it up, {{ selectedUser }}!</p>
+                    <p class="text-xs text-sage">Continue logging to track environmental impact.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Impact Summary -->
+              <div class="card bg-sage shadow-b w-[35%]">
+                <div class="card-body h-full p-3 flex flex-col">
+                  <h2 class="card-title text-xs font-semibold mb-2">Environmental Impact</h2>
+                  <div class="flex-1 space-y-4">
+                    <div class="text-center">
+                      <div class="text-lg font-bold">{{ userData.totalCO2SavedKg.toFixed(1) }} kg</div>
+                      <div class="text-xs text-sage">Total CO₂ Saved</div>
+                    </div>
+                    
+                    <div class="space-y-2 text-xs">
+                      <div class="flex justify-between">
+                        <span>🌳 Trees planted equiv:</span>
+                        <span class="font-medium">{{ userData.treesEquivalent.toFixed(1) }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>🚗 Car miles offset:</span>
+                        <span class="font-medium">{{ userData.carMilesEquivalent.toFixed(0) }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>⛽ Petrol saved (L):</span>
+                        <span class="font-medium">{{ userData.petrolLitresEquivalent.toFixed(1) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="bg-deepgreen/20 rounded p-2 text-center">
+                      <div class="text-xs text-sage">Last updated:</div>
+                      <div class="text-xs font-medium">{{ lastUpdated ? formatDateTime(lastUpdated) : 'Never' }}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Global View -->
-        <div v-else class="space-y-8">
-          <!-- Global Stats Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-purple-100 rounded-lg">
-                  <User class="text-purple-600" :size="24" />
+          <!-- Global View -->
+          <div v-else class="flex flex-1 flex-col gap-4">
+            <!-- Top Section: Global KPI Cards + Global Trend -->
+            <div class="flex gap-4 h-1/2">
+              <!-- 5 Global KPI Cards -->
+              <div class="grid grid-cols-5 gap-2.5 w-[70%]">
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Total Users</h2>
+                      <p class="text-sm font-medium">{{ globalStats.totalUsers.toLocaleString() }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Global Food Waste</h2>
+                      <p class="text-sm font-medium">{{ globalStats.globalFoodWaste.toLocaleString() }} kg</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Global CO₂ Saved</h2>
+                      <p class="text-sm font-medium">{{ globalStats.globalCO2Saved.toLocaleString() }} kg</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Trees Planted Equiv.</h2>
+                      <p class="text-sm font-medium">{{ globalStats.treesPlanted.toFixed(0) }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card bg-sage shadow-b">
+                  <div class="card-body p-3 h-full flex flex-col justify-between">
+                    <div>
+                      <h2 class="card-title text-xs font-semibold">Avg per User</h2>
+                      <p class="text-sm font-medium">{{ globalStats.avgPerUser.toFixed(1) }} kg CO₂</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Total Users</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ globalStats.totalUsers.toLocaleString() }}</p>
-            </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-green-100 rounded-lg">
-                  <Leaf class="text-green-600" :size="24" />
+              <!-- Right: Global Impact Summary -->
+              <div class="card bg-sage shadow-b flex-1">
+                <div class="card-body h-full p-3 flex flex-col">
+                  <h2 class="card-title text-xs font-semibold mb-2">🌍 Collective Impact</h2>
+                  <div class="flex-1 flex flex-col justify-center text-center space-y-4">
+                    <div>
+                      <div class="text-2xl font-bold">{{ globalStats.globalCO2Saved.toLocaleString() }} kg</div>
+                      <div class="text-xs text-sage">Total CO₂ Saved by All Users</div>
+                    </div>
+                    
+                    <div class="space-y-2 text-xs">
+                      <div>Equivalent to planting <span class="font-bold">{{ globalStats.treesPlanted.toFixed(0) }}</span> trees</div>
+                      <div>Or taking a car off the road for <span class="font-bold">{{ (globalStats.globalCO2Saved / CAR_CO2_FACTOR / 365).toFixed(0) }}</span> days</div>
+                    </div>
+
+                    <div class="bg-deepgreen/20 rounded p-2">
+                      <div class="text-xs">{{ globalStats.totalUsers }} users making a difference</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Global Food Waste</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ globalStats.globalFoodWaste.toLocaleString() }} kg</p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-blue-100 rounded-lg">
-                  <Globe class="text-blue-600" :size="24" />
+            <!-- Bottom Section: User Distribution + Top Contributors -->
+            <div class="flex gap-4 h-1/2">
+              <!-- User Statistics -->
+              <div class="card bg-sage shadow-b w-[45%]">
+                <div class="card-body h-full p-3 flex flex-col">
+                  <h2 class="card-title text-xs font-semibold mb-2">User Distribution</h2>
+                  <div class="flex-1 flex flex-col justify-center space-y-4">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                      <div class="bg-deepgreen/20 rounded p-3">
+                        <div class="text-lg font-bold">{{ userStats?.usersWithData || 0 }}</div>
+                        <div class="text-xs text-sage">Active Users</div>
+                      </div>
+                      <div class="bg-deepgreen/20 rounded p-3">
+                        <div class="text-lg font-bold">{{ userStats?.usersWithoutData || 0 }}</div>
+                        <div class="text-xs text-sage">Need to Start</div>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-deepgreen/20 rounded p-2 text-center">
+                      <div class="text-xs">
+                        {{ ((userStats?.usersWithData || 0) / (userStats?.totalUsers || 1) * 100).toFixed(1) }}% 
+                        participation rate
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Global CO₂ Saved</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ globalStats.globalCO2Saved.toLocaleString() }} kg</p>
-            </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-emerald-100 rounded-lg">
-                  <TreePine class="text-emerald-600" :size="24" />
+              <!-- Top Contributors -->
+              <div class="card bg-sage shadow-b w-[55%]">
+                <div class="card-body h-full p-3 flex flex-col">
+                  <h2 class="card-title text-xs font-semibold mb-2">Top Contributors (CO₂ Saved)</h2>
+                  <div class="flex-1 overflow-y-auto space-y-2">
+                    <div 
+                      v-for="(user, index) in usersWithData.slice(0, 10)" 
+                      :key="user.username"
+                      class="bg-deepgreen/20 rounded p-2 flex justify-between items-center"
+                    >
+                      <div class="flex items-center gap-2">
+                        <div class="text-xs font-bold w-6 text-center">{{ index + 1 }}</div>
+                        <div class="text-xs font-medium">{{ user.username }}</div>
+                      </div>
+                      <div class="text-right text-xs">
+                        <div class="font-medium">{{ user.feedingLogsCount }} logs</div>
+                        <div class="text-sage">Estimated impact</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Trees Planted Equiv.</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ globalStats.treesPlanted.toFixed(0) }}</p>
             </div>
-
-            <div class="bg-white rounded-xl shadow-lg p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-amber-100 rounded-lg">
-                  <TrendingUp class="text-amber-600" :size="24" />
-                </div>
-              </div>
-              <h3 class="text-sm font-medium text-gray-600 mb-1">Avg per User</h3>
-              <p class="text-2xl font-bold text-gray-900">{{ globalStats.avgPerUser.toFixed(1) }} kg CO₂</p>
-            </div>
-          </div>
-
-          <!-- Global Impact Message -->
-          <div class="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl shadow-lg p-8 text-center text-white">
-            <h2 class="text-3xl font-bold mb-4">🌍 Collective Impact</h2>
-            <p class="text-xl mb-4">
-              Together, NutriBot users have saved over <strong>{{ globalStats.globalCO2Saved.toLocaleString() }} kg of CO₂</strong>
-            </p>
-            <p class="text-lg opacity-90">
-              That's equivalent to planting <strong>{{ globalStats.treesPlanted.toFixed(0) }} trees</strong> or 
-              taking a car off the road for <strong>{{ (globalStats.globalCO2Saved / CAR_CO2_FACTOR / 365).toFixed(0) }} days</strong>!
-            </p>
           </div>
         </div>
       </div>
@@ -336,17 +382,9 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import { 
-  Leaf, TreePine, Car, Droplets, TrendingUp, RefreshCw, 
-  Globe, User, MessageCircle, Database, ChevronDown 
-} from 'lucide-vue-next'
 
 export default {
   name: 'CO2ESavingsDashboard',
-  components: {
-    Leaf, TreePine, Car, Droplets, TrendingUp, RefreshCw,
-    Globe, User, MessageCircle, Database, ChevronDown
-  },
   setup() {
     // Reactive data
     const isLoading = ref(true)
@@ -561,5 +599,36 @@ export default {
 </script>
 
 <style scoped>
-/* Add any custom styles here if needed */
+/* Custom utilities matching your theme */
+.bg-deepgreen {
+  background-color: #0D2705;
+}
+
+.bg-sage {
+  background-color: #0B4F26;
+}
+
+.text-cream {
+  color: #F7FFF2;
+}
+
+.text-sage {
+  color: #D7EDBC;
+}
+
+.shadow-b {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Override select styling */
+select option {
+  background-color: #0D2705 !important;
+  color: #F7FFF2 !important;
+}
+
+select optgroup {
+  background-color: #0D2705 !important;
+  color: #D7EDBC !important;
+  font-weight: bold;
+}
 </style>
