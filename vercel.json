@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd Dashboards && npm run build",
-  "outputDirectory": "Dashboards/dist",
-  "installCommand": "cd Dashboards && npm install"
-}
