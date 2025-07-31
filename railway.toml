@@ -1,0 +1,8 @@
+[build]
+command = "cd Dashboards/backend && npm install"
+watchPatterns = ["Dashboards/backend/**"]
+
+[deploy]
+startCommand = "cd Dashboards/backend && node server.js"
+healthcheckPath = "/api/health"
+restartPolicyType = "ON_FAILURE"

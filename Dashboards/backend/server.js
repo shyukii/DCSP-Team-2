@@ -8,17 +8,18 @@ const PORT = process.env.PORT || 3001;
 // Import routes
 const apiRoutes = require('./routes/api');
 
-// Middleware
-const allowedOrigins = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:5173', 'http://localhost:3000', 'https://papas-princess.vercel.app'];
-
-console.log('🔧 CORS allowed origins:', allowedOrigins);
-console.log('🚀 CORS fix deployed - version 2');
+// Middleware - Explicit CORS configuration
+console.log('🚀 CORS fix deployed - version 3 - EXPLICIT CONFIG');
 
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:3000', 
+    'https://papas-princess.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
