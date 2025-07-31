@@ -4,3 +4,7 @@ command = "npm install"
 [deploy]
 startCommand = "node server.js"
 healthcheckPath = "/api/health"
+
+# Force redeploy trigger
+[experimental]
+configVersion = 2
