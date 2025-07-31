@@ -52,14 +52,7 @@
             <i class="fas fa-chart-area text-lg"></i>
             <span v-if="!isCollapsed">Historical</span>
           </div>
-        </router-link>
-
-        <div class="sidebar-link">
-          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
-            <i class="fas fa-sync text-lg"></i>
-            <span v-if="!isCollapsed">Refresh</span>
-          </div>
-        </div>
+        </router-link>    
       </transition-group>
     </nav>
   </aside>

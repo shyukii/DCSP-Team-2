@@ -8,7 +8,7 @@
           <!-- Left: Title + Subtitle -->
           <div class="flex flex-col justify-end leading-tight">
             <h1 class="text-3xl font-bold">
-              <span class="text-sage">CO₂E Savings</span> Dashboard
+              <span class="text-sage">CO₂E Savings</span> Impact
             </h1>
             <p class="text-sm text-sage mt-1">
               Track environmental impact through composting and monitor CO₂ savings across all users.
@@ -22,8 +22,13 @@
               v-if="selectedView === 'personal'"
               v-model="selectedUser" 
               @change="onUserChange"
-              class="bg-sage hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transition-all duration-300"
-              :style="{ width: `${calculateDropdownWidth(selectedUser)}px` }"
+              class="bg-sage hover:bg-[#5E936C] border-transparent text-white px-6 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer appearance-none bg-no-repeat bg-right pr-10"
+              :style="{ 
+                width: `${calculateDropdownWidth(selectedUser)}px`,
+                backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0iI0Y3RkZGMiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNS4yOTMgNy4yOTNhMSAxIDAgMDExLjQxNCAwTDEwIDEwLjU4NmwzLjI5My0zLjI5M2ExIDEgMCAxMTEuNDE0IDEuNDE0bC00IDRhMSAxIDAgMDEtMS40MTQgMGwtNC00YTEgMSAwIDAxMC0xLjQxNHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==)',
+                backgroundPosition: 'right 0.75rem center',
+                backgroundSize: '1rem'
+              }"
             >
               <option value="" class="bg-deepgreen text-cream">Choose a user...</option>
               <optgroup label="Users with Data" v-if="usersWithData.length > 0" class="bg-deepgreen text-cream">
@@ -51,8 +56,8 @@
             <button 
               @click="selectedView = selectedView === 'personal' ? 'global' : 'personal'"
               :class="[
-                'bg-sage hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10',
-                selectedView === 'global' ? 'bg-[#5E936C]' : ''
+                'bg-sage hover:bg-[#5E936C] border-transparent text-white px-6 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 active:scale-95',
+                selectedView === 'global' ? 'bg-[#5E936C] shadow-lg' : ''
               ]"
             >
               {{ selectedView === 'personal' ? 'Personal' : 'Global' }} View
@@ -61,9 +66,22 @@
             <button 
               @click="selectedView === 'personal' ? fetchUserData() : fetchGlobalData()"
               :disabled="isLoading"
-              class="bg-sage hover:bg-[#5E936C]/50 border-transparent text-white px-6 py-2 text-sm rounded-md transition-colors border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="group bg-sage hover:bg-[#5E936C] border-transparent text-white px-4 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center min-w-[90px]"
             >
-              {{ isLoading ? 'Loading...' : 'Refresh' }}
+              <div class="flex items-center gap-2">
+                <svg 
+                  :class="[
+                    'w-4 h-4 transition-transform duration-300',
+                    isLoading ? 'animate-spin' : 'group-hover:rotate-180'
+                  ]"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>{{ isLoading ? 'Loading...' : 'Refresh' }}</span>
+              </div>
             </button>
           </div>
         </div>
@@ -169,14 +187,107 @@
         </div>
 
         <!-- No User Selected - Only show in Personal View -->
-        <div v-else-if="!selectedUser && selectedView === 'personal'" class="flex items-center justify-center flex-1">
-          <div class="card bg-sage shadow-b max-w-md w-full">
-            <div class="card-body p-6 text-center">
-              <h2 class="text-xl font-semibold mb-4">Select a User</h2>
-              <p class="text-sm">Choose a user from the dropdown above to view their CO₂ savings data.</p>
-              <div class="mt-4 text-xs text-sage">
-                <p>Total: {{ userStats?.totalUsers || 0 }} users</p>
-                <p>With data: {{ userStats?.usersWithData || 0 }} • Need to start: {{ userStats?.usersWithoutData || 0 }}</p>
+        <div v-else-if="!selectedUser && selectedView === 'personal'" class="flex items-center justify-center flex-1 p-4">
+          <div class="max-w-2xl w-full mx-auto">
+            <!-- Main Card -->
+            <div class="bg-sage/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-sage/30 overflow-hidden">
+              <!-- Header Section -->
+              <div class="bg-gradient-to-r from-sage to-[#5E936C] p-8 text-center relative">
+                <!-- Background pattern -->
+                <div class="absolute inset-0 opacity-10">
+                  <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                      <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+                  </svg>
+                </div>
+                
+                <div class="relative z-10">
+                  <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30">
+                    <span class="text-3xl">👤</span>
+                  </div>
+                  <h2 class="text-2xl font-bold text-white mb-2">Select a User</h2>
+                  <p class="text-cream/90 text-sm">Choose a user from the dropdown above to explore their composting journey and environmental impact</p>
+                </div>
+              </div>
+              
+              <!-- Content Section -->
+              <div class="p-8">
+                <!-- User Statistics Overview -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                  <div class="text-center p-4 bg-deepgreen/30 rounded-xl border border-sage/20">
+                    <div class="text-2xl font-bold text-white mb-1">{{ userStats?.totalUsers || 0 }}</div>
+                    <div class="text-sage text-xs">Total Users</div>
+                  </div>
+                  
+                  <div class="text-center p-4 bg-emerald-500/20 rounded-xl border border-emerald-500/30">
+                    <div class="text-2xl font-bold text-emerald-400 mb-1">{{ userStats?.usersWithData || 0 }}</div>
+                    <div class="text-sage text-xs">Active Composters</div>
+                  </div>
+                  
+                  <div class="text-center p-4 bg-amber-500/20 rounded-xl border border-amber-500/30">
+                    <div class="text-2xl font-bold text-amber-400 mb-1">{{ userStats?.usersWithoutData || 0 }}</div>
+                    <div class="text-sage text-xs">Ready to Start</div>
+                  </div>
+                </div>
+
+                <!-- Features Preview -->
+                <div class="space-y-4">
+                  <h3 class="text-lg font-semibold text-white text-center mb-4">What You'll See</h3>
+                  
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">📊</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">Personal Dashboard</div>
+                        <div class="text-sage text-xs">Complete impact overview</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">📈</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">Trend Analysis</div>
+                        <div class="text-sage text-xs">Monthly progress tracking</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">🌍</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">CO₂ Savings</div>
+                        <div class="text-sage text-xs">Environmental impact metrics</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">📝</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">Activity History</div>
+                        <div class="text-sage text-xs">Recent composting logs</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Footer -->
+              <div class="bg-deepgreen/60 px-8 py-4 border-t border-sage/20">
+                <div class="flex items-center justify-center gap-2 text-sage">
+                  <span class="text-lg">🔍</span>
+                  <span class="text-sm">Use the dropdown above to dive into any user's composting journey!</span>
+                </div>
               </div>
             </div>
           </div>
@@ -497,7 +608,7 @@
                     <div class="text-xs opacity-80">Equiv.</div>
                   </div>
                   <div>
-                    <div class="text-2xl font-bold">{{ globalStats.treesPlanted.toFixed(0) }}</div>
+                    <div class="text-2xl font-bold">{{ globalStats.treesPlanted.toFixed(2) }}</div>
                     <div class="text-xs opacity-80">Trees Planted</div>
                   </div>
                 </div>
@@ -545,12 +656,12 @@
                     </div>
                     
                     <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 mb-1">
-                      <div class="text-green-400 font-semibold text-xs">{{ globalStats.treesPlanted.toFixed(0) }}</div>
+                      <div class="text-green-400 font-semibold text-xs">{{ globalStats.treesPlanted.toFixed(2) }}</div>
                       <div class="text-sage text-xs">Trees planted equivalent</div>
                     </div>
                     
                     <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 mb-1">
-                      <div class="text-blue-400 font-semibold text-xs">{{ (globalStats.globalCO2Saved / CAR_CO2_FACTOR / 365).toFixed(0) }}</div>
+                      <div class="text-blue-400 font-semibold text-xs">{{ (globalStats.globalCO2Saved / CAR_CO2_FACTOR / 365).toFixed(2) }}</div>
                       <div class="text-sage text-xs">Days of car emissions offset</div>
                     </div>
                     
@@ -738,7 +849,7 @@ export default {
     })
 
     // Constants - Match Python exactly
-    const API_BASE_URL = 'http://localhost:3001/api'
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
     const TREE_CO2_ABSORPTION = 25.0  // Match Python: 25.0
     const PETROL_CO2_FACTOR = 2.3     // Match Python: 2.3
     const CAR_CO2_FACTOR = 0.4        // Match Python: 0.4

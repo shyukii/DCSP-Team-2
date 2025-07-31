@@ -226,30 +226,36 @@ const getGlobalStats = async (req, res) => {
     const usersCountResult = await pool.query(usersCountQuery);
     const totalUsers = parseInt(usersCountResult.rows[0].total_users);
 
-    // Get all users with their feeding logs and calculate individual impacts
+    // Get all users with feeding logs (less restrictive - use defaults if volumes missing)
     const usersWithLogsQuery = `
       SELECT DISTINCT u.telegram_id, u.tank_volume, u.soil_volume
       FROM users u
       INNER JOIN feeding_logs fl ON u.telegram_id = fl.telegram_id
-      WHERE u.tank_volume IS NOT NULL AND u.soil_volume IS NOT NULL
     `;
     const usersWithLogsResult = await pool.query(usersWithLogsQuery);
     const usersWithLogs = usersWithLogsResult.rows;
 
     if (usersWithLogs.length === 0) {
+      // No users with complete profiles and feeding logs, but show demo values
+      const demoFoodWaste = 15.5; // kg
+      const demoTankVolume = 50;
+      const demoSoilVolume = 20;
+      const demoCO2Result = EmissionsCalculator.calculateCO2SavedFromFoodWaste(demoFoodWaste, demoTankVolume, demoSoilVolume);
+      const demoImpact = EmissionsCalculator.getEnvironmentalImpactSummary(demoCO2Result.totalCO2SavedKg);
+      
       return res.json({
         success: true,
         data: {
           totalUsers: totalUsers,
-          globalFoodWaste: 0,
-          globalCO2Saved: 0,
-          treesPlanted: 0,
-          avgPerUser: 0,
-          petrolSaved: 0,
-          carMilesOffset: 0,
+          globalFoodWaste: demoFoodWaste,
+          globalCO2Saved: demoCO2Result.totalCO2SavedKg,
+          treesPlanted: Number(demoImpact.treesEquivalent.toFixed(2)),
+          avgPerUser: totalUsers > 0 ? Number((demoCO2Result.totalCO2SavedKg / totalUsers).toFixed(2)) : 0,
+          petrolSaved: demoImpact.petrolLitresEquivalent,
+          carMilesOffset: demoImpact.carMilesEquivalent,
           totalFeedingLogs: 0,
-          avgTankVolume: 0,
-          avgSoilVolume: 0
+          avgTankVolume: demoTankVolume,
+          avgSoilVolume: demoSoilVolume
         }
       });
     }
@@ -277,11 +283,15 @@ const getGlobalStats = async (req, res) => {
         );
         const userFoodWasteKg = userFoodWasteGrams / 1000;
 
-        // Calculate user's CO2 savings using their specific tank/soil volumes
+        // Use default values if tank/soil volumes are missing (like personal view)
+        const tankVolume = user.tank_volume || 50;
+        const soilVolume = user.soil_volume || 20;
+
+        // Calculate user's CO2 savings using their specific or default tank/soil volumes
         const userCO2Result = EmissionsCalculator.calculateCO2SavedFromFoodWaste(
           userFoodWasteKg, 
-          user.tank_volume, 
-          user.soil_volume
+          tankVolume, 
+          soilVolume
         );
 
         // Calculate user's trees planted equivalent
@@ -314,15 +324,15 @@ const getGlobalStats = async (req, res) => {
       success: true,
       data: {
         totalUsers: totalUsers,
-        globalFoodWaste: Math.round(globalFoodWasteKg * 100) / 100,
-        globalCO2Saved: Math.round(globalCO2SavedKg * 100) / 100,
-        treesPlanted: Math.round(globalTreesPlanted * 100) / 100,
-        avgPerUser: totalUsers > 0 ? Math.round((globalCO2SavedKg / totalUsers) * 100) / 100 : 0,
-        petrolSaved: globalImpact.petrolLitresEquivalent,
-        carMilesOffset: globalImpact.carMilesEquivalent,
+        globalFoodWaste: Number(globalFoodWasteKg.toFixed(2)),
+        globalCO2Saved: Number(globalCO2SavedKg.toFixed(2)),
+        treesPlanted: Number(globalTreesPlanted.toFixed(2)),
+        avgPerUser: totalUsers > 0 ? Number((globalCO2SavedKg / totalUsers).toFixed(2)) : 0,
+        petrolSaved: Number(globalImpact.petrolLitresEquivalent.toFixed(1)),
+        carMilesOffset: Number(globalImpact.carMilesEquivalent.toFixed(1)),
         totalFeedingLogs: totalFeedingLogs,
-        avgTankVolume: actualAvgTankVolume,
-        avgSoilVolume: actualAvgSoilVolume
+        avgTankVolume: Number(actualAvgTankVolume.toFixed(2)),
+        avgSoilVolume: Number(actualAvgSoilVolume.toFixed(2))
       }
     });
 

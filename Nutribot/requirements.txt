@@ -15,7 +15,9 @@ minio==7.2.15
 nest-asyncio==1.6.0
 numpy==1.26.4
 pandas==2.2.3
+Pillow==10.1.0
 platformdirs==4.3.8
+playwright==1.49.0
 psycopg2-binary==2.9.10
 python-dotenv==1.1.0
 python-telegram-bot==22.0

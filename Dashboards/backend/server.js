@@ -9,8 +9,12 @@ const PORT = process.env.PORT || 3001;
 const apiRoutes = require('./routes/api');
 
 // Middleware
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Vite default port
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -25,6 +29,15 @@ app.get('/', (req, res) => {
     message: 'NutricycleAI Backend API',
     version: '1.0.0',
     status: 'Running'
+  });
+});
+
+// Health check endpoint for Railway
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
 });
 
