@@ -1,6 +1,0 @@
-[build]
-command = "cd Dashboards/backend && npm install"
-
-[deploy]
-startCommand = "cd Dashboards/backend && node server.js"
-healthcheckPath = "/api/health"
