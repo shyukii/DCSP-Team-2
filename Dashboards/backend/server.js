@@ -14,6 +14,7 @@ const allowedOrigins = process.env.CORS_ORIGIN
   : ['http://localhost:5173', 'http://localhost:3000', 'https://papas-princess.vercel.app'];
 
 console.log('🔧 CORS allowed origins:', allowedOrigins);
+console.log('🚀 CORS fix deployed - version 2');
 
 app.use(cors({
   origin: allowedOrigins,
