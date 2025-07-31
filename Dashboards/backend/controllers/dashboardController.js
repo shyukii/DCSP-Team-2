@@ -9,9 +9,9 @@ class EmissionsCalculator {
   static STP_CO2_PPM = 415.0;
   static FOOD_WASTE_CO2_FACTOR = 2.5;
   static COMPOST_REDUCTION_FACTOR = 0.8;
-  static TREE_CO2_ABSORPTION = 21.9;
-  static PETROL_CO2_FACTOR = 2.33;
-  static CAR_CO2_FACTOR = 0.454;
+  static TREE_CO2_ABSORPTION = 25.0;    // was 21.9
+  static PETROL_CO2_FACTOR = 2.3;       // was 2.33  
+  static CAR_CO2_FACTOR = 0.4;          // was 0.454
 
   static calculateCO2SavedFromFoodWaste(foodWasteKg, tankVolume, soilVolume) {
     const co2Ppm = this.STP_CO2_PPM;
@@ -163,11 +163,11 @@ const getUserCO2Impact = async (req, res) => {
       });
     }
 
-    // Calculate total food waste (greens + browns) in kg
+    // Calculate total food waste (greens + browns) in kg - match Python rounding
     const totalFoodWasteGrams = feedingLogs.reduce((sum, log) => 
       sum + (parseFloat(log.greens) || 0) + (parseFloat(log.browns) || 0), 0
     );
-    const totalFoodWasteKg = totalFoodWasteGrams / 1000;
+    const totalFoodWasteKg = Math.round((totalFoodWasteGrams / 1000) * 100) / 100; // Round to 2 decimals like Python
 
     // Calculate CO2 savings
     const co2Result = EmissionsCalculator.calculateCO2SavedFromFoodWaste(
@@ -226,16 +226,17 @@ const getGlobalStats = async (req, res) => {
     const usersCountResult = await pool.query(usersCountQuery);
     const totalUsers = parseInt(usersCountResult.rows[0].total_users);
 
-    // Get all feeding logs for global calculation
-    const globalLogsQuery = `
-      SELECT greens, browns, water, created_at 
-      FROM feeding_logs 
-      ORDER BY created_at DESC
+    // Get all users with their feeding logs and calculate individual impacts
+    const usersWithLogsQuery = `
+      SELECT DISTINCT u.telegram_id, u.tank_volume, u.soil_volume
+      FROM users u
+      INNER JOIN feeding_logs fl ON u.telegram_id = fl.telegram_id
+      WHERE u.tank_volume IS NOT NULL AND u.soil_volume IS NOT NULL
     `;
-    const globalLogsResult = await pool.query(globalLogsQuery);
-    const allFeedingLogs = globalLogsResult.rows;
+    const usersWithLogsResult = await pool.query(usersWithLogsQuery);
+    const usersWithLogs = usersWithLogsResult.rows;
 
-    if (allFeedingLogs.length === 0) {
+    if (usersWithLogs.length === 0) {
       return res.json({
         success: true,
         data: {
@@ -245,23 +246,56 @@ const getGlobalStats = async (req, res) => {
           treesPlanted: 0,
           avgPerUser: 0,
           petrolSaved: 0,
-          carMilesOffset: 0
+          carMilesOffset: 0,
+          totalFeedingLogs: 0,
+          avgTankVolume: 0,
+          avgSoilVolume: 0
         }
       });
     }
 
-    // Calculate global food waste
-    const globalFoodWasteGrams = allFeedingLogs.reduce((sum, log) => 
-      sum + (parseFloat(log.greens) || 0) + (parseFloat(log.browns) || 0), 0
-    );
-    const globalFoodWasteKg = globalFoodWasteGrams / 1000;
+    let globalFoodWasteKg = 0;
+    let globalCO2SavedKg = 0;
+    let globalTreesPlanted = 0;
+    let totalFeedingLogs = 0;
 
-    // For global CO2 calculation, use average tank/soil volumes
-    // You might want to calculate actual averages from user profiles
-    const avgTankVolume = 50;  // Default average
-    const avgSoilVolume = 20;  // Default average
+    // Calculate for each user individually and sum up
+    for (const user of usersWithLogs) {
+      const userLogsQuery = `
+        SELECT greens, browns, water, created_at 
+        FROM feeding_logs 
+        WHERE telegram_id = $1
+        ORDER BY created_at DESC
+      `;
+      const userLogsResult = await pool.query(userLogsQuery, [user.telegram_id]);
+      const userFeedingLogs = userLogsResult.rows;
 
-    // Or calculate actual averages:
+      if (userFeedingLogs.length > 0) {
+        // Calculate user's total food waste
+        const userFoodWasteGrams = userFeedingLogs.reduce((sum, log) => 
+          sum + (parseFloat(log.greens) || 0) + (parseFloat(log.browns) || 0), 0
+        );
+        const userFoodWasteKg = userFoodWasteGrams / 1000;
+
+        // Calculate user's CO2 savings using their specific tank/soil volumes
+        const userCO2Result = EmissionsCalculator.calculateCO2SavedFromFoodWaste(
+          userFoodWasteKg, 
+          user.tank_volume, 
+          user.soil_volume
+        );
+
+        // Calculate user's trees planted equivalent
+        const userImpact = EmissionsCalculator.getEnvironmentalImpactSummary(userCO2Result.totalCO2SavedKg);
+
+        // Add to global totals
+        globalFoodWasteKg += userFoodWasteKg;
+        globalCO2SavedKg += userCO2Result.totalCO2SavedKg;
+        globalTreesPlanted += userImpact.treesEquivalent;
+        totalFeedingLogs += userFeedingLogs.length;
+      }
+    }
+
+    // Calculate averages for display
     const avgVolumesQuery = `
       SELECT 
         AVG(tank_volume) as avg_tank_volume,
@@ -270,30 +304,23 @@ const getGlobalStats = async (req, res) => {
       WHERE tank_volume IS NOT NULL AND soil_volume IS NOT NULL
     `;
     const avgVolumesResult = await pool.query(avgVolumesQuery);
-    const actualAvgTankVolume = parseFloat(avgVolumesResult.rows[0].avg_tank_volume) || avgTankVolume;
-    const actualAvgSoilVolume = parseFloat(avgVolumesResult.rows[0].avg_soil_volume) || avgSoilVolume;
+    const actualAvgTankVolume = parseFloat(avgVolumesResult.rows[0].avg_tank_volume) || 50;
+    const actualAvgSoilVolume = parseFloat(avgVolumesResult.rows[0].avg_soil_volume) || 20;
 
-    // Calculate global CO2 savings
-    const globalCO2Result = EmissionsCalculator.calculateCO2SavedFromFoodWaste(
-      globalFoodWasteKg, 
-      actualAvgTankVolume, 
-      actualAvgSoilVolume
-    );
-
-    // Get global environmental impact
-    const globalImpact = EmissionsCalculator.getEnvironmentalImpactSummary(globalCO2Result.totalCO2SavedKg);
+    // Get global environmental impact for other metrics
+    const globalImpact = EmissionsCalculator.getEnvironmentalImpactSummary(globalCO2SavedKg);
 
     res.json({
       success: true,
       data: {
         totalUsers: totalUsers,
-        globalFoodWaste: globalFoodWasteKg,
-        globalCO2Saved: globalCO2Result.totalCO2SavedKg,
-        treesPlanted: globalImpact.treesEquivalent,
-        avgPerUser: totalUsers > 0 ? globalCO2Result.totalCO2SavedKg / totalUsers : 0,
+        globalFoodWaste: Math.round(globalFoodWasteKg * 100) / 100,
+        globalCO2Saved: Math.round(globalCO2SavedKg * 100) / 100,
+        treesPlanted: Math.round(globalTreesPlanted * 100) / 100,
+        avgPerUser: totalUsers > 0 ? Math.round((globalCO2SavedKg / totalUsers) * 100) / 100 : 0,
         petrolSaved: globalImpact.petrolLitresEquivalent,
         carMilesOffset: globalImpact.carMilesEquivalent,
-        totalFeedingLogs: allFeedingLogs.length,
+        totalFeedingLogs: totalFeedingLogs,
         avgTankVolume: actualAvgTankVolume,
         avgSoilVolume: actualAvgSoilVolume
       }

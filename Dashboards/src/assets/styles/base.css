@@ -29,7 +29,7 @@
 /* Optional: custom utility color classes */
 @layer utilities {
   .bg-deepgreen { background-color: #0D3705 !important; }
-  .bg-sage { background-color: #0B4F26; }
+  .bg-sage { background-color: #0B4F26 !important; }
   .bg-khaki { background-color: #AEC5B5; }
   .text-cream { color: #F7FFF2; }
   .text-sage { color: #D7EDBC; }
