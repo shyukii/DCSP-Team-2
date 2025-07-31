@@ -156,11 +156,11 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     if choice == "start_llama":
         await q.edit_message_text(
-            "I'm Llama and I'm here to help you with your plants!!\n\n"
+            "I'm NutriBot and I'm here to help you with your composting and plants!!\n\n"
             "You can now type or speak your question."
         )
 
-        # ★ Mark the user as “in Ask‐Anything mode”:
+        # Mark the user as “in Ask‐Anything mode”:
         from constants import AMA
         context.user_data["state"] = AMA
 

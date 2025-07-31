@@ -32,7 +32,7 @@ async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("❌ That command isn't available right now. Use /back to return to the menu.")
         return AMA
 
-    # 4) Send the prompt to Llama
+    # 4) Send the prompt to LLM
     try:
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
         resp = await llama.generate_response(text)

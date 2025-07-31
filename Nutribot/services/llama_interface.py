@@ -12,7 +12,7 @@ class LlamaInterface:
     """
     def __init__(self, model_name: str = None):
         """
-        Initialise the LlamaInterface.
+        Initialise the LLM.
 
         Args:
             model_name: Name of the OpenAI model to use. Defaults to OPENAI_MODEL from config.
