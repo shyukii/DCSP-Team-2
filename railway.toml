@@ -1,14 +1,6 @@
 [build]
-command = "npm install"
+command = "cd Dashboards/backend && npm install"
 
 [deploy]
-startCommand = "node server.js"
+startCommand = "cd Dashboards/backend && node server.js"
 healthcheckPath = "/api/health"
-
-[[services]]
-name = "backend"
-source = "Dashboards/backend"
-
-[environments.production.source]
-repo = "shyukii/DCSP-Team-2"
-branch = "main"
