@@ -134,6 +134,7 @@ def setup_handlers():
                 MessageHandler(filters.PHOTO, handle_photo)
             ],
             AMA:               [CommandHandler(["back","menu"], back_to_menu_command),
+                                CallbackQueryHandler(handle_main_menu, pattern="^create_video$"),
                                 MessageHandler(filters.TEXT & ~filters.COMMAND, llama_response),
                                 MessageHandler(filters.VOICE, handle_voice),
                                 MessageHandler(filters.COMMAND, block_commands_during_ama),],
@@ -161,7 +162,6 @@ def setup_handlers():
         fallbacks=[CommandHandler("cancel", cancel), CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")],
         name="nutribot_conversation",
     )
-
     # Add the conversation handler
     application.add_handler(conv_handler)
 

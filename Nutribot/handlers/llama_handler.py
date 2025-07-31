@@ -1,5 +1,5 @@
 import logging
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from services.llama_interface import LlamaInterface
 from handlers.menu import show_main_menu
@@ -36,7 +36,15 @@ async def llama_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
         resp = await llama.generate_response(text)
-        await update.message.reply_text(resp)
+        
+        # Store the response for potential video generation
+        context.user_data["last_ama_response"] = resp
+        
+        # Create video generation button
+        keyboard = [[InlineKeyboardButton("🎬 Create Video", callback_data=f"create_video")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(resp, reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Llama error: {e}")
         await update.message.reply_text(

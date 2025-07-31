@@ -153,6 +153,11 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if choice == "view_logs":
         from handlers.commands import handle_view_logs
         return await handle_view_logs(update, context)
+    
+    # Handle video creation callback
+    if choice == "create_video":
+        from handlers.video_handler import handle_video_creation
+        return await handle_video_creation(update, context)
 
     if choice == "start_llama":
         await q.edit_message_text(
