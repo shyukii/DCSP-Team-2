@@ -10,27 +10,19 @@ console.log('DB_USER:', process.env.DB_USER ? '***SET***' : 'MISSING');
 console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '***SET***' : 'MISSING');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? '***SET***' : 'MISSING');
 
-// Try DATABASE_URL first, then individual variables
-let poolConfig;
-if (process.env.DATABASE_URL) {
-  poolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  };
-} else {
-  poolConfig = {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  };
-}
+// Hardcode for Railway deployment (temporary)
+const poolConfig = {
+  host: 'aws-0-us-east-2.pooler.supabase.com',
+  port: 6543,
+  database: 'postgres',
+  user: 'postgres.nimflhaujdwzwirodude',
+  password: 'Zss-3617sigma',
+  ssl: {
+    rejectUnauthorized: false
+  }
+};
+
+console.log('🔧 Using hardcoded database configuration for Railway');
 
 const pool = new Pool({
   ...poolConfig,
