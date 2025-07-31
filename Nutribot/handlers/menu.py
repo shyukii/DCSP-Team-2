@@ -165,7 +165,22 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             "You can now type or speak your question."
         )
 
-        # Mark the user as “in Ask‐Anything mode”:
+        # Send an introductory video file
+        try:
+            video_path = "Nutribot/handlers/temp_video_689903e0.mp4"
+            if os.path.exists(video_path):
+                with open(video_path, 'rb') as video_file:
+                    await context.bot.send_video(
+                        chat_id=update.effective_chat.id,
+                        video=video_file,
+                        caption="🎬 Welcome to Ask Anything mode! Here's a quick introduction to get you started.",
+                        supports_streaming=True
+                    )
+        except Exception as e:
+            # If video sending fails, continue without it
+            pass
+
+        # Mark the user as "in Ask‐Anything mode":
         from constants import AMA
         context.user_data["state"] = AMA
 

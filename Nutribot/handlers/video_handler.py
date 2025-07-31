@@ -135,17 +135,17 @@ async def check_video_status(context: ContextTypes.DEFAULT_TYPE, chat_id: int, v
                                         pass
                                         
                                 else:
-                                    # Fallback to URL if download fails
+                                    # Fallback message if download fails
                                     await context.bot.send_message(
                                         chat_id=chat_id,
-                                        text=f"🎉 Your video is ready!\n\n📹 Download: {download_url}"
+                                        text="🎉 Your video is ready!\n\n📹 Video processing complete. "
                                     )
                     except Exception as e:
                         logger.error(f"Error downloading/sending video: {e}")
-                        # Fallback to URL
+                        # Fallback message
                         await context.bot.send_message(
                             chat_id=chat_id,
-                            text=f"🎉 Your video is ready!\n\n📹 Download: {download_url}"
+                            text="🎉 Your video is ready!\n\n📹 Video processing complete."
                         )
                 else:
                     await context.bot.send_message(

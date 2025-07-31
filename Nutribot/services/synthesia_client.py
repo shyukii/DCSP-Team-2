@@ -48,9 +48,9 @@ class SynthesiaClient:
                 "visibility": "private",
                 "templateId": "31d4dd96-97aa-4e93-a753-f096a62a3d80",  # Your Nutribot Template
                 "input": [{
-                    "scriptText": script[:2000],  # Limit script length
-                    "avatar": "anna_costume1_cameraA",  # Required field
-                    "background": "green_screen"  # Required field
+                    "scriptText": script[:5000],  # Limit script length
+                    "avatar": "santa_costume1_cameraA",  # Required field
+                    "background": "workspace-media.6d31bf56-524c-4d23-b1fb-dce233cbc391"  # Required field
                 }]
             }
             
