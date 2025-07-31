@@ -39,8 +39,10 @@ app.get('/', (req, res) => {
 // Health check endpoint for Railway
 app.get('/api/health', (req, res) => {
   res.json({
-    status: 'healthy',
+    status: 'OK',
+    message: 'NutricycleAI API is running',
     timestamp: new Date().toISOString(),
+    version: 'v3-CORS-FIXED',
     uptime: process.uptime()
   });
 });
