@@ -6,24 +6,13 @@
         <!-- Header and User Selector -->
         <div class="flex justify-between items-end">
           <!-- Left: Title + Subtitle -->
-          <div class="flex flex-col justify-end leading-tight relative">
-            <div class="absolute -top-2 -left-2 w-8 h-8 bg-sage/20 rounded-full animate-pulse"></div>
-            <h1 class="text-4xl font-bold tracking-tight">
-              <span class="text-sage">⚡ Soil EC</span> <span class="text-white">Monitoring</span>
+          <div class="flex flex-col justify-end leading-tight">
+            <h1 class="text-3xl font-bold">
+              <span class="text-sage">Soil EC</span> Monitoring
             </h1>
-            <p class="text-base text-sage mt-2 font-medium">
+            <p class="text-sm text-sage mt-1">
               Track electrical conductivity levels and predict compost readiness with ML-powered forecasting.
             </p>
-            <div class="flex items-center mt-3 space-x-3">
-              <div class="flex items-center text-cream text-sm bg-sage/20 px-3 py-1 rounded-full">
-                <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                Live Monitoring
-              </div>
-              <div class="flex items-center text-cream text-sm bg-sage/20 px-3 py-1 rounded-full">
-                <div class="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                AI Predictions
-              </div>
-            </div>
           </div>
 
           <!-- Right: User Selector Dropdown -->
@@ -31,11 +20,9 @@
             <select 
               v-model="selectedUser" 
               @change="onUserChange"
-              class="bg-gradient-to-r from-sage to-[#4A7856] hover:from-[#5E936C] hover:to-[#4A7856] border-transparent text-white px-6 py-3 text-sm rounded-xl transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-2 focus:ring-sage/50 focus:outline-none focus:border-none hover:border-none h-12 transform hover:scale-105 hover:shadow-xl hover:-translate-y-1 cursor-pointer appearance-none bg-no-repeat bg-right pr-12 shadow-lg backdrop-blur-sm font-semibold"
+              class="bg-sage hover:bg-[#5E936C] border-transparent text-white px-6 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer appearance-none bg-no-repeat bg-right pr-10"
               :style="{ 
-                backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0iI0Y3RkZGMiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNS4yOTMgNy4yOTNhMSAxIDAgMDExLjQxNCAwTDEwIDEwLjU4NmwzLjI5My0zLjI5M2ExIDEgMCAxMTEuNDE0IDEuNDE0bC00IDRhMSAxIDAgMDEtMS40MTQgMGwtNC00YTEgMSAwIDAxMC0xLjQxNHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==)',
-                backgroundPosition: 'right 1rem center',
-                backgroundSize: '1.2rem'
+                backgroundSize: '1rem'
               }"
             >
               <option value="" class="bg-deepgreen text-cream">Choose a user...</option>
@@ -91,80 +78,58 @@
           <!-- Current Status Cards -->
           <div class="col-span-12 lg:col-span-4 space-y-4">
             <!-- Current EC Level -->
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-semibold text-cream opacity-90">{{ getStatusEmoji(currentEC) }} Current EC Level</span>
-                <div class="w-8 h-8 bg-cream/20 rounded-full flex items-center justify-center">
-                  <span class="text-lg">⚡</span>
-                </div>
+            <div class="bg-sage p-4 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-cream">{{ getStatusEmoji(currentEC) }} Current EC Level</span>
               </div>
-              <div class="text-4xl font-bold text-white mb-2 tracking-tight">{{ currentEC }} <span class="text-lg font-normal text-cream/80">mS/cm</span></div>
-              <div class="text-cream text-sm mb-3">{{ getECStatus(currentEC) }}</div>
-              <div class="w-full bg-deepgreen/50 rounded-full h-3 overflow-hidden">
+              <div class="text-3xl font-bold text-white mb-1">{{ currentEC }} mS/cm</div>
+              <div class="text-cream text-sm">{{ getECStatus(currentEC) }}</div>
+              <div class="w-full bg-deepgreen rounded-full h-2 mt-2">
                 <div 
                   :class="getECBarColor(currentEC)"
-                  class="h-3 rounded-full transition-all duration-700 ease-out shadow-inner"
+                  class="h-2 rounded-full transition-all duration-500"
                   :style="`width: ${Math.min((currentEC / 5) * 100, 100)}%`"
                 ></div>
               </div>
             </div>
 
             <!-- Readiness Status -->
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-semibold text-cream opacity-90">🎯 Compost Readiness</span>
-                <div class="w-8 h-8 bg-cream/20 rounded-full flex items-center justify-center">
-                  <span class="text-lg">🕐</span>
-                </div>
+            <div class="bg-sage p-4 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-cream">🎯 Compost Readiness</span>
               </div>
-              <div class="text-2xl font-bold text-white mb-2">{{ getReadinessText(readinessStatus) }}</div>
+              <div class="text-lg font-bold text-white mb-1">{{ getReadinessText(readinessStatus) }}</div>
               <div class="text-cream text-sm" v-if="estimatedReadyDays">
-                <span class="bg-cream/20 px-2 py-1 rounded-full text-xs">~{{ estimatedReadyDays }} days to ready</span>
+                ~{{ estimatedReadyDays }} days to ready
               </div>
               <div class="text-cream text-sm" v-else>
-                <span class="bg-cream/20 px-2 py-1 rounded-full text-xs">Monitoring progress</span>
+                Monitoring progress
               </div>
             </div>
 
             <!-- Alert Section -->
-            <div v-if="alertLevel && alertLevel !== 'none'" :class="getAlertCardClass(alertLevel)" class="p-6 rounded-xl shadow-lg border border-red-500/30 transform hover:scale-105 transition-all duration-300 animate-pulse">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-semibold text-white">{{ getAlertIcon(alertLevel) }} System Alert</span>
-                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <span class="text-lg">⚠️</span>
-                </div>
+            <div v-if="alertLevel && alertLevel !== 'none'" :class="getAlertCardClass(alertLevel)" class="p-4 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-white">{{ getAlertIcon(alertLevel) }} Alert</span>
               </div>
-              <div class="text-white text-sm leading-relaxed bg-black/20 p-3 rounded-lg">{{ alertMessage }}</div>
+              <div class="text-white text-sm">{{ alertMessage }}</div>
             </div>
 
             <!-- Health Score -->
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-semibold text-cream opacity-90">💚 Health Score</span>
-                <div class="w-8 h-8 bg-cream/20 rounded-full flex items-center justify-center">
-                  <span class="text-lg">📊</span>
-                </div>
+            <div class="bg-sage p-4 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-cream">💚 Health Score</span>
               </div>
-              <div class="text-4xl font-bold text-white mb-2">{{ averageHealthScore }}<span class="text-lg font-normal text-cream/80">/100</span></div>
-              <div class="text-cream text-sm mb-3">{{ getHealthDescription(averageHealthScore) }}</div>
-              <div class="w-full bg-deepgreen/50 rounded-full h-3 overflow-hidden">
-                <div 
-                  class="h-3 rounded-full transition-all duration-700 ease-out shadow-inner"
-                  :class="averageHealthScore >= 80 ? 'bg-green-400' : averageHealthScore >= 60 ? 'bg-yellow-400' : 'bg-red-400'"
-                  :style="`width: ${averageHealthScore}%`"
-                ></div>
-              </div>
+              <div class="text-2xl font-bold text-white mb-1">{{ averageHealthScore }}/100</div>
+              <div class="text-cream text-sm">{{ getHealthDescription(averageHealthScore) }}</div>
             </div>
 
             <!-- Care Recommendations -->
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-semibold text-cream opacity-90">💡 AI Recommendations</span>
-                <div class="w-8 h-8 bg-cream/20 rounded-full flex items-center justify-center">
-                  <span class="text-lg">🤖</span>
-                </div>
+            <div class="bg-sage p-4 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-cream">💡 Recommendations</span>
               </div>
-              <div class="text-cream text-sm leading-relaxed bg-deepgreen/30 p-4 rounded-lg border-l-4 border-yellow-400">
+              <div class="text-cream text-sm leading-relaxed">
                 {{ primaryRecommendation }}
               </div>
             </div>
@@ -172,25 +137,16 @@
 
           <!-- EC Timeline Chart -->
           <div class="col-span-12 lg:col-span-8">
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] rounded-xl p-6 h-full flex flex-col shadow-lg border border-sage/20">
-              <div class="flex items-center justify-between mb-6">
-                <div>
-                  <span class="text-xl font-bold text-white">📈 EC Trend & Predictions</span>
-                  <p class="text-cream text-sm opacity-90 mt-1">90-day forecast with ML-powered insights</p>
-                </div>
+            <div class="bg-sage rounded-lg p-4 h-full flex flex-col">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-cream">📈 EC Trend & Predictions</span>
                 <div class="flex space-x-2">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-400/30">
-                    📊 Historical
-                  </span>
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-200 border border-green-400/30">
-                    🔮 Predicted
-                  </span>
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-200 border border-red-400/30">
-                    ⚠️ Critical Zone
-                  </span>
+                  <span class="text-xs text-cream bg-blue-500 px-2 py-1 rounded">Historical</span>
+                  <span class="text-xs text-cream bg-green-500 px-2 py-1 rounded">Predicted</span>
+                  <span class="text-xs text-cream bg-red-500 px-2 py-1 rounded">Optimal Range</span>
                 </div>
               </div>
-              <div class="flex-1 min-h-0 bg-deepgreen/30 rounded-lg p-4 backdrop-blur-sm border border-sage/30">
+              <div class="flex-1 min-h-0">
                 <canvas ref="ecChart" class="w-full h-full"></canvas>
               </div>
             </div>
@@ -198,46 +154,22 @@
 
           <!-- Statistics Summary -->
           <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-2xl">📊</span>
-              </div>
-              <div class="text-3xl text-white font-bold mb-1">{{ totalReadings }}</div>
-              <div class="text-cream text-sm opacity-90">Total Readings</div>
-              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
-                <div class="bg-blue-400 h-1 rounded-full w-3/4"></div>
-              </div>
+            <div class="bg-sage p-4 rounded-lg text-center">
+              <div class="text-2xl text-white font-bold">{{ totalReadings }}</div>
+              <div class="text-cream text-sm">Total Readings</div>
             </div>
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-2xl">⚡</span>
-              </div>
-              <div class="text-3xl text-white font-bold mb-1">{{ averageEC }} <span class="text-lg font-normal text-cream/80">mS/cm</span></div>
-              <div class="text-cream text-sm opacity-90">Average EC</div>
-              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
-                <div class="bg-yellow-400 h-1 rounded-full w-2/3"></div>
-              </div>
+            <div class="bg-sage p-4 rounded-lg text-center">
+              <div class="text-2xl text-white font-bold">{{ averageEC }} mS/cm</div>
+              <div class="text-cream text-sm">Average EC</div>
             </div>
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-2xl">💧</span>
-              </div>
-              <div class="text-3xl text-white font-bold mb-1">{{ averageMoisture }}<span class="text-lg font-normal text-cream/80">%</span></div>
-              <div class="text-cream text-sm opacity-90">Average Moisture</div>
-              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
-                <div class="bg-cyan-400 h-1 rounded-full w-4/5"></div>
-              </div>
+            <div class="bg-sage p-4 rounded-lg text-center">
+              <div class="text-2xl text-white font-bold">{{ averageMoisture }}%</div>
+              <div class="text-cream text-sm">Average Moisture</div>
             </div>
-            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
-              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-2xl">🔮</span>
-              </div>
-              <div class="text-3xl text-white font-bold mb-1" v-if="predictionsData.timeline">{{ predictionsData.timeline.week_1 || '--' }}</div>
-              <div class="text-3xl text-white font-bold mb-1" v-else>--</div>
-              <div class="text-cream text-sm opacity-90">7-Day Forecast</div>
-              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
-                <div class="bg-green-400 h-1 rounded-full w-1/2"></div>
-              </div>
+            <div class="bg-sage p-4 rounded-lg text-center">
+              <div class="text-2xl text-white font-bold" v-if="predictionsData.timeline">{{ predictionsData.timeline.week_1 || '--' }}</div>
+              <div class="text-2xl text-white font-bold" v-else>--</div>
+              <div class="text-cream text-sm">7-Day Forecast</div>
             </div>
           </div>
         </div>
