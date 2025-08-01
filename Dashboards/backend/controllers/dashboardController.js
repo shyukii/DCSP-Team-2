@@ -1,6 +1,27 @@
 const pool = require('../config/database');
 
 /**
+ * Database query wrapper with retry logic
+ */
+const executeQuery = async (query, params = [], retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await pool.query(query, params);
+      return result;
+    } catch (error) {
+      console.error(`Database query attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        throw error; // Last attempt, throw the error
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+    }
+  }
+};
+
+/**
  * CO2 Emissions Calculator Class
  * Matches your Python EmissionsCalculator logic
  */
@@ -802,7 +823,7 @@ const getSoilECUsers = async (req, res) => {
       ORDER BY ec_logs_count DESC, u.username ASC
     `;
     
-    const result = await pool.query(query);
+    const result = await executeQuery(query);
     
     const usersWithData = result.rows
       .filter(row => parseInt(row.ec_logs_count) > 0)

@@ -29,9 +29,12 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false
   },
-  max: 20,
+  max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 60000,
+  acquireTimeoutMillis: 60000,
+  allowExitOnIdle: true,
+  application_name: 'dscp-dashboard-backend'
 });
 
 // Test connection
