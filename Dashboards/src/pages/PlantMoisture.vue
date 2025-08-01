@@ -212,6 +212,9 @@ export default {
     const moistureHistory = ref([])
     const moisturePredictions = ref([])
 
+    // API configuration
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+
     const calculateDropdownWidth = (username) => {
       const baseWidth = 200
       const extraWidth = username ? username.length * 8 : 0
@@ -248,7 +251,7 @@ export default {
 
     const loadUsers = async () => {
       try {
-        const response = await fetch('/api/plant-moisture-users')
+        const response = await fetch(`${API_BASE_URL}/plant-moisture-users`)
         if (response.ok) {
           const result = await response.json()
           if (result.success && result.data) {
@@ -278,7 +281,7 @@ export default {
 
       try {
         // Load moisture data
-        const response = await fetch(`/api/user/${username}/plant-moisture`)
+        const response = await fetch(`${API_BASE_URL}/user/${username}/plant-moisture`)
         if (response.ok) {
           const result = await response.json()
           
@@ -291,7 +294,7 @@ export default {
             moistureHistory.value = data.moistureLogs || []
             
             // Load predictions
-            const predResponse = await fetch(`/api/user/${username}/moisture-predictions`)
+            const predResponse = await fetch(`${API_BASE_URL}/user/${username}/moisture-predictions`)
             if (predResponse.ok) {
               const predResult = await predResponse.json()
               if (predResult.success && predResult.data) {
