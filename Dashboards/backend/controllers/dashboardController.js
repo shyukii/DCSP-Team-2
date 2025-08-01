@@ -785,6 +785,338 @@ const getUserMoisturePredictions = async (req, res) => {
   }
 };
 
+/**
+ * Get all users with soil EC logs
+ * GET /api/soil-ec-users
+ */
+const getSoilECUsers = async (req, res) => {
+  try {
+    const query = `
+      SELECT DISTINCT u.username, u.telegram_id,
+             COUNT(cs.id) as ec_logs_count,
+             MAX(cs.created_at) as last_reading_date
+      FROM users u
+      LEFT JOIN compost_status cs ON u.telegram_id = cs.telegram_id 
+        AND cs.ec IS NOT NULL
+      GROUP BY u.username, u.telegram_id
+      ORDER BY ec_logs_count DESC, u.username ASC
+    `;
+    
+    const result = await pool.query(query);
+    
+    const usersWithData = result.rows
+      .filter(row => parseInt(row.ec_logs_count) > 0)
+      .map(row => ({
+        username: row.username,
+        telegramId: row.telegram_id,
+        ecLogsCount: parseInt(row.ec_logs_count),
+        lastReadingDate: row.last_reading_date,
+        hasData: true
+      }));
+
+    const usersWithoutData = result.rows
+      .filter(row => parseInt(row.ec_logs_count) === 0)
+      .map(row => ({
+        username: row.username,
+        telegramId: row.telegram_id,
+        ecLogsCount: 0,
+        lastReadingDate: null,
+        hasData: false
+      }));
+
+    res.json({
+      success: true,
+      data: {
+        usersWithData: usersWithData,
+        usersWithoutData: usersWithoutData,
+        totalUsers: result.rows.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting soil EC users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
+/**
+ * Get user's soil EC data and statistics
+ * GET /api/user/:username/soil-ec
+ */
+const getUserSoilEC = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // Get user info
+    const userQuery = `SELECT telegram_id, username FROM users WHERE username = $1`;
+    const userResult = await pool.query(userQuery, [username]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+    const { telegram_id } = user;
+
+    // Get EC logs with predictions
+    const ecLogsQuery = `
+      SELECT ec, moisture, created_at,
+             overall_health_score, ec_status, moisture_status,
+             readiness_status, estimated_ready_days,
+             primary_recommendation, alert_level, alert_message
+      FROM compost_status 
+      WHERE telegram_id = $1 
+        AND ec IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 30
+    `;
+    const ecLogsResult = await pool.query(ecLogsQuery, [telegram_id]);
+    const ecLogs = ecLogsResult.rows;
+
+    if (ecLogs.length === 0) {
+      return res.json({
+        success: true,
+        hasData: false,
+        message: 'No soil EC data found',
+        data: {
+          user: user,
+          currentEC: 0,
+          currentMoisture: 0,
+          totalReadings: 0,
+          averageEC: 0,
+          averageMoisture: 0,
+          averageHealthScore: 0,
+          ecLogs: [],
+          currentStatus: 'No data',
+          readinessStatus: 'Unknown',
+          primaryRecommendation: 'Start taking EC readings to get predictions'
+        }
+      });
+    }
+
+    // Calculate statistics
+    const currentReading = ecLogs[0];
+    const currentEC = parseFloat(currentReading.ec);
+    const currentMoisture = parseFloat(currentReading.moisture || 0);
+    const totalReadings = ecLogs.length;
+    const averageEC = ecLogs.reduce((sum, log) => sum + parseFloat(log.ec), 0) / totalReadings;
+    const averageMoisture = ecLogs.reduce((sum, log) => sum + parseFloat(log.moisture || 0), 0) / totalReadings;
+    const averageHealthScore = ecLogs.reduce((sum, log) => sum + (parseFloat(log.overall_health_score) || 50), 0) / totalReadings;
+
+    res.json({
+      success: true,
+      hasData: true,
+      data: {
+        user: user,
+        currentEC: Math.round(currentEC * 100) / 100,
+        currentMoisture: Math.round(currentMoisture * 10) / 10,
+        totalReadings: totalReadings,
+        averageEC: Math.round(averageEC * 100) / 100,
+        averageMoisture: Math.round(averageMoisture * 10) / 10,
+        averageHealthScore: Math.round(averageHealthScore),
+        ecLogs: ecLogs.map(log => ({
+          ec: parseFloat(log.ec),
+          moisture: parseFloat(log.moisture || 0),
+          created_at: log.created_at,
+          health_score: parseFloat(log.overall_health_score || 50),
+          ec_status: log.ec_status,
+          moisture_status: log.moisture_status
+        })),
+        currentStatus: currentReading.ec_status || 'Unknown',
+        readinessStatus: currentReading.readiness_status || 'Unknown',
+        estimatedReadyDays: currentReading.estimated_ready_days,
+        primaryRecommendation: currentReading.primary_recommendation || 'Continue monitoring',
+        alertLevel: currentReading.alert_level || 'none',
+        alertMessage: currentReading.alert_message
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting user soil EC:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
+/**
+ * Get EC predictions for a user
+ * GET /api/user/:username/ec-predictions
+ */
+const getUserECPredictions = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // Get user info
+    const userQuery = `SELECT telegram_id, username FROM users WHERE username = $1`;
+    const userResult = await pool.query(userQuery, [username]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+    const { telegram_id } = user;
+
+    // Get latest prediction data
+    const latestPredictionQuery = `
+      SELECT ec, moisture, 
+             daily_predictions, prediction_dates,
+             week_1_prediction, week_2_prediction,
+             month_1_prediction, month_2_prediction, month_3_prediction,
+             avg_ec_prediction, max_ec_prediction, min_ec_prediction,
+             ec_trend, trend_strength, trend_description,
+             readiness_status, estimated_ready_days, estimated_ready_date,
+             readiness_confidence, current_maturity_stage,
+             completion_percentage, quality_score,
+             alert_level, alert_message, action_required,
+             primary_recommendation, nutrient_recommendation,
+             moisture_recommendation, timeline_recommendation,
+             created_at
+      FROM compost_status 
+      WHERE telegram_id = $1 
+        AND prediction_generated = true
+        AND prediction_success = true
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    const predictionResult = await pool.query(latestPredictionQuery, [telegram_id]);
+
+    if (predictionResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        hasData: false,
+        message: 'No prediction data available',
+        data: {
+          predictions: [],
+          forecasts: [],
+          timeline: {},
+          recommendations: {},
+          alerts: [],
+          overall_summary: 'No prediction data available - take an EC reading to get forecasts'
+        }
+      });
+    }
+
+    const predData = predictionResult.rows[0];
+    
+    // Process daily predictions for chart
+    let forecasts = [];
+    if (predData.daily_predictions && predData.prediction_dates) {
+      const predictions = Array.isArray(predData.daily_predictions) ? predData.daily_predictions : JSON.parse(predData.daily_predictions);
+      const dates = Array.isArray(predData.prediction_dates) ? predData.prediction_dates : JSON.parse(predData.prediction_dates);
+      
+      forecasts = predictions.map((pred, index) => ({
+        date: dates[index],
+        predicted_ec: parseFloat(pred),
+        day_number: index + 1,
+        status: pred >= 1.5 && pred <= 3.0 ? 'optimal' : (pred < 1.5 ? 'low' : 'high')
+      }));
+    }
+
+    // Generate key timeline predictions
+    const timeline = {
+      week_1: parseFloat(predData.week_1_prediction || 0),
+      week_2: parseFloat(predData.week_2_prediction || 0),
+      month_1: parseFloat(predData.month_1_prediction || 0),
+      month_2: parseFloat(predData.month_2_prediction || 0),
+      month_3: parseFloat(predData.month_3_prediction || 0),
+      average: parseFloat(predData.avg_ec_prediction || 0),
+      max_value: parseFloat(predData.max_ec_prediction || 0),
+      min_value: parseFloat(predData.min_ec_prediction || 0)
+    };
+
+    // Compile recommendations
+    const recommendations = {
+      primary: predData.primary_recommendation,
+      nutrient: predData.nutrient_recommendation,
+      moisture: predData.moisture_recommendation,
+      timeline: predData.timeline_recommendation,
+      trend: predData.trend_description
+    };
+
+    // Process alerts
+    const alerts = [];
+    if (predData.alert_level && predData.alert_level !== 'none') {
+      alerts.push({
+        level: predData.alert_level,
+        message: predData.alert_message,
+        action_required: predData.action_required,
+        created_at: predData.created_at
+      });
+    }
+
+    // Generate overall summary
+    let overall_summary = '';
+    if (predData.readiness_status === 'ready_soon') {
+      overall_summary = `🎉 Excellent! Your compost will be ready in ~${predData.estimated_ready_days} days. Continue current management.`;
+    } else if (predData.readiness_status === 'short_term') {
+      overall_summary = `✅ Good progress! Estimated ready in ~${predData.estimated_ready_days} days. Monitor trends closely.`;
+    } else if (predData.readiness_status === 'medium_term') {
+      overall_summary = `⏳ Making steady progress. Estimated ready in ~${predData.estimated_ready_days} days. Patience required.`;
+    } else if (predData.readiness_status === 'needs_attention') {
+      overall_summary = `⚠️ Needs attention. Current conditions may delay readiness. Follow recommendations below.`;
+    } else {
+      overall_summary = `📊 EC levels being monitored. Continue taking readings for better predictions.`;
+    }
+
+    res.json({
+      success: true,
+      hasData: true,
+      data: {
+        current_ec: parseFloat(predData.ec),
+        current_moisture: parseFloat(predData.moisture || 0),
+        predictions: forecasts.slice(0, 30), // Next 30 days for chart
+        forecasts: forecasts,
+        timeline: timeline,
+        trend: {
+          direction: predData.ec_trend,
+          strength: parseFloat(predData.trend_strength || 0),
+          description: predData.trend_description
+        },
+        readiness: {
+          status: predData.readiness_status,
+          estimated_days: predData.estimated_ready_days,
+          estimated_date: predData.estimated_ready_date,
+          confidence: predData.readiness_confidence,
+          maturity_stage: predData.current_maturity_stage,
+          completion_percentage: parseFloat(predData.completion_percentage || 0)
+        },
+        quality: {
+          score: parseFloat(predData.quality_score || 0),
+          description: predData.quality_score > 8 ? 'Excellent' : 
+                      predData.quality_score > 6 ? 'Good' : 
+                      predData.quality_score > 4 ? 'Fair' : 'Needs Improvement'
+        },
+        recommendations: recommendations,
+        alerts: alerts,
+        overall_summary: overall_summary,
+        last_updated: predData.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting EC predictions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
 module.exports = {
   getUsersWithFeedingData,
   getUserCO2Impact,
@@ -796,5 +1128,8 @@ module.exports = {
   getDevicesWithSensors,
   getPlantMoistureUsers,
   getUserPlantMoisture,
-  getUserMoisturePredictions
+  getUserMoisturePredictions,
+  getSoilECUsers,
+  getUserSoilEC,
+  getUserECPredictions
 };

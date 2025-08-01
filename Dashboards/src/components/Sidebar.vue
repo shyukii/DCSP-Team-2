@@ -60,6 +60,13 @@
             <span v-if="!isCollapsed">Plant Moisture</span>
           </div>
         </router-link>
+
+        <router-link key="soil-ec" to="/soil-ec" class="no-underline text-inherit sidebar-link">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
+            <i class="fas fa-bolt text-lg"></i>
+            <span v-if="!isCollapsed">Soil EC</span>
+          </div>
+        </router-link>
       </transition-group>
     </nav>
   </aside>

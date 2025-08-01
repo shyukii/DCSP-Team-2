@@ -5,6 +5,7 @@ import Feed from '../pages/Feed.vue'
 import Savings from '../pages/Savings.vue'
 import Historical from '../pages/Historical.vue'
 import PlantMoisture from '../pages/PlantMoisture.vue'
+import SoilEC from '../pages/SoilEC.vue'
 
 const routes = [
   {
@@ -17,6 +18,7 @@ const routes = [
       { path: 'savings', name: 'Savings', component: Savings },
       { path: 'historical', name: 'Historical', component: Historical },
       { path: 'plant-moisture', name: 'PlantMoisture', component: PlantMoisture },
+      { path: 'soil-ec', name: 'SoilEC', component: SoilEC },
     ]
   }
 ]
