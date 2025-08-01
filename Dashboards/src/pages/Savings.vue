@@ -366,7 +366,11 @@
                     <h3 class="text-sm font-semibold text-white">CO₂ Savings Trend</h3>
                     <div class="flex items-center gap-2 text-white text-xs">
                       <div class="w-2 h-2 bg-white rounded-full"></div>
-                      <span>Each Log</span>
+                      <span>Historical</span>
+                      <div class="w-2 h-2 bg-green-400 rounded-full ml-2"></div>
+                      <span>Predicted</span>
+                      <div class="w-2 h-2 bg-red-400 rounded-full ml-2"></div>
+                      <span>Target Range</span>
                     </div>
                   </div>
                   <div class="flex-1 relative min-h-0">

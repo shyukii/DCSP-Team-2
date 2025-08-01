@@ -11,7 +11,10 @@ const {
   getUsersWithFeedingData,
   getPlantMoistureUsers,
   getUserPlantMoisture,
-  getUserMoisturePredictions
+  getUserMoisturePredictions,
+  getSoilECUsers,
+  getUserSoilEC,
+  getUserECPredictions
 } = require('../controllers/dashboardController');
 
 // CO2E Dashboard routes
@@ -24,6 +27,11 @@ router.get('/feeding-logs/:username', getUserFeedingLogs);
 router.get('/plant-moisture-users', getPlantMoistureUsers);
 router.get('/user/:username/plant-moisture', getUserPlantMoisture);
 router.get('/user/:username/moisture-predictions', getUserMoisturePredictions);
+
+// Soil EC Dashboard routes
+router.get('/soil-ec-users', getSoilECUsers);
+router.get('/user/:username/soil-ec', getUserSoilEC);
+router.get('/user/:username/ec-predictions', getUserECPredictions);
 
 // Legacy dashboard routes (keeping for compatibility)
 router.get('/dashboard/stats', getDashboardStats);
