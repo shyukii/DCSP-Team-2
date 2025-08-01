@@ -1,0 +1,11 @@
+{
+  "name": "dcsp-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd Dashboards/backend && npm install",
+    "start": "cd Dashboards/backend && node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
