@@ -6,13 +6,24 @@
         <!-- Header and User Selector -->
         <div class="flex justify-between items-end">
           <!-- Left: Title + Subtitle -->
-          <div class="flex flex-col justify-end leading-tight">
-            <h1 class="text-3xl font-bold">
-              <span class="text-sage">Plant Moisture</span> Tracking
+          <div class="flex flex-col justify-end leading-tight relative">
+            <div class="absolute -top-2 -left-2 w-8 h-8 bg-sage/20 rounded-full animate-pulse"></div>
+            <h1 class="text-4xl font-bold tracking-tight">
+              <span class="text-sage">💧 Plant Moisture</span> <span class="text-white">Tracking</span>
             </h1>
-            <p class="text-sm text-sage mt-1">
+            <p class="text-base text-sage mt-2 font-medium">
               Monitor plant soil moisture levels and predict watering needs with AI-powered forecasting.
             </p>
+            <div class="flex items-center mt-3 space-x-3">
+              <div class="flex items-center text-cream text-sm bg-sage/20 px-3 py-1 rounded-full">
+                <div class="w-2 h-2 bg-cyan-400 rounded-full mr-2 animate-pulse"></div>
+                Smart Watering
+              </div>
+              <div class="flex items-center text-cream text-sm bg-sage/20 px-3 py-1 rounded-full">
+                <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                Plant Health
+              </div>
+            </div>
           </div>
 
           <!-- Right: User Selector Dropdown -->
@@ -20,12 +31,12 @@
             <select 
               v-model="selectedUser" 
               @change="onUserChange"
-              class="bg-sage hover:bg-[#5E936C] border-transparent text-white px-6 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer appearance-none bg-no-repeat bg-right pr-10"
+              class="bg-gradient-to-r from-sage to-[#4A7856] hover:from-[#5E936C] hover:to-[#4A7856] border-transparent text-white px-6 py-3 text-sm rounded-xl transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-2 focus:ring-sage/50 focus:outline-none focus:border-none hover:border-none h-12 transform hover:scale-105 hover:shadow-xl hover:-translate-y-1 cursor-pointer appearance-none bg-no-repeat bg-right pr-12 shadow-lg backdrop-blur-sm font-semibold"
               :style="{ 
                 width: `${calculateDropdownWidth(selectedUser)}px`,
                 backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0iI0Y3RkZGMiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNS4yOTMgNy4yOTNhMSAxIDAgMDExLjQxNCAwTDEwIDEwLjU4NmwzLjI5My0zLjI5M2ExIDEgMCAxMTEuNDE0IDEuNDE0bC00IDRhMSAxIDAgMDEtMS40MTQgMGwtNC00YTEgMSAwIDAxMC0xLjQxNHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==)',
-                backgroundPosition: 'right 0.75rem center',
-                backgroundSize: '1rem'
+                backgroundPosition: 'right 1rem center',
+                backgroundSize: '1.2rem'
               }"
             >
               <option value="" class="bg-deepgreen text-cream">Choose a user...</option>
@@ -81,16 +92,21 @@
           <!-- Current Status Cards -->
           <div class="col-span-12 lg:col-span-4 space-y-4">
             <!-- Current Moisture Level -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-white font-semibold">💧 Current Moisture</h3>
-                <span class="text-2xl">{{ getStatusEmoji(currentMoisture) }}</span>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-white font-bold text-lg mb-1">💧 Current Moisture</h3>
+                  <p class="text-cream text-xs opacity-80">Real-time soil moisture level</p>
+                </div>
+                <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center">
+                  <span class="text-3xl">{{ getStatusEmoji(currentMoisture) }}</span>
+                </div>
               </div>
-              <div class="text-3xl font-bold text-white mb-1">{{ currentMoisture }}%</div>
-              <div class="text-cream text-sm">{{ getMoistureStatus(currentMoisture) }}</div>
-              <div class="w-full bg-deepgreen rounded-full h-2 mt-2">
+              <div class="text-4xl font-bold text-white mb-3 tracking-tight">{{ currentMoisture }}<span class="text-lg font-normal text-cream/80">%</span></div>
+              <div class="text-cream text-sm mb-4 bg-deepgreen/30 px-3 py-2 rounded-lg border-l-4 border-blue-400">{{ getMoistureStatus(currentMoisture) }}</div>
+              <div class="w-full bg-deepgreen/50 rounded-full h-3 overflow-hidden">
                 <div 
-                  class="h-2 rounded-full transition-all duration-300"
+                  class="h-3 rounded-full transition-all duration-700 ease-out shadow-inner"
                   :class="getMoistureBarColor(currentMoisture)"
                   :style="`width: ${currentMoisture}%`"
                 ></div>
@@ -98,35 +114,51 @@
             </div>
 
             <!-- Next Watering -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-white font-semibold">🗓️ Next Watering</h3>
-                <span class="text-2xl">⏰</span>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-white font-bold text-lg mb-1">🗓️ Next Watering</h3>
+                  <p class="text-cream text-xs opacity-80">Optimal watering schedule</p>
+                </div>
+                <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center">
+                  <span class="text-2xl">⏰</span>
+                </div>
               </div>
-              <div class="text-lg font-bold text-white mb-1">{{ nextWateringDay }}</div>
-              <div class="text-cream text-sm">{{ nextWateringDate }}</div>
+              <div class="text-2xl font-bold text-white mb-2">{{ nextWateringDay }}</div>
+              <div class="text-cream text-sm bg-deepgreen/30 px-3 py-2 rounded-lg">{{ nextWateringDate }}</div>
             </div>
 
             <!-- Watering Alerts -->
-            <div v-if="upcomingAlerts.length > 0" class="bg-red-600 p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-white font-semibold">🚨 Watering Alerts</h3>
-                <span class="text-2xl">⚠️</span>
+            <div v-if="upcomingAlerts.length > 0" class="bg-gradient-to-br from-red-600 to-red-800 p-6 rounded-xl shadow-lg border border-red-500/30 transform hover:scale-105 transition-all duration-300 animate-pulse">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-white font-bold text-lg mb-1">🚨 Watering Alerts</h3>
+                  <p class="text-red-100 text-xs opacity-80">Critical moisture levels detected</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <span class="text-2xl">⚠️</span>
+                </div>
               </div>
-              <div class="space-y-1">
-                <div v-for="alert in upcomingAlerts.slice(0, 3)" :key="alert.date" class="text-sm text-white">
-                  {{ alert.day_name }}: {{ alert.moisture_level }}%
+              <div class="space-y-2">
+                <div v-for="alert in upcomingAlerts.slice(0, 3)" :key="alert.date" class="bg-black/20 p-3 rounded-lg">
+                  <div class="text-sm text-white font-medium">{{ alert.day_name }}</div>
+                  <div class="text-xs text-red-100">Moisture: {{ alert.moisture_level }}%</div>
                 </div>
               </div>
             </div>
 
             <!-- Plant Care Tips -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-white font-semibold">💡 Care Tips</h3>
-                <span class="text-2xl">🌱</span>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-white font-bold text-lg mb-1">💡 AI Care Tips</h3>
+                  <p class="text-cream text-xs opacity-80">Smart recommendations</p>
+                </div>
+                <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center">
+                  <span class="text-2xl">🌱</span>
+                </div>
               </div>
-              <div class="text-cream text-sm leading-relaxed">
+              <div class="text-cream text-sm leading-relaxed bg-deepgreen/30 p-4 rounded-lg border-l-4 border-yellow-400">
                 {{ getCareTip(currentMoisture) }}
               </div>
             </div>
@@ -134,25 +166,28 @@
 
           <!-- Moisture Timeline Chart -->
           <div class="col-span-12 lg:col-span-8">
-            <div class="bg-sage rounded-lg p-4 h-full flex flex-col">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-white font-semibold text-lg">📈 30-Day Moisture Prediction</h3>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] rounded-xl p-6 h-full flex flex-col shadow-lg border border-sage/20">
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h3 class="text-xl font-bold text-white mb-2">📈 30-Day Moisture Prediction</h3>
+                  <p class="text-cream text-sm opacity-90">AI-powered watering schedule and moisture forecasting</p>
+                </div>
                 <div class="flex space-x-2 text-sm">
-                  <span class="flex items-center text-cream">
-                    <div class="w-3 h-3 bg-blue-400 rounded mr-1"></div>
-                    Historical
+                  <span class="inline-flex items-center px-3 py-1 rounded-full font-medium bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                    📊 Historical
                   </span>
-                  <span class="flex items-center text-cream">
-                    <div class="w-3 h-3 bg-green-400 rounded mr-1"></div>
-                    Predicted
+                  <span class="inline-flex items-center px-3 py-1 rounded-full font-medium bg-green-500/20 text-green-200 border border-green-400/30">
+                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    🔮 Predicted
                   </span>
-                  <span class="flex items-center text-cream">
-                    <div class="w-3 h-3 bg-red-400 rounded mr-1"></div>
-                    Critical Zone
+                  <span class="inline-flex items-center px-3 py-1 rounded-full font-medium bg-red-500/20 text-red-200 border border-red-400/30">
+                    <div class="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                    ⚠️ Critical Zone
                   </span>
                 </div>
               </div>
-              <div class="flex-1 min-h-0">
+              <div class="flex-1 min-h-0 bg-deepgreen/30 rounded-lg p-4 backdrop-blur-sm border border-sage/30">
                 <canvas ref="moistureChart" class="w-full h-full"></canvas>
               </div>
             </div>
@@ -160,21 +195,45 @@
 
           <!-- Statistics Summary -->
           <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ totalReadings }}</div>
-              <div class="text-cream text-sm">Total Readings</div>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-2xl">📊</span>
+              </div>
+              <div class="text-3xl text-white font-bold mb-1">{{ totalReadings }}</div>
+              <div class="text-cream text-sm opacity-90">Total Readings</div>
+              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
+                <div class="bg-blue-400 h-1 rounded-full w-3/4"></div>
+              </div>
             </div>
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ averageMoisture }}%</div>
-              <div class="text-cream text-sm">Average Moisture</div>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-2xl">💧</span>
+              </div>
+              <div class="text-3xl text-white font-bold mb-1">{{ averageMoisture }}<span class="text-lg font-normal text-cream/80">%</span></div>
+              <div class="text-cream text-sm opacity-90">Average Moisture</div>
+              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
+                <div class="bg-cyan-400 h-1 rounded-full w-2/3"></div>
+              </div>
             </div>
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ daysToNextWatering }}</div>
-              <div class="text-cream text-sm">Days to Next Water</div>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-2xl">⏳</span>
+              </div>
+              <div class="text-3xl text-white font-bold mb-1">{{ daysToNextWatering }}</div>
+              <div class="text-cream text-sm opacity-90">Days to Next Water</div>
+              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
+                <div class="bg-yellow-400 h-1 rounded-full w-1/2"></div>
+              </div>
             </div>
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ predictedWaterings }}</div>
-              <div class="text-cream text-sm">Waterings This Month</div>
+            <div class="bg-gradient-to-br from-sage to-[#0B4F26] p-6 rounded-xl text-center shadow-lg border border-sage/20 transform hover:scale-105 transition-all duration-300">
+              <div class="w-12 h-12 bg-cream/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-2xl">🚿</span>
+              </div>
+              <div class="text-3xl text-white font-bold mb-1">{{ predictedWaterings }}</div>
+              <div class="text-cream text-sm opacity-90">Waterings This Month</div>
+              <div class="w-full bg-deepgreen/50 rounded-full h-1 mt-3">
+                <div class="bg-green-400 h-1 rounded-full w-4/5"></div>
+              </div>
             </div>
           </div>
         </div>
