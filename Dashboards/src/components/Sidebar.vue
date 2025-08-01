@@ -26,33 +26,40 @@
     <!-- Nav Items -->
     <nav class="flex flex-col mt-2">
       <transition-group name="fade-slide" tag="div" class="flex flex-col transition-all duration-300">
-        <router-link to="/readiness" class="no-underline text-inherit sidebar-link">
+        <router-link key="readiness" to="/readiness" class="no-underline text-inherit sidebar-link">
           <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
             <i class="fas fa-leaf text-lg"></i>
             <span v-if="!isCollapsed">Readiness</span>
           </div>
         </router-link>
 
-        <router-link to="/feed" class="no-underline text-inherit sidebar-link">
+        <router-link key="feed" to="/feed" class="no-underline text-inherit sidebar-link">
           <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
             <i class="fas fa-apple-alt text-lg"></i>
             <span v-if="!isCollapsed">Feed</span>
           </div>
         </router-link>
 
-        <router-link to="/savings" class="no-underline text-inherit sidebar-link">
+        <router-link key="savings" to="/savings" class="no-underline text-inherit sidebar-link">
           <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
             <i class="fas fa-chart-line text-lg"></i>
             <span v-if="!isCollapsed">CO₂ Savings</span>
           </div>
         </router-link>
 
-        <router-link to="/historical" class="no-underline text-inherit sidebar-link">
+        <router-link key="historical" to="/historical" class="no-underline text-inherit sidebar-link">
           <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
             <i class="fas fa-chart-area text-lg"></i>
             <span v-if="!isCollapsed">Historical</span>
           </div>
-        </router-link>    
+        </router-link>
+
+        <router-link key="plant-moisture" to="/plant-moisture" class="no-underline text-inherit sidebar-link">
+          <div class="flex items-center sidebar-item" :class="isCollapsed ? 'justify-center px-0' : 'justify-start px-4 space-x-3'">
+            <i class="fas fa-seedling text-lg"></i>
+            <span v-if="!isCollapsed">Plant Moisture</span>
+          </div>
+        </router-link>
       </transition-group>
     </nav>
   </aside>

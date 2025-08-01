@@ -729,12 +729,21 @@ async def watering_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_text("Please /start to login first.")
         return
     
+    # Create keyboard with dashboard option
+    keyboard = [
+        [InlineKeyboardButton("📊 View Plant Dashboard", callback_data="view_plant_dashboard")],
+        [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
     await update.message.reply_text(
         "💧 **Plant Moisture Projection**\n\n"
         "📏 Using your soil moisture meter, please measure your plant's current moisture percentage.\n\n"
         "Enter the moisture percentage (0-100):\n"
-        "_Example_: `45` for 45% moisture",
-        parse_mode="Markdown"
+        "_Example_: `45` for 45% moisture\n\n"
+        "📊 Or view your visual dashboard below:",
+        parse_mode="Markdown",
+        reply_markup=reply_markup
     )
     
     return PLANT_MOISTURE_INPUT

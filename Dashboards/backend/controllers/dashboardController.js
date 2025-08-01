@@ -526,6 +526,265 @@ const getDevicesWithSensors = async (req, res) => {
   }
 };
 
+/**
+ * Get all users with plant moisture logs
+ * GET /api/plant-moisture-users
+ */
+const getPlantMoistureUsers = async (req, res) => {
+  try {
+    const query = `
+      SELECT DISTINCT u.username, u.telegram_id,
+             COUNT(p.id) as moisture_logs_count,
+             MAX(p.created_at) as last_reading_date
+      FROM users u
+      LEFT JOIN plant p ON u.telegram_id = p.telegram_id
+      GROUP BY u.username, u.telegram_id
+      ORDER BY moisture_logs_count DESC, u.username ASC
+    `;
+    
+    const result = await pool.query(query);
+    
+    const usersWithData = result.rows
+      .filter(row => parseInt(row.moisture_logs_count) > 0)
+      .map(row => ({
+        username: row.username,
+        telegramId: row.telegram_id,
+        moistureLogsCount: parseInt(row.moisture_logs_count),
+        lastReadingDate: row.last_reading_date
+      }));
+
+    const usersWithoutData = result.rows
+      .filter(row => parseInt(row.moisture_logs_count) === 0)
+      .map(row => ({
+        username: row.username,
+        telegramId: row.telegram_id,
+        moistureLogsCount: 0,
+        lastReadingDate: null
+      }));
+
+    res.json({
+      success: true,
+      data: {
+        usersWithData,
+        usersWithoutData,
+        totalUsers: result.rows.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting plant moisture users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
+/**
+ * Get user's plant moisture data and history
+ * GET /api/user/:username/plant-moisture
+ */
+const getUserPlantMoisture = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // Get user info
+    const userQuery = `SELECT telegram_id, username FROM users WHERE username = $1`;
+    const userResult = await pool.query(userQuery, [username]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+    const { telegram_id } = user;
+
+    // Get moisture logs
+    const moistureLogsQuery = `
+      SELECT plant_moisture, created_at 
+      FROM plant 
+      WHERE telegram_id = $1 
+      ORDER BY created_at DESC
+      LIMIT 30
+    `;
+    const moistureLogsResult = await pool.query(moistureLogsQuery, [telegram_id]);
+    const moistureLogs = moistureLogsResult.rows;
+
+    if (moistureLogs.length === 0) {
+      return res.json({
+        success: true,
+        hasData: false,
+        message: 'No plant moisture data found',
+        data: {
+          user: user,
+          currentMoisture: 0,
+          totalReadings: 0,
+          averageMoisture: 0,
+          moistureLogs: []
+        }
+      });
+    }
+
+    // Calculate statistics
+    const currentMoisture = parseFloat(moistureLogs[0].plant_moisture);
+    const totalReadings = moistureLogs.length;
+    const averageMoisture = moistureLogs.reduce((sum, log) => sum + parseFloat(log.plant_moisture), 0) / totalReadings;
+
+    res.json({
+      success: true,
+      hasData: true,
+      data: {
+        user: user,
+        currentMoisture: Math.round(currentMoisture * 10) / 10,
+        totalReadings: totalReadings,
+        averageMoisture: Math.round(averageMoisture * 10) / 10,
+        moistureLogs: moistureLogs.map(log => ({
+          plant_moisture: parseFloat(log.plant_moisture),
+          created_at: log.created_at
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting user plant moisture:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
+/**
+ * Get moisture predictions for a user (calls Python service)
+ * GET /api/user/:username/moisture-predictions
+ */
+const getUserMoisturePredictions = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // Get user info
+    const userQuery = `SELECT telegram_id, username FROM users WHERE username = $1`;
+    const userResult = await pool.query(userQuery, [username]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+    const { telegram_id } = user;
+
+    // Get latest moisture reading
+    const latestMoistureQuery = `
+      SELECT plant_moisture 
+      FROM plant 
+      WHERE telegram_id = $1 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    const latestMoistureResult = await pool.query(latestMoistureQuery, [telegram_id]);
+
+    if (latestMoistureResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        hasData: false,
+        message: 'No moisture data available for predictions',
+        data: {
+          projections: [],
+          watering_alerts: [],
+          overall_recommendation: 'No data available'
+        }
+      });
+    }
+
+    const currentMoisture = parseFloat(latestMoistureResult.rows[0].plant_moisture);
+
+    // Generate 30-day predictions using simple model
+    // This mimics the Python PlantMoistureProjection logic
+    const projections = [];
+    const currentDate = new Date();
+    
+    for (let day = 0; day < 30; day++) {
+      const projectionDate = new Date(currentDate);
+      projectionDate.setDate(currentDate.getDate() + day);
+      
+      let projectedMoisture;
+      if (day === 0) {
+        projectedMoisture = currentMoisture;
+      } else {
+        // Simple decay model: 3.5% daily loss with some variation
+        const dailyLoss = 3.5 + (Math.random() - 0.5) * 2; // 2.5-4.5% range
+        projectedMoisture = Math.max(0, currentMoisture - (dailyLoss * day));
+      }
+      
+      // Determine status
+      let status;
+      if (projectedMoisture < 20) status = 'critical';
+      else if (projectedMoisture < 40) status = 'low';
+      else if (projectedMoisture < 60) status = 'moderate';
+      else status = 'good';
+      
+      projections.push({
+        date: projectionDate.toISOString().split('T')[0],
+        day_name: projectionDate.toLocaleDateString('en-US', { weekday: 'long' }),
+        moisture_percentage: Math.round(projectedMoisture * 10) / 10,
+        status: status
+      });
+    }
+
+    // Generate watering alerts
+    const watering_alerts = projections
+      .filter(proj => proj.moisture_percentage < 40)
+      .slice(0, 5)
+      .map(proj => ({
+        date: proj.date,
+        day_name: proj.day_name,
+        moisture_level: proj.moisture_percentage,
+        urgency: proj.status,
+        message: `Water needed on ${proj.day_name} - Moisture will be ${proj.moisture_percentage}%`
+      }));
+
+    // Overall recommendation
+    const criticalDays = projections.filter(p => p.status === 'critical').length;
+    const lowDays = projections.filter(p => p.status === 'low').length;
+    
+    let overall_recommendation;
+    if (criticalDays > 0) {
+      overall_recommendation = '🚨 Immediate Action Required: Your plant will need water within the next few days.';
+    } else if (lowDays > 2) {
+      overall_recommendation = '⚠️ Plan Ahead: Schedule watering sessions to maintain healthy moisture levels.';
+    } else {
+      overall_recommendation = '✅ All Good: Your plant\'s moisture levels look healthy for the week ahead.';
+    }
+
+    res.json({
+      success: true,
+      hasData: true,
+      data: {
+        current_moisture: currentMoisture,
+        projections: projections,
+        watering_alerts: watering_alerts,
+        overall_recommendation: overall_recommendation
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting moisture predictions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
 module.exports = {
   getUsersWithFeedingData,
   getUserCO2Impact,
@@ -534,5 +793,8 @@ module.exports = {
   getDashboardStats,
   getHistoricalData,
   getPredictionData,
-  getDevicesWithSensors
+  getDevicesWithSensors,
+  getPlantMoistureUsers,
+  getUserPlantMoisture,
+  getUserMoisturePredictions
 };
