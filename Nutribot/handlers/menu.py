@@ -37,7 +37,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 
     if update.callback_query:
         await update.callback_query.edit_message_text(
-            f"Setup complete, {username}! Your compost setup is saved.\n\n"
+            f"Welcome, {username}! Let's care for your compost.\n\n"
             "What would you like to do?",
             reply_markup=markup
         )
