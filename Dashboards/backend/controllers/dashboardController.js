@@ -130,7 +130,7 @@ const getUserCO2Impact = async (req, res) => {
     // Get feeding logs
     const feedingLogsQuery = `
       SELECT greens, browns, 
-             COALESCE(moisture_percentage) as moisture_value,
+             COALESCE(moisture_percentage, 0) as moisture_percentage,
              CASE WHEN moisture_percentage IS NOT NULL THEN 'percentage' ELSE 'ml' END as moisture_type,
              created_at 
       FROM feeding_logs 
@@ -272,7 +272,7 @@ const getGlobalStats = async (req, res) => {
     for (const user of usersWithLogs) {
       const userLogsQuery = `
         SELECT greens, browns, 
-               COALESCE(moisture_percentage) as moisture_value,
+               COALESCE(moisture_percentage, 0) as moisture_percentage,
                CASE WHEN moisture_percentage IS NOT NULL THEN 'percentage' ELSE 'ml' END as moisture_type,
                created_at 
         FROM feeding_logs 
@@ -426,7 +426,7 @@ const getUserFeedingLogs = async (req, res) => {
 
     const query = `
       SELECT greens, browns, 
-             COALESCE(moisture_percentage) as moisture_value,
+             COALESCE(moisture_percentage, 0) as moisture_percentage,
              CASE WHEN moisture_percentage IS NOT NULL THEN 'percentage' ELSE 'ml' END as moisture_type,
              created_at 
       FROM feeding_logs 

@@ -135,7 +135,7 @@
                         <div class="w-6 h-6 bg-sage rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">3</div>
                         <div>
                           <div class="font-semibold text-white text-sm">Log Your Materials</div>
-                          <div class="text-sage text-xs">Record greens, browns, and water amounts</div>
+                          <div class="text-sage text-xs">Record greens, browns, and moisture percentage</div>
                         </div>
                       </div>
                       
@@ -167,7 +167,7 @@
                       
                       <div class="text-center p-4 bg-gradient-to-r from-blue-500/20 to-blue-600/10 rounded-lg border border-blue-500/30">
                         <div class="text-2xl mb-2">💧</div>
-                        <div class="font-bold text-white text-sm mb-1">Water</div>
+                        <div class="font-bold text-white text-sm mb-1">Moisture Percentage</div>
                         <div class="text-sage text-xs">Moisture for optimal decomposition</div>
                       </div>
                     </div>
@@ -470,7 +470,7 @@
                             </div>
                             <div class="flex items-center gap-1">
                               <span>💧</span>
-                              <span class="text-light-green">{{ log.water }}ml</span>
+                              <span class="text-light-green">{{ log.moisture_percentage || 0 }}%</span>
                             </div>
                           </div>
                         </div>
