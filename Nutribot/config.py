@@ -29,7 +29,6 @@ class Config:
     CLARIFAI_PLANT_MODEL_URL: str = "https://clarifai.com/s10257235/NutriBot-Image-Classification/models/Image-Classification-Model"
     
     # File Paths
-    LOGIN_FILE: str = os.getenv("LOGIN_FILE", "loginIDs.json")
     FFMPEG_PATH: str = os.getenv("FFMPEG_PATH", r"C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe")
     TEMP_AUDIO_DIR: str = "temp/"
     
@@ -121,7 +120,6 @@ class Config:
 TELEGRAM_TOKEN = Config.TELEGRAM_TOKEN
 CLARIFAI_PAT = Config.CLARIFAI_PAT
 OPENAI_MODEL = Config.OPENAI_MODEL
-LOGIN_FILE = Config.LOGIN_FILE
 OPENAI_API_KEY = Config.OPENAI_API_KEY
 REPLICATE_API_TOKEN = Config.REPLICATE_API_TOKEN
 FFMPEG_PATH = Config.FFMPEG_PATH
