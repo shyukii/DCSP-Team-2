@@ -579,12 +579,12 @@ async def handle_log_feeding_choice(update: Update, context: ContextTypes.DEFAUL
     await update.effective_message.reply_text(
         "📝 **Log Your Actual Feeding**\n\n"
         "Please enter the actual amounts you added to your compost in this format:\n"
-        "`greens;browns;water`\n\n"
-        "**Example:** `30;54;50`\n"
+        "`greens;browns;moisture_percentage`\n\n"
+        "**Example:** `30;54;45`\n"
         "• Greens: 30g\n"
         "• Browns: 54g  \n"
-        "• Water: 50ml\n\n"
-        "💡 *Enter the values separated by semicolons*",
+        "• Moisture achieved: 45%\n\n"
+        "💡 *Use your moisture meter to measure the final moisture percentage after adding water*",
         parse_mode="Markdown"
     )
     
@@ -600,42 +600,58 @@ async def handle_feeding_log_input(update: Update, context: ContextTypes.DEFAULT
         if len(parts) != 3:
             await update.message.reply_text(
                 "❌ Please enter three values separated by semicolons.\n"
-                "Format: `greens;browns;water`\n"
-                "Example: `30;54;50`"
+                "Format: `greens;browns;moisture_percentage`\n"
+                "Example: `30;54;45`"
             )
             return FEEDING_LOG_INPUT
         
         try:
             greens = float(parts[0])
             browns = float(parts[1])
-            water = float(parts[2])
+            moisture_percentage = float(parts[2])
         except ValueError:
             await update.message.reply_text(
                 "❌ Please enter valid numbers.\n"
-                "Format: `greens;browns;water`\n" 
-                "Example: `30;54;50`"
+                "Format: `greens;browns;moisture_percentage`\n" 
+                "Example: `30;54;45`"
             )
             return FEEDING_LOG_INPUT
         
-        # Validate values are positive
-        if greens < 0 or browns < 0 or water < 0:
+        # Validate values are positive and moisture is within range
+        if greens < 0 or browns < 0 or moisture_percentage < 0:
             await update.message.reply_text(
                 "❌ Please enter positive values only.\n"
                 "All amounts should be greater than or equal to 0."
             )
             return FEEDING_LOG_INPUT
         
+        if moisture_percentage > 100:
+            await update.message.reply_text(
+                "❌ Moisture percentage cannot exceed 100%.\n"
+                "Please enter a value between 0 and 100."
+            )
+            return FEEDING_LOG_INPUT
+        
         # Save to database
         telegram_id = update.effective_user.id
-        feeding_log = db.create_feeding_log(telegram_id, greens, browns, water)
+        feeding_log = db.create_feeding_log(telegram_id, greens, browns, moisture_percentage)
         
         if feeding_log:
+            # Check if moisture is close to target
+            moisture_feedback = ""
+            if moisture_percentage < 40:
+                moisture_feedback = "\n⚠️ Moisture is quite low - consider adding more water next time."
+            elif moisture_percentage > 60:
+                moisture_feedback = "\n⚠️ Moisture is quite high - reduce water next time for better aeration."
+            elif 45 <= moisture_percentage <= 55:
+                moisture_feedback = "\n🎯 Perfect! You hit the ideal moisture range!"
+            
             await update.message.reply_text(
                 f"✅ **Feeding Logged Successfully!**\n\n"
                 f"📊 **Your Entry:**\n"
                 f"🌿 Greens: {greens}g\n"  
                 f"🍂 Browns: {browns}g\n"
-                f"💧 Water: {water}ml\n\n"
+                f"💧 Moisture achieved: {moisture_percentage}%{moisture_feedback}\n\n"
                 f"📅 Logged at: {feeding_log.get('created_at', 'just now')}\n\n"
                 f"Great job tracking your composting! 🌱",
                 parse_mode="Markdown"
@@ -688,7 +704,11 @@ async def handle_view_logs(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         log_text += f"**{i}. {created_date}**\n"
         log_text += f"🌿 Greens: {log.get('greens', 0)}g\n"
         log_text += f"🍂 Browns: {log.get('browns', 0)}g\n" 
-        log_text += f"💧 Water: {log.get('water', 0)}ml\n\n"
+        moisture = log.get('moisture_percentage', log.get('water', 0))  # Fallback for old logs
+        if log.get('moisture_percentage') is not None:
+            log_text += f"💧 Moisture: {moisture}%\n\n"
+        else:
+            log_text += f"💧 Water: {moisture}ml (old format)\n\n"
     
     # Send new message instead of editing the recommendation
     await update.effective_message.reply_text(

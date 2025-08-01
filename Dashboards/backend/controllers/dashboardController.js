@@ -129,7 +129,10 @@ const getUserCO2Impact = async (req, res) => {
 
     // Get feeding logs
     const feedingLogsQuery = `
-      SELECT greens, browns, water, created_at 
+      SELECT greens, browns, 
+             COALESCE(moisture_percentage, water) as moisture_value,
+             CASE WHEN moisture_percentage IS NOT NULL THEN 'percentage' ELSE 'ml' END as moisture_type,
+             created_at 
       FROM feeding_logs 
       WHERE telegram_id = $1 
       ORDER BY created_at DESC
@@ -268,7 +271,10 @@ const getGlobalStats = async (req, res) => {
     // Calculate for each user individually and sum up
     for (const user of usersWithLogs) {
       const userLogsQuery = `
-        SELECT greens, browns, water, created_at 
+        SELECT greens, browns, 
+               COALESCE(moisture_percentage, water) as moisture_value,
+               CASE WHEN moisture_percentage IS NOT NULL THEN 'percentage' ELSE 'ml' END as moisture_type,
+               created_at 
         FROM feeding_logs 
         WHERE telegram_id = $1
         ORDER BY created_at DESC
@@ -419,7 +425,10 @@ const getUserFeedingLogs = async (req, res) => {
     const telegram_id = userResult.rows[0].telegram_id;
 
     const query = `
-      SELECT greens, browns, water, created_at 
+      SELECT greens, browns, 
+             COALESCE(moisture_percentage, water) as moisture_value,
+             CASE WHEN moisture_percentage IS NOT NULL THEN 'percentage' ELSE 'ml' END as moisture_type,
+             created_at 
       FROM feeding_logs 
       WHERE telegram_id = $1 
       ORDER BY created_at DESC 

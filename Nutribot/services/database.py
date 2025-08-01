@@ -83,7 +83,7 @@ class DatabaseService:
             user.get('soil_volume') is not None
         ])
     
-    def create_feeding_log(self, telegram_id: int, greens: float, browns: float, water: float) -> Optional[Dict[str, Any]]:
+    def create_feeding_log(self, telegram_id: int, greens: float, browns: float, moisture_percentage: float) -> Optional[Dict[str, Any]]:
         """
         Create a new feeding log entry
         
@@ -91,7 +91,7 @@ class DatabaseService:
             telegram_id: User's telegram ID
             greens: Amount of greens added (in grams)
             browns: Amount of browns added (in grams)  
-            water: Amount of water added (in ml)
+            moisture_percentage: Moisture percentage achieved after feeding
             
         Returns:
             Created feeding log entry or None if failed
@@ -108,7 +108,7 @@ class DatabaseService:
                 'username': user['username'],  # Add username to the feeding log
                 'greens': greens,
                 'browns': browns,
-                'water': water
+                'moisture_percentage': moisture_percentage
             }).execute()
             return response.data[0] if response.data else None
         except Exception as e:

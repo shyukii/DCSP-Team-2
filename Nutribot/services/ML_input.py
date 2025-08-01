@@ -86,10 +86,10 @@ class MLCompostRecommendation:
         brown_per_green = self.default_ratios[normalized_crop]
         browns_grams = greens_grams * brown_per_green
         
-        # Calculate water needed - always 50% of soil volume
+        # Calculate maximum water needed - always 50% of soil volume
         if soil_volume_liters and soil_volume_liters > 0:
-            # Use 50% of soil volume
-            water_grams = soil_volume_liters * 1000 * 0.5  # Convert L to g and use 50%
+            # Use 50% of soil volume as maximum
+            max_water_grams = soil_volume_liters * 1000 * 0.5  # Convert L to g and use 50%
         else:
             # If no soil volume provided, return error
             return {
@@ -102,8 +102,9 @@ class MLCompostRecommendation:
         return {
             "greens_g": round(greens_grams, 2),
             "browns_g": round(browns_grams, 2),
-            "water_g": round(water_grams, 2),
-            "water_ml": round(water_grams, 2),  # Same as grams for water
+            "max_water_g": round(max_water_grams, 2),
+            "max_water_ml": round(max_water_grams, 2),  # Same as grams for water
+            "target_moisture_percentage": 50,  # Target moisture level
             "target_crop": normalized_crop,
             "expected_cn_ratio": expected_cn_ratio,
             "brown_per_green_ratio": brown_per_green,
@@ -127,14 +128,18 @@ class MLCompostRecommendation:
 
 🥬 **Greens:** {result['greens_g']}g
 🍂 **Browns:** {result['browns_g']}g  
-💧 **Water:** {result['water_ml']}ml
+💧 **Max Water:** {result['max_water_ml']}ml
+
+🎯 **Target Moisture:** {result['target_moisture_percentage']}%
 
 📊 **Details:**
 • Expected C:N ratio: {result['expected_cn_ratio']}
 • Soil volume: {result['soil_volume_liters']}L
 • Browns per greens ratio: {result['brown_per_green_ratio']}:1
 
-💧 Water calculated as 50% of your soil volume
+⚠️ **Important:** Use your moisture meter to achieve {result['target_moisture_percentage']}% moisture. The {result['max_water_ml']}ml is the MAXIMUM - you may need less depending on current moisture levels.
+
+📝 After feeding, log the actual moisture percentage you achieved.
 
 *Based on advanced ML analysis optimized for {result['target_crop'].lower()}*"""
 
