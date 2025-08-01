@@ -186,6 +186,7 @@
 <script>
 import { ref, onMounted, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import 'chartjs-adapter-date-fns'
 
 Chart.register(...registerables)
 
@@ -300,6 +301,11 @@ export default {
               if (predResult.success && predResult.data) {
                 moisturePredictions.value = predResult.data.projections || []
                 upcomingAlerts.value = predResult.data.watering_alerts || []
+                
+                console.log('Predictions loaded:', {
+                  projections: moisturePredictions.value.length,
+                  alerts: upcomingAlerts.value.length
+                })
               }
               
               // Calculate next watering
@@ -313,9 +319,11 @@ export default {
               predictedWaterings.value = upcomingAlerts.value.length
             }
             
-            // Update chart
+            // Update chart after data is loaded
             await nextTick()
-            updateChart()
+            setTimeout(() => {
+              updateChart()
+            }, 100)
           }
         }
       } catch (error) {
@@ -326,7 +334,10 @@ export default {
     }
 
     const updateChart = () => {
-      if (!moistureChart.value) return
+      if (!moistureChart.value) {
+        console.warn('Chart canvas not available yet')
+        return
+      }
 
       // Destroy existing chart
       if (chartInstance.value) {
@@ -335,7 +346,7 @@ export default {
 
       const ctx = moistureChart.value.getContext('2d')
       
-      // Prepare data
+      // Prepare data with debugging
       const historicalData = moistureHistory.value.map(log => ({
         x: new Date(log.created_at),
         y: log.plant_moisture
@@ -345,6 +356,13 @@ export default {
         x: new Date(pred.date),
         y: pred.moisture_percentage
       }))
+
+      console.log('Chart data:', {
+        historical: historicalData,
+        predictions: predictionData,
+        historicalCount: historicalData.length,
+        predictionCount: predictionData.length
+      })
 
       chartInstance.value = new Chart(ctx, {
         type: 'line',
@@ -377,7 +395,7 @@ export default {
               ],
               borderColor: '#EF4444',
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              fill: '-1',
+              fill: true,
               tension: 0,
               pointRadius: 0
             }
