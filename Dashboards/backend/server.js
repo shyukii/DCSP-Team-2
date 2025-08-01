@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 const apiRoutes = require('./routes/api');
 
 // Middleware - Explicit CORS configuration
-console.log('🚀 CORS fix deployed - version 3 - EXPLICIT CONFIG');
+console.log('🚀 CORS fix deployed - version 4 - SURGE DOMAIN ADDED');
 
 app.use(cors({
   origin: [
