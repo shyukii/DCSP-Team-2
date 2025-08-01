@@ -22,6 +22,9 @@
               @change="onUserChange"
               class="bg-sage hover:bg-[#5E936C] border-transparent text-white px-6 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer appearance-none bg-no-repeat bg-right pr-10"
               :style="{ 
+                width: `${calculateDropdownWidth(selectedUser)}px`,
+                backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0iI0Y3RkZGMiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNS4yOTMgNy4yOTNhMSAxIDAgMDExLjQxNCAwTDEwIDEwLjU4NmwzLjI5My0zLjI5M2ExIDEgMCAxMTEuNDE0IDEuNDE0bC00IDRhMSAxIDAgMDEtMS40MTQgMGwtNC00YTEgMSAwIDAxMC0xLjQxNHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==)',
+                backgroundPosition: 'right 0.75rem center',
                 backgroundSize: '1rem'
               }"
             >
@@ -47,6 +50,28 @@
                 </option>
               </optgroup>
             </select>
+
+            <!-- Reading Selector - Only show when user has multiple readings -->
+            <select 
+              v-if="selectedUser && ecHistory.length > 1"
+              v-model="selectedReadingIndex" 
+              @change="onReadingChange"
+              class="bg-sage hover:bg-[#5E936C] border-transparent text-white px-4 py-2 text-sm rounded-md transition-all duration-300 ease-in-out border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none hover:border-none h-10 transform hover:scale-105 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer appearance-none bg-no-repeat bg-right pr-8"
+              :style="{ 
+                backgroundImage: 'url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0iI0Y3RkZGMiI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNS4yOTMgNy4yOTNhMSAxIDAgMDExLjQxNCAwTDEwIDEwLjU4NmwzLjI5My0zLjI5M2ExIDEgMCAxMTEuNDE0IDEuNDE0bC00IDRhMSAxIDAgMDEtMS40MTQgMGwtNC00YTEgMSAwIDAxMC0xLjQxNHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==)',
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '0.8rem'
+              }"
+            >
+              <option 
+                v-for="(reading, index) in ecHistory" 
+                :key="index" 
+                :value="index"
+                class="bg-deepgreen text-cream"
+              >
+                {{ formatReadingDate(reading.created_at) }} - {{ reading.ec }} mS/cm
+              </option>
+            </select>
           </div>
         </div>
 
@@ -56,120 +81,401 @@
         </div>
 
         <!-- No User Selected -->
-        <div v-else-if="!selectedUser" class="flex-1 flex items-center justify-center">
-          <div class="text-center">
-            <div class="text-sage text-6xl mb-4">🧪</div>
-            <div class="text-sage text-xl mb-2">Select a user to view soil EC monitoring</div>
-            <div class="text-cream text-sm">Choose from the dropdown above to see EC trends and predictions</div>
+        <div v-else-if="!selectedUser" class="flex items-center justify-center flex-1 p-4">
+          <div class="max-w-2xl w-full mx-auto">
+            <!-- Main Card -->
+            <div class="bg-sage/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-sage/30 overflow-hidden">
+              <!-- Header Section -->
+              <div class="bg-gradient-to-r from-sage to-[#5E936C] p-8 text-center relative">
+                <!-- Background pattern -->
+                <div class="absolute inset-0 opacity-10">
+                  <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                      <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+                  </svg>
+                </div>
+                
+                <div class="relative z-10">
+                  <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30">
+                    <span class="text-3xl">🧪</span>
+                  </div>
+                  <h2 class="text-2xl font-bold text-white mb-2">Select a User</h2>
+                  <p class="text-cream/90 text-sm">Choose a user from the dropdown above to explore their soil EC monitoring and compost readiness predictions</p>
+                </div>
+              </div>
+              
+              <!-- Content Section -->
+              <div class="p-8">
+                <!-- User Statistics Overview -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                  <div class="text-center p-4 bg-deepgreen/30 rounded-xl border border-sage/20">
+                    <div class="text-2xl font-bold text-white mb-1">{{ (usersWithData.length + usersWithoutData.length) || 0 }}</div>
+                    <div class="text-sage text-xs">Total Users</div>
+                  </div>
+                  
+                  <div class="text-center p-4 bg-emerald-500/20 rounded-xl border border-emerald-500/30">
+                    <div class="text-2xl font-bold text-emerald-400 mb-1">{{ usersWithData.length || 0 }}</div>
+                    <div class="text-sage text-xs">Active Monitors</div>
+                  </div>
+                  
+                  <div class="text-center p-4 bg-amber-500/20 rounded-xl border border-amber-500/30">
+                    <div class="text-2xl font-bold text-amber-400 mb-1">{{ usersWithoutData.length || 0 }}</div>
+                    <div class="text-sage text-xs">Ready to Start</div>
+                  </div>
+                </div>
+
+                <!-- Features Preview -->
+                <div class="space-y-4">
+                  <h3 class="text-lg font-semibold text-white text-center mb-4">What You'll See</h3>
+                  
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">📊</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">EC Monitoring</div>
+                        <div class="text-sage text-xs">Real-time conductivity tracking</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">📈</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">Trend Analysis</div>
+                        <div class="text-sage text-xs">Historical & predicted data</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">🎯</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">Readiness Status</div>
+                        <div class="text-sage text-xs">ML-powered forecasting</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 p-4 bg-deepgreen/20 rounded-lg border border-sage/20">
+                      <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span class="text-lg">🤖</span>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-white text-sm">AI Recommendations</div>
+                        <div class="text-sage text-xs">Smart composting insights</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Footer -->
+              <div class="bg-deepgreen/60 px-8 py-4 border-t border-sage/20">
+                <div class="flex items-center justify-center gap-2 text-sage">
+                  <span class="text-lg">🔍</span>
+                  <span class="text-sm">Use the dropdown above to dive into any user's soil EC monitoring journey!</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- No Data Available -->
-        <div v-else-if="!hasData" class="flex-1 flex items-center justify-center">
-          <div class="text-center">
-            <div class="text-sage text-6xl mb-4">📊</div>
-            <div class="text-sage text-xl mb-2">No soil EC data available</div>
-            <div class="text-cream text-sm">{{ selectedUser }} hasn't taken any EC readings yet</div>
+        <div v-else-if="!hasData" class="flex items-center justify-center flex-1 p-4">
+          <div class="max-w-4xl w-full mx-auto">
+            <!-- Main Card -->
+            <div class="bg-sage/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-sage/30 overflow-hidden">
+              <!-- Header Section -->
+              <div class="bg-gradient-to-r from-sage to-[#5E936C] p-6 text-center">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span class="text-2xl">🧪</span>
+                </div>
+                <h2 class="text-xl font-bold text-white mb-1">Ready to Start EC Monitoring?</h2>
+                <p class="text-cream/90">{{ selectedUser }} hasn't taken any EC readings yet</p>
+              </div>
+              
+              <!-- Content Section -->
+              <div class="p-6">
+                <div class="flex gap-8">
+                  <!-- Left: Getting Started Steps -->
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-white mb-4 text-center">Getting Started is Easy!</h3>
+                    <div class="space-y-3">
+                      <div class="flex items-center gap-3 p-3 bg-deepgreen/40 rounded-lg border border-sage/20">
+                        <div class="w-6 h-6 bg-sage rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">1</div>
+                        <div>
+                          <div class="font-semibold text-white text-sm">Open NutriBot Telegram</div>
+                          <div class="text-sage text-xs">Launch the chatbot to get started</div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-3 p-3 bg-deepgreen/40 rounded-lg border border-sage/20">
+                        <div class="w-6 h-6 bg-sage rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">2</div>
+                        <div>
+                          <div class="font-semibold text-white text-sm">Use EC Monitoring Feature</div>
+                          <div class="text-sage text-xs">Find the soil EC testing option in the menu</div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-3 p-3 bg-deepgreen/40 rounded-lg border border-sage/20">
+                        <div class="w-6 h-6 bg-sage rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">3</div>
+                        <div>
+                          <div class="font-semibold text-white text-sm">Record Your Readings</div>
+                          <div class="text-sage text-xs">Log EC values and moisture percentages</div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-3 p-3 bg-deepgreen/40 rounded-lg border border-sage/20">
+                        <div class="w-6 h-6 bg-sage rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">4</div>
+                        <div>
+                          <div class="font-semibold text-white text-sm">Monitor Compost Health</div>
+                          <div class="text-sage text-xs">Return here to track readiness and get AI insights!</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Right: EC Information -->
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-white mb-4 text-center">Understanding EC Levels</h3>
+                    <div class="space-y-3">
+                      <div class="text-center p-4 bg-gradient-to-r from-green-500/20 to-green-600/10 rounded-lg border border-green-500/30">
+                        <div class="text-2xl mb-2">✅</div>
+                        <div class="font-bold text-white text-sm mb-1">Optimal Range</div>
+                        <div class="text-sage text-xs">1.5-3.0 mS/cm - Perfect for compost health</div>
+                      </div>
+                      
+                      <div class="text-center p-4 bg-gradient-to-r from-amber-600/20 to-amber-700/10 rounded-lg border border-amber-600/30">
+                        <div class="text-2xl mb-2">⚠️</div>
+                        <div class="font-bold text-white text-sm mb-1">Building/High Range</div>
+                        <div class="text-sage text-xs">1.0-1.5 or 3.0-4.0 mS/cm - Monitor closely</div>
+                      </div>
+                      
+                      <div class="text-center p-4 bg-gradient-to-r from-red-500/20 to-red-600/10 rounded-lg border border-red-500/30">
+                        <div class="text-2xl mb-2">🚨</div>
+                        <div class="font-bold text-white text-sm mb-1">Critical Levels</div>
+                        <div class="text-sage text-xs">Below 1.0 or above 4.0 mS/cm - Action needed</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Footer -->
+              <div class="bg-deepgreen/60 px-6 py-3 text-center border-t border-sage/20">
+                <div class="flex items-center justify-center gap-2 text-sage">
+                  <span class="text-lg">🔬</span>
+                  <span class="text-xs">Start monitoring your soil EC today for optimal compost development!</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Dashboard Content -->
-        <div v-else class="flex-1 grid grid-cols-12 gap-4 min-h-0">
-          <!-- Current Status Cards -->
-          <div class="col-span-12 lg:col-span-4 space-y-4">
-            <!-- Current EC Level -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-cream">{{ getStatusEmoji(currentEC) }} Current EC Level</span>
-              </div>
-              <div class="text-3xl font-bold text-white mb-1">{{ currentEC }} mS/cm</div>
-              <div class="text-cream text-sm">{{ getECStatus(currentEC) }}</div>
-              <div class="w-full bg-deepgreen rounded-full h-2 mt-2">
-                <div 
-                  :class="getECBarColor(currentEC)"
-                  class="h-2 rounded-full transition-all duration-500"
-                  :style="`width: ${Math.min((currentEC / 5) * 100, 100)}%`"
-                ></div>
-              </div>
-            </div>
-
-            <!-- Readiness Status -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-cream">🎯 Compost Readiness</span>
-              </div>
-              <div class="text-lg font-bold text-white mb-1">{{ getReadinessText(readinessStatus) }}</div>
-              <div class="text-cream text-sm" v-if="estimatedReadyDays">
-                ~{{ estimatedReadyDays }} days to ready
-              </div>
-              <div class="text-cream text-sm" v-else>
-                Monitoring progress
-              </div>
-            </div>
-
-            <!-- Alert Section -->
-            <div v-if="alertLevel && alertLevel !== 'none'" :class="getAlertCardClass(alertLevel)" class="p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-white">{{ getAlertIcon(alertLevel) }} Alert</span>
-              </div>
-              <div class="text-white text-sm">{{ alertMessage }}</div>
-            </div>
-
-            <!-- Health Score -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-cream">💚 Health Score</span>
-              </div>
-              <div class="text-2xl font-bold text-white mb-1">{{ averageHealthScore }}/100</div>
-              <div class="text-cream text-sm">{{ getHealthDescription(averageHealthScore) }}</div>
-            </div>
-
-            <!-- Care Recommendations -->
-            <div class="bg-sage p-4 rounded-lg">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-cream">💡 Recommendations</span>
-              </div>
-              <div class="text-cream text-sm leading-relaxed">
-                {{ primaryRecommendation }}
-              </div>
-            </div>
-          </div>
-
-          <!-- EC Timeline Chart -->
-          <div class="col-span-12 lg:col-span-8">
-            <div class="bg-sage rounded-lg p-4 h-full flex flex-col">
-              <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-cream">📈 EC Trend & Predictions</span>
-                <div class="flex space-x-2">
-                  <span class="text-xs text-cream bg-blue-500 px-2 py-1 rounded">Historical</span>
-                  <span class="text-xs text-cream bg-green-500 px-2 py-1 rounded">Predicted</span>
-                  <span class="text-xs text-cream bg-red-500 px-2 py-1 rounded">Optimal Range</span>
+        <div v-else class="flex flex-1 flex-col gap-4 min-h-0 h-full">
+          <!-- Top Section: Key Metrics + EC Trend Chart - 50% height -->
+          <div class="flex gap-4 h-1/2 min-h-0">
+            <!-- Left: Key Metrics in 2x2 Grid -->
+            <div class="grid grid-cols-2 gap-3 w-80">
+              <!-- Current EC Level -->
+              <div class="bg-sage rounded-xl p-4 text-white shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <span class="text-sm">{{ getStatusEmoji(currentEC) }}</span>
+                  </div>
+                  <div class="text-xs opacity-80">Current</div>
+                </div>
+                <div>
+                  <div class="text-xl font-bold">{{ currentEC }}</div>
+                  <div class="text-xs opacity-80">mS/cm EC Level</div>
                 </div>
               </div>
-              <div class="flex-1 min-h-0">
-                <canvas ref="ecChart" class="w-full h-full"></canvas>
+
+              <!-- Health Score -->
+              <div class="bg-sage rounded-xl p-4 text-white shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <span class="text-sm">💚</span>
+                  </div>
+                  <div class="text-xs opacity-80">Score</div>
+                </div>
+                <div>
+                  <div class="text-xl font-bold">{{ averageHealthScore }}</div>
+                  <div class="text-xs opacity-80">Health Score</div>
+                </div>
+              </div>
+
+              <!-- Total Readings -->
+              <div class="bg-sage rounded-xl p-4 text-white shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <span class="text-sm">📊</span>
+                  </div>
+                  <div class="text-xs opacity-80">Total</div>
+                </div>
+                <div>
+                  <div class="text-xl font-bold">{{ totalReadings }}</div>
+                  <div class="text-xs opacity-80">EC Readings</div>
+                </div>
+              </div>
+
+              <!-- Average Moisture -->
+              <div class="bg-sage rounded-xl p-4 text-white shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <span class="text-sm">💧</span>
+                  </div>
+                  <div class="text-xs opacity-80">Avg</div>
+                </div>
+                <div>
+                  <div class="text-xl font-bold">{{ averageMoisture }}%</div>
+                  <div class="text-xs opacity-80">Moisture</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: EC Trend Chart -->
+            <div class="bg-sage rounded-xl flex-1 min-h-0">
+              <div class="p-3 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white">EC Trend & Predictions</h3>
+                  <div class="flex items-center gap-2 text-white text-xs">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <span>Historical</span>
+                    <div class="w-2 h-2 bg-green-400 rounded-full ml-2"></div>
+                    <span>Predicted</span>
+                    <div class="w-2 h-2 bg-red-400 rounded-full ml-2"></div>
+                    <span>Optimal (1.5-3.0)</span>
+                  </div>
+                </div>
+                <div class="flex-1 relative min-h-0">
+                  <canvas ref="ecChart" class="w-full h-full"></canvas>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Statistics Summary -->
-          <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ totalReadings }}</div>
-              <div class="text-cream text-sm">Total Readings</div>
+          <!-- Bottom Section: Readiness Status + Recent Activity - 50% height -->
+          <div class="flex gap-4 h-1/2 min-h-0">
+            <!-- Readiness & Alerts Panel -->
+            <div class="bg-sage rounded-xl flex-1 min-h-0 max-h-full">
+              <div class="p-4 h-full flex flex-col min-h-0">
+                <div class="flex items-center justify-between mb-3 flex-shrink-0">
+                  <h3 class="text-sm font-semibold text-white">Compost Status</h3>
+                  <div class="text-sage text-xs">{{ getReadinessText(readinessStatus) }}</div>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto min-h-0 space-y-3">
+                  <!-- Readiness Status -->
+                  <div class="bg-deepgreen/20 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-lg">🎯</span>
+                        <span class="text-white font-medium text-sm">Readiness Status</span>
+                      </div>
+                      <span class="text-emerald-400 font-semibold text-sm">{{ getReadinessText(readinessStatus) }}</span>
+                    </div>
+                    <div class="text-sage text-xs" v-if="estimatedReadyDays">
+                      ~{{ estimatedReadyDays }} days to ready
+                    </div>
+                    <div class="text-sage text-xs" v-else>
+                      Monitoring progress
+                    </div>
+                  </div>
+
+                  <!-- EC Status -->
+                  <div class="bg-deepgreen/20 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-lg">{{ getStatusEmoji(currentEC) }}</span>
+                        <span class="text-white font-medium text-sm">EC Status</span>
+                      </div>
+                      <span class="text-blue-400 font-semibold text-sm">{{ currentEC }} mS/cm</span>
+                    </div>
+                    <div class="text-sage text-xs">{{ getECStatus(currentEC) }}</div>
+                  </div>
+
+                  <!-- Alert Section -->
+                  <div v-if="alertLevel && alertLevel !== 'none'" :class="getAlertCardClass(alertLevel)" class="rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-lg">{{ getAlertIcon(alertLevel) }}</span>
+                        <span class="text-white font-medium text-sm">System Alert</span>
+                      </div>
+                    </div>
+                    <div class="text-white text-xs">{{ alertMessage }}</div>
+                  </div>
+                </div>
+                
+                <!-- Motivational Footer -->
+                <div class="mt-3 p-3 bg-deepgreen/20 rounded-lg">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                      <span class="text-xs">⚡</span>
+                    </div>
+                    <div>
+                      <p class="text-white font-medium text-xs">EC Monitoring Active</p>
+                      <p class="text-sage text-xs">Keep tracking for optimal compost health</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ averageEC }} mS/cm</div>
-              <div class="text-cream text-sm">Average EC</div>
-            </div>
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold">{{ averageMoisture }}%</div>
-              <div class="text-cream text-sm">Average Moisture</div>
-            </div>
-            <div class="bg-sage p-4 rounded-lg text-center">
-              <div class="text-2xl text-white font-bold" v-if="predictionsData.timeline">{{ predictionsData.timeline.week_1 || '--' }}</div>
-              <div class="text-2xl text-white font-bold" v-else>--</div>
-              <div class="text-cream text-sm">7-Day Forecast</div>
+
+            <!-- AI Recommendations Panel -->
+            <div class="w-64 bg-sage rounded-xl">
+              <div class="p-4 h-full flex flex-col">
+                <div class="text-center mb-4">
+                  <div class="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span class="text-lg">🤖</span>
+                  </div>
+                  <h3 class="text-sm font-semibold text-white mb-1">AI Recommendations</h3>
+                  <div class="text-xs text-sage">Smart composting insights</div>
+                </div>
+                
+                <div class="space-y-3 flex-1">
+                  <div class="bg-deepgreen/20 rounded-lg p-3">
+                    <div class="text-white text-xs leading-relaxed">{{ primaryRecommendation }}</div>
+                  </div>
+                  
+                  <div class="bg-deepgreen/20 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm">📊</span>
+                        <span class="text-white text-xs">Avg EC</span>
+                      </div>
+                      <span class="text-blue-400 font-semibold text-xs">{{ averageEC }} mS/cm</span>
+                    </div>
+                  </div>
+                  
+                  <div class="bg-deepgreen/20 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm">🔮</span>
+                        <span class="text-white text-xs">7-Day Forecast</span>
+                      </div>
+                      <span class="text-green-400 font-semibold text-xs" v-if="predictionsData.timeline">
+                        {{ predictionsData.timeline.week_1 || '--' }}
+                      </span>
+                      <span class="text-green-400 font-semibold text-xs" v-else>--</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Last Updated -->
+                <div class="mt-3 pt-3 border-t border-sage/20 text-center">
+                  <div class="text-sage text-xs">Last reading</div>
+                  <div class="text-white text-xs font-medium">{{ selectedUser || 'No user selected' }}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -189,6 +495,7 @@ export default {
   name: 'SoilEC',
   setup() {
     const selectedUser = ref('')
+    const selectedReadingIndex = ref(0)
     const loading = ref(false)
     const hasData = ref(false)
     const usersWithData = ref([])
@@ -271,6 +578,53 @@ export default {
       return 'Needs attention'
     }
 
+    const calculateDropdownWidth = (username) => {
+      if (!username) return 180
+      
+      const user = [...usersWithData.value, ...usersWithoutData.value].find(u => u.username === username)
+      let displayText = username
+      
+      if (user) {
+        if (usersWithData.value.includes(user)) {
+          displayText = `${username} (${user.ecLogsCount} readings)`
+        } else {
+          displayText = `${username} (No data yet)`
+        }
+      }
+      
+      // Approximate 8px per character + 80px for padding and dropdown arrow
+      return Math.max(displayText.length * 8 + 80, 180)
+    }
+
+    const formatReadingDate = (dateString) => {
+      if (!dateString) return 'Invalid Date'
+      
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const day = date.getDate().toString().padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = date.getHours().toString().padStart(2, '0')
+      const minutes = date.getMinutes().toString().padStart(2, '0')
+      return `${day}/${month}/${year} ${hours}:${minutes}`
+    }
+
+    const updateCurrentReadingData = () => {
+      if (ecHistory.value.length === 0) return
+      
+      const selectedReading = ecHistory.value[selectedReadingIndex.value] || ecHistory.value[0]
+      currentEC.value = selectedReading.ec || 0
+      currentMoisture.value = selectedReading.moisture_percentage || 0
+      
+      // You could also update other related data based on the selected reading
+      // For now, we'll keep the aggregate data (averages, totals) as they are
+    }
+
+    const onReadingChange = () => {
+      updateCurrentReadingData()
+    }
+
     const loadUsers = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/soil-ec-users`)
@@ -323,6 +677,9 @@ export default {
             alertLevel.value = data.alertLevel
             alertMessage.value = data.alertMessage
             ecHistory.value = data.ecLogs || []
+            
+            // Reset reading selector to show the most recent reading (index 0)
+            selectedReadingIndex.value = 0
             
             // Load predictions
             const predResponse = await fetch(`${API_BASE_URL}/user/${username}/ec-predictions`)
@@ -524,6 +881,11 @@ export default {
       getAlertIcon,
       getAlertCardClass,
       getHealthDescription,
+      calculateDropdownWidth,
+      ecHistory,
+      selectedReadingIndex,
+      formatReadingDate,
+      onReadingChange,
       onUserChange
     }
   }
