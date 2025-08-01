@@ -15,7 +15,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173', 
     'http://localhost:3000', 
-    'https://papas-princess.vercel.app'
+    'https://papas-princess.vercel.app',
+    'https://nutricycle-dashboard.surge.sh'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
