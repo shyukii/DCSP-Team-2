@@ -30,7 +30,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
         [InlineKeyboardButton("💧 Plant Watering", callback_data="plant_watering")],
         [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
         [InlineKeyboardButton("📸 Image Scan",  callback_data="image_scan")],
-        [InlineKeyboardButton("🌍 View CO₂E Dashboard", callback_data="view_dashboard")],
+        [InlineKeyboardButton("🌍 View Dashboards", callback_data="view_dashboard")],
         [InlineKeyboardButton("❓ Help",         callback_data="help_commands")]
     ]
     markup = InlineKeyboardMarkup(kb)
@@ -464,38 +464,20 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return MAIN_MENU
 
     if choice == "view_dashboard":
-        # Handle dashboard screenshot generation
-        await q.edit_message_text("🔄 Generating your CO₂E Dashboard preview...")
-        
-        try:
-            from services.dashboard_screenshot import generate_dashboard_screenshot
-            screenshot_path = await generate_dashboard_screenshot(update.effective_user.id)
-            
-            if screenshot_path:
-                with open(screenshot_path, 'rb') as photo:
-                    await context.bot.send_photo(
-                        chat_id=update.effective_chat.id,
-                        photo=photo,
-                        caption="🌍 **Your CO₂E Dashboard Preview**\n\nThis shows your current composting impact and environmental savings!"
-                    )
-                # Clean up the temporary file
-                try:
-                    os.remove(screenshot_path)
-                except:
-                    pass
-            else:
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text="📊 Dashboard preview temporarily unavailable. Please try again later."
-                )
-        except Exception as e:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text="📊 Dashboard preview temporarily unavailable. Please try again later."
-            )
-        
-        # Return to main menu
-        return await show_main_menu(update, context, user)
+        # Redirect to the frontend dashboard
+        await q.edit_message_text(
+            "🌍 **NutriCycle Dashboards**\n\n"
+            "View your comprehensive composting analytics:\n"
+            "• CO₂ Savings Tracker\n"
+            "• Soil EC Monitoring\n" 
+            "• Plant Moisture Analytics\n\n"
+            "👆 Click the link below to access your dashboards:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("� Open Dashboards", url="https://nutricycle-dashboard.surge.sh/")],
+                [InlineKeyboardButton("� Back to Menu", callback_data="back_to_menu")]
+            ])
+        )
+        return MAIN_MENU
 
     if choice == "view_plant_dashboard":
         # Handle plant moisture dashboard screenshot generation
