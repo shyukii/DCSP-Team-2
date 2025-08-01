@@ -2,7 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from services.database import db
 from utils.message_utils import get_cached_user_data, clear_user_cache
-from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT, AMA, SCAN_TYPE_SELECTION
+from constants import MAIN_MENU, CO2_FOOD_WASTE_INPUT, COMPOST_HELPER_INPUT, AMA, SCAN_TYPE_SELECTION, EC_FORECAST_SELECTION, EC_INPUT
 # from services.clarifai_segmentation import ClarifaiImageSegmentation  # Lazy loaded when needed
 import os
 
@@ -25,7 +25,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 
     kb = [
         [InlineKeyboardButton("📦 Compost Feeding", callback_data="compost_feed")],
-        [InlineKeyboardButton("💩 Compost Extraction", callback_data="compost_extract")],
+        [InlineKeyboardButton("🧠 ML EC Forecast", callback_data="ec_forecast")],
         [InlineKeyboardButton("📈 CO2 Tracker", callback_data="co2_tracker")],
         [InlineKeyboardButton("💧 Plant Watering", callback_data="plant_watering")],
         [InlineKeyboardButton("🪴 Ask Anything ",    callback_data="start_llama")],
@@ -227,6 +227,44 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             reply_markup=reply_markup
         )
         return COMPOST_HELPER_INPUT
+        
+    if choice == "ec_forecast":
+        # Show options for EC Forecast
+        keyboard = [
+            [InlineKeyboardButton("🧠 ML EC Prediction", callback_data="ml_ec_prediction")],
+            [InlineKeyboardButton("💩 Compost Estimate Calculator", callback_data="compost_extract")],
+            [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await q.edit_message_text(
+            "🧠 **ML EC Forecast Options**\n\n"
+            "Choose your analysis type:\n\n"
+            "🧠 **ML EC Prediction**: Input your current soil EC and moisture to get 90-day forecasts\n"
+            "💩 **Compost Estimate Calculator**: Calculate compost yield estimates\n\n"
+            "What would you like to do?",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        return EC_FORECAST_SELECTION
+        
+    if choice == "ml_ec_prediction":
+        # Ask for EC and moisture input
+        await q.edit_message_text(
+            "🧠 **ML EC Prediction**\n\n"
+            "Please enter your current soil EC and moisture content.\n\n"
+            "Enter two numbers separated by semicolon:\n"
+            "`ec_value;moisture_percentage`\n\n"
+            "📊 **Example**: `2.5;65`\n"
+            "• EC: 2.5 (mS/cm)\n"
+            "• Moisture: 65%\n\n"
+            "💡 *Use your EC and moisture meter for accurate readings*",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Back", callback_data="ec_forecast")]
+            ])
+        )
+        return EC_INPUT
         
     if choice == "co2_tracker":
         # Load user data for CO2 calculator

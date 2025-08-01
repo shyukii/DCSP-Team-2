@@ -45,6 +45,8 @@ from constants import (
     SCAN_TYPE_SELECTION,
     FEEDING_LOG_INPUT,
     PLANT_MOISTURE_INPUT,
+    EC_FORECAST_SELECTION,
+    EC_INPUT,
 )
 from handlers.auth import (
     start as start_conversation,
@@ -76,6 +78,7 @@ from handlers.commands import (
     handle_scan_type_choice,
     handle_feeding_log_input,
     handle_plant_moisture_input,
+    handle_ec_input,
     watering_command,
 )
 from services.emissions_calculator import co2_calculator_command
@@ -156,6 +159,14 @@ def setup_handlers():
             ],
             PLANT_MOISTURE_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_plant_moisture_input),
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
+            ],
+            EC_FORECAST_SELECTION: [
+                CallbackQueryHandler(handle_main_menu),
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
+            ],
+            EC_INPUT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_ec_input),
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
             ],
         },

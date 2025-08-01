@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 # Removed unused imports: EmissionsCalculator, FeedCalculator
 from services.ML_input import MLCompostRecommendation
 from services.extraction_timing import CompostProcessCalculator
-from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION, FEEDING_LOG_INPUT, PLANT_MOISTURE_INPUT
+from constants import GREENS_INPUT, MAIN_MENU, COMPOST_HELPER_INPUT, AMA, ML_CROP_SELECTION, ML_GREENS_INPUT, SCAN_TYPE_SELECTION, FEEDING_LOG_INPUT, PLANT_MOISTURE_INPUT, EC_INPUT
 from services.database import db
 from handlers.menu import show_main_menu
 from utils.message_utils import get_cached_user_data
@@ -519,7 +519,7 @@ async def care_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        f"🪴 **{species.capitalize()} Care Guide**\n\n{tips}\n\n"
+        f"🪴 **Plant Care Guide**\n\n{tips}\n\n"
         "Remember to apply compost when nutrients deplete.",
         parse_mode="Markdown",
         reply_markup=reply_markup
@@ -876,3 +876,146 @@ async def handle_plant_moisture_input(update: Update, context: ContextTypes.DEFA
         # Return to main menu on error
         username = context.user_data.get("username") or context.user_data.get("login_username")
         return await show_main_menu(update, context, username)
+
+async def handle_ec_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle EC and moisture input for ML prediction"""
+    try:
+        # Parse the input
+        input_text = update.message.text.strip()
+        parts = input_text.split(';')
+        
+        if len(parts) != 2:
+            await update.message.reply_text(
+                "❌ Please enter two values separated by semicolon.\n"
+                "Format: `ec_value;moisture_percentage`\n"
+                "Example: `2.5;65`"
+            )
+            return EC_INPUT
+        
+        try:
+            ec_value = float(parts[0])
+            moisture_percentage = float(parts[1])
+        except ValueError:
+            await update.message.reply_text(
+                "❌ Please enter valid numbers.\n"
+                "Format: `ec_value;moisture_percentage`\n" 
+                "Example: `2.5;65`"
+            )
+            return EC_INPUT
+        
+        # Validate values
+        if ec_value < 0 or moisture_percentage < 0:
+            await update.message.reply_text(
+                "❌ Please enter positive values only.\n"
+                "EC and moisture should be greater than 0."
+            )
+            return EC_INPUT
+        
+        if moisture_percentage > 100:
+            await update.message.reply_text(
+                "❌ Moisture percentage cannot exceed 100%.\n"
+                "Please enter a value between 0 and 100."
+            )
+            return EC_INPUT
+        
+        if ec_value > 10:  # Reasonable upper limit for EC
+            await update.message.reply_text(
+                "❌ EC value seems too high (>10 mS/cm).\n"
+                "Please check your reading and try again."
+            )
+            return EC_INPUT
+        
+        # Show processing message
+        processing_msg = await update.message.reply_text(
+            "🔄 **Processing your data...**\n\n"
+            f"📊 EC: {ec_value} mS/cm\n"
+            f"💧 Moisture: {moisture_percentage}%\n\n"
+            "🧠 Running ML prediction..."
+        )
+        
+        # Generate ML prediction first
+        try:
+            from services.ec_forecast_service import ECForecastService
+            ec_service = ECForecastService()
+            
+            # Update processing message
+            await processing_msg.edit_text(
+                "🔄 **Generating 90-day forecast...**\n\n"
+                f"📊 EC: {ec_value} mS/cm\n"
+                f"💧 Moisture: {moisture_percentage}%\n\n"
+                "🧠 ML model working..."
+            )
+            
+            # Get prediction
+            prediction_result = ec_service.predict_90_day_forecast(ec_value, moisture_percentage)
+            
+        except Exception as ml_error:
+            logger.error(f"ML prediction error: {ml_error}")
+            prediction_result = {'success': False, 'error': str(ml_error)}
+        
+        # Save to database with predictions
+        telegram_id = update.effective_user.id
+        compost_status = db.create_compost_status_with_predictions(telegram_id, ec_value, moisture_percentage, prediction_result)
+        
+        if not compost_status:
+            await processing_msg.edit_text(
+                "❌ Failed to save your data. Please try again."
+            )
+            return EC_INPUT
+        
+        # Handle the prediction results
+        if prediction_result.get('success', False):
+            # Format and send the prediction message
+            prediction_message = ec_service.format_prediction_message(prediction_result)
+            
+            # Create action buttons
+            keyboard = [
+                [InlineKeyboardButton("📊 Enter New Reading", callback_data="ml_ec_prediction")],
+                [InlineKeyboardButton(" Back to Menu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            # Update processing message with results
+            await processing_msg.edit_text(
+                "✅ **Data Saved Successfully!**\n\n"
+                f"📊 Your reading and predictions have been saved to the database."
+            )
+            
+            # Send prediction results as new message
+            await update.message.reply_text(
+                prediction_message,
+                parse_mode="Markdown",
+                reply_markup=reply_markup
+            )
+            
+        else:
+            # ML prediction failed, but data was saved
+            error_msg = prediction_result.get('error', 'Unknown error')
+            await processing_msg.edit_text(
+                f"✅ **Data Saved Successfully!**\n\n"
+                f"📊 EC: {ec_value} mS/cm\n"
+                f"💧 Moisture: {moisture_percentage}%\n\n"
+                f"⚠️ **ML Prediction Failed**: {error_msg}\n\n"
+                "Your data has been saved for future analysis."
+            )
+            
+            keyboard = [
+                [InlineKeyboardButton("🔄 Try Again", callback_data="ml_ec_prediction")],
+                [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(
+                "What would you like to do next?",
+                reply_markup=reply_markup
+            )
+        
+        # Return to main menu state
+        return MAIN_MENU
+        
+    except Exception as e:
+        logger.error(f"Error processing EC input: {e}")
+        await update.message.reply_text(
+            "❌ An error occurred while processing your input. Please try again."
+        )
+        return EC_INPUT

@@ -23,6 +23,8 @@ class ConversationState(IntEnum):
     SCAN_TYPE_SELECTION = 17
     FEEDING_LOG_INPUT = 18
     PLANT_MOISTURE_INPUT = 19
+    EC_FORECAST_SELECTION = 20
+    EC_INPUT = 21
 
 # Export for backward compatibility
 AMA = ConversationState.AMA
@@ -45,6 +47,8 @@ ML_GREENS_INPUT = ConversationState.ML_GREENS_INPUT
 SCAN_TYPE_SELECTION = ConversationState.SCAN_TYPE_SELECTION
 FEEDING_LOG_INPUT = ConversationState.FEEDING_LOG_INPUT
 PLANT_MOISTURE_INPUT = ConversationState.PLANT_MOISTURE_INPUT
+EC_FORECAST_SELECTION = ConversationState.EC_FORECAST_SELECTION
+EC_INPUT = ConversationState.EC_INPUT
 
 # Bot messages
 WELCOME_MESSAGE = """👋 *Hi there! I'm NutriBot, your friendly composting and plant care assistant *🌱♻️
