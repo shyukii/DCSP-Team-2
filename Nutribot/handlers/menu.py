@@ -484,7 +484,6 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await q.edit_message_text("🔄 Generating your Plant Moisture Dashboard preview...")
         
         try:
-            from services.database import db
             from services.dashboard_screenshot import DashboardScreenshot
             
             # Get username from user data
