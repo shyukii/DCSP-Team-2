@@ -833,22 +833,30 @@ async def handle_plant_moisture_input(update: Update, context: ContextTypes.DEFA
             )
             return PLANT_MOISTURE_INPUT
         
-        # Generate moisture projection
-        projection_data = moisture_service.generate_moisture_projection(moisture_value)
+        # Generate moisture projection with telegram_id for logging
+        telegram_id = update.effective_user.id
+        projection_data = moisture_service.generate_moisture_projection(moisture_value, telegram_id)
         
-        # Create dashboard message
+        # Create comprehensive dashboard message
         dashboard_text = f"💧 **Plant Moisture Dashboard**\n\n"
         dashboard_text += f"📊 **Current Status:**\n"
         dashboard_text += f"• Current moisture: {moisture_value}%\n"
         dashboard_text += f"• {projection_data['next_watering_day']}\n\n"
         
-        dashboard_text += f"📅 **7-Day Projection:**\n"
-        for proj in projection_data['projections'][:5]:  # Show first 5 days
+        # Show watering alerts if any
+        if projection_data['watering_alerts']:
+            dashboard_text += f"🚨 **Watering Alerts (Next 30 Days):**\n"
+            for alert in projection_data['watering_alerts'][:3]:  # Show first 3 alerts
+                dashboard_text += f"• {alert['message']}\n"
+            dashboard_text += "\n"
+        
+        dashboard_text += f"📅 **Next 7 Days Projection:**\n"
+        for proj in projection_data['projections'][:7]:  # Show first 7 days
             status_emoji = {"critical": "🚨", "low": "⚠️", "moderate": "📊", "good": "✅"}
             emoji = status_emoji.get(proj['status'], "📊")
             dashboard_text += f"{emoji} {proj['day_name']}: {proj['moisture_percentage']}%\n"
         
-        dashboard_text += f"\n🎯 **Recommendation:**\n"
+        dashboard_text += f"\n🎯 **30-Day Recommendation:**\n"
         dashboard_text += f"{projection_data['overall_recommendation']}\n\n"
         
         # Add care tips
