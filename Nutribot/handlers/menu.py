@@ -497,6 +497,54 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         # Return to main menu
         return await show_main_menu(update, context, user)
 
+    if choice == "view_plant_dashboard":
+        # Handle plant moisture dashboard screenshot generation
+        await q.edit_message_text("🔄 Generating your Plant Moisture Dashboard preview...")
+        
+        try:
+            from services.database import db
+            from services.dashboard_screenshot import DashboardScreenshot
+            
+            # Get username from user data
+            user_info = db.get_user_by_telegram_id(update.effective_user.id)
+            if user_info:
+                username = user_info['username']
+                screenshot_path = await DashboardScreenshot.capture_plant_moisture_dashboard(username)
+                
+                if screenshot_path:
+                    with open(screenshot_path, 'rb') as photo:
+                        await context.bot.send_photo(
+                            chat_id=update.effective_chat.id,
+                            photo=photo,
+                            caption="🌱 **Your Plant Moisture Dashboard**\n\n"
+                                   "This shows your 30-day moisture predictions, watering alerts, and AI-powered plant care recommendations!\n\n"
+                                   "📊 Includes: Current moisture level, predicted decline, optimal watering schedule, and care tips."
+                        )
+                    # Clean up the temporary file
+                    try:
+                        os.remove(screenshot_path)
+                    except:
+                        pass
+                else:
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text="🌱 Plant Dashboard preview temporarily unavailable. Please try again later."
+                    )
+            else:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="❌ User not found. Please ensure you're logged in."
+                )
+        except Exception as e:
+            print(f"Error generating plant dashboard: {e}")
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="🌱 Plant Dashboard preview temporarily unavailable. Please try again later."
+            )
+        
+        # Return to main menu
+        return await show_main_menu(update, context, user)
+
     if choice == "back_to_menu":
         # Clear any temporary states
         context.user_data.pop("scan_mode", None)

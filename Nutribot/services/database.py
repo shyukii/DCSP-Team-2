@@ -171,6 +171,52 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Error calculating total food waste for all users: {e}")
             return 0.0
+    
+    def create_plant_moisture_log(self, telegram_id: int, plant_moisture: float) -> Optional[Dict[str, Any]]:
+        """
+        Create a new plant moisture log entry
+        
+        Args:
+            telegram_id: User's telegram ID
+            plant_moisture: Current plant moisture percentage
+            
+        Returns:
+            Created plant moisture log entry or None if failed
+        """
+        try:
+            # Get the user to retrieve the username
+            user = self.get_user_by_telegram_id(telegram_id)
+            if not user:
+                logger.error(f"User not found for telegram_id {telegram_id}")
+                return None
+            
+            response = self.supabase.table('plant').insert({
+                'telegram_id': telegram_id,
+                'username': user['username'],
+                'plant_moisture': plant_moisture
+            }).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Error creating plant moisture log for telegram_id {telegram_id}: {e}")
+            return None
+    
+    def get_user_plant_moisture_logs(self, telegram_id: int, limit: int = 10) -> list:
+        """
+        Get recent plant moisture logs for a user
+        
+        Args:
+            telegram_id: User's telegram ID
+            limit: Number of recent logs to retrieve
+            
+        Returns:
+            List of plant moisture log entries
+        """
+        try:
+            response = self.supabase.table('plant').select("*").eq('telegram_id', telegram_id).order('created_at', desc=True).limit(limit).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"Error getting plant moisture logs for telegram_id {telegram_id}: {e}")
+            return []
 
     def create_compost_status_with_predictions(self, telegram_id: int, ec: float, moisture: float, predictions: Dict) -> Optional[Dict[str, Any]]:
         """
