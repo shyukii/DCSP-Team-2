@@ -43,7 +43,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     message: 'NutricycleAI API is running',
     timestamp: new Date().toISOString(),
-    version: 'v3-CORS-FIXED',
+    version: 'v4-SURGE-CORS-FIXED',
     uptime: process.uptime()
   });
 });
