@@ -294,12 +294,12 @@
         </div>
 
         <!-- Main Dashboard Content -->
-        <div v-else-if="(hasData && selectedView === 'personal') || selectedView === 'global'" class="flex flex-1 flex-col gap-4">
+        <div v-else-if="(hasData && selectedView === 'personal') || selectedView === 'global'" class="flex flex-1 flex-col gap-4 min-h-0 h-full">
           
           <!-- Personal View -->
-          <div v-if="selectedView === 'personal'" class="flex flex-1 flex-col gap-4">
+          <div v-if="selectedView === 'personal'" class="flex flex-1 flex-col gap-4 min-h-0 h-full">
             <!-- Top Section: Hero Stats + Monthly Trend Chart - 50% height -->
-            <div class="flex gap-4 flex-1">
+            <div class="flex gap-4 h-1/2 min-h-0">
               <!-- Left: Key Metrics in 2x2 Grid -->
               <div class="grid grid-cols-2 gap-3 w-80">
                 <!-- Total Food Waste -->
@@ -360,7 +360,7 @@
               </div>
 
               <!-- Right: CO₂ Savings Trend Chart -->
-              <div class="bg-sage rounded-xl flex-1">
+              <div class="bg-sage rounded-xl flex-1 min-h-0">
                 <div class="p-3 h-full flex flex-col">
                   <div class="flex items-center justify-between mb-2">
                     <h3 class="text-sm font-semibold text-white">CO₂ Savings Trend</h3>
@@ -438,45 +438,45 @@
             </div>
 
             <!-- Bottom Section: Recent Activity + Impact Summary - 50% height -->
-            <div class="flex gap-4 flex-1 min-h-0">
+            <div class="flex gap-4 h-1/2 min-h-0">
               <!-- Recent Feeding Logs -->
-              <div class="bg-sage rounded-xl flex-1">
-                <div class="p-4 h-full flex flex-col">
-                  <div class="flex items-center justify-between mb-3">
+              <div class="bg-sage rounded-xl flex-1 min-h-0 max-h-full">
+                <div class="p-4 h-full flex flex-col min-h-0">
+                  <div class="flex items-center justify-between mb-3 flex-shrink-0">
                     <h3 class="text-sm font-semibold text-white">Recent Activity</h3>
-                    <div class="text-sage text-xs">Last {{ Math.min(feedingLogs.length, 8) }} entries</div>
+                    <div class="text-sage text-xs">{{ feedingLogs.length }} entries</div>
                   </div>
                   
-                  <div class="flex-1 overflow-y-auto space-y-0 min-h-0">
+                  <div class="flex-1 overflow-y-auto min-h-0 space-y-1 px-1">
                     <div 
-                      v-for="(log, index) in feedingLogs.slice(0, 8)" 
+                      v-for="(log, index) in feedingLogs" 
                       :key="index"
                       :class="[
-                        'bg-deepgreen/20 hover:bg-deepgreen/30 rounded-lg p-3 transition-colors',
-                        index !== feedingLogs.slice(0, 8).length - 1 ? 'border-b border-sage/20 mb-2' : ''
+                        'rounded-lg p-3 transition-all duration-300 ease-in-out cursor-pointer hover:shadow-lg hover:z-10 relative mx-1 flex-shrink-0',
+                        index % 2 === 0 ? 'bg-alternate text-light-green hover:bg-sage hover:brightness-110' : 'bg-alternate-dark text-light-green hover:bg-deepgreen hover:brightness-110'
                       ]"
                     >
                       <div class="flex justify-between items-start">
                         <div class="flex-1">
-                          <div class="text-white font-medium text-xs mb-1">{{ formatDate(log.created_at) }}</div>
+                          <div class="text-light-green font-medium text-xs mb-1">{{ formatDate(log.created_at) }}</div>
                           <div class="flex items-center gap-3 text-xs">
                             <div class="flex items-center gap-1">
                               <span>🥬</span>
-                              <span class="text-sage">{{ log.greens }}g</span>
+                              <span class="text-light-green">{{ log.greens }}g</span>
                             </div>
                             <div class="flex items-center gap-1">
                               <span>🍂</span>
-                              <span class="text-sage">{{ log.browns }}g</span>
+                              <span class="text-light-green">{{ log.browns }}g</span>
                             </div>
                             <div class="flex items-center gap-1">
                               <span>💧</span>
-                              <span class="text-sage">{{ log.water }}ml</span>
+                              <span class="text-light-green">{{ log.water }}ml</span>
                             </div>
                           </div>
                         </div>
                         <div class="text-right ml-3">
-                          <div class="text-white font-semibold text-xs">{{ formatNumber(calculateLogFoodWaste(log)) }} kg</div>
-                          <div class="text-emerald-400 text-xs">{{ formatNumber(calculateLogCO2(log)) }} kg CO₂</div>
+                          <div class="text-bright-white font-semibold text-xs">{{ formatNumber(calculateLogFoodWaste(log)) }} kg</div>
+                          <div class="text-emerald-200 text-xs font-semibold">{{ formatNumber(calculateLogCO2(log)) }} kg CO₂</div>
                         </div>
                       </div>
                     </div>

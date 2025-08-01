@@ -31,8 +31,14 @@
   .bg-deepgreen { background-color: #0D3705 !important; }
   .bg-sage { background-color: #0B4F26 !important; }
   .bg-khaki { background-color: #AEC5B5; }
+  .bg-alternate { background-color: #0B4F26; }
+  .bg-alternate-dark { background-color: #0D3705; }
   .text-cream { color: #F7FFF2; }
   .text-sage { color: #D7EDBC; }
+  .text-black { color: #000000; }
+  .text-dark-green { color: #0D3705; }
+  .text-light-green { color: #D7EDBC; }
+  .text-bright-white { color: #FFFFFF; }
   .shadow-b {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
