@@ -22,7 +22,7 @@ class Config:
     OPENAI_API_URL: str = "https://api.openai.com/v1/chat/completions"
     
     # Replicate Models
-    REPLICATE_SPEECH_MODEL: str = "openai/whisper:8099696689d249cf8b122d833c36ac3f75505c666a395ca40ef26f68e7d3d16e"
+    REPLICATE_SPEECH_MODEL: str = "cjwbw/seamless_communication:668a4fec05a887143e5fe8d45df25ec4c794dd43169b9a11562309b2d45873b0"
     
     # Clarifai Configuration
     CLARIFAI_COMPOST_MODEL_URL: str = "https://clarifai.com/shyueqi/Nuritbot/models/TANKER-SEGMENTER"
