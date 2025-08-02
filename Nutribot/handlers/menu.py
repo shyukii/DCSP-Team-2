@@ -168,7 +168,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
         # Send an introductory video file
         try:
-            video_path = "Nutribot/handlers/temp_video_689903e0.mp4"
+            print('I AM HERE SENT')
+            video_path = "./handlers/introvid.mp4"
             if os.path.exists(video_path):
                 with open(video_path, 'rb') as video_file:
                     await context.bot.send_video(
@@ -178,7 +179,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                         supports_streaming=True
                     )
         except Exception as e:
-            # If video sending fails, continue without it
+            # If video sending fails, continue without itWS
+            print('i failed')
             pass
 
         # Mark the user as "in Ask‐Anything mode":

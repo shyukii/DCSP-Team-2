@@ -67,8 +67,7 @@ Replace `BOT_TOKEN` with your actual token and `SERVICE_URL` with URL from step 
 curl -X POST "https://api.telegram.org/bot7787023282:AAGcLCvCiiT94hVKfWzSzMtz5WNtnJE1Axo/setWebhook" -H "Content-Type: application/json" -d '{"url": "https://nutribot-app-7ksso7ovsa-as.a.run.app/webhook"}'
 ```
 ```powershell
-Invoke-WebRequest -Uri "https://api.telegram.org/bot7787023282:AAGcLCvCiiT94hVKfWzSzMtz5WNtnJE1Axo/setWebhook" -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"url":"https://nutribot-app-7ksso7ovsa-as.a.run.app/webhook"}'
-Invoke-WebRequest -Uri "https://api.telegram.org/bot7787023282:AAGcLCvCiiT94hVKfWzSzMtz5WNtnJE1Axo/setWebhook" -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"url":"https://nutribot-app-340554908049.asia-southeast1.run.app/webhook"}'
+Invoke-WebRequest -Uri "https://api.telegram.org/botBOT_TOKEN/setWebhook" -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"url":"https://nutribot-app-7ksso7ovsa-as.a.run.app/webhook"}'
 
 ```
 ## Updates

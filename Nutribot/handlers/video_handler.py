@@ -2,6 +2,7 @@ import logging
 import asyncio
 import aiohttp
 import os
+import io
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from services.synthesia_client import SynthesiaClient
@@ -109,30 +110,23 @@ async def check_video_status(context: ContextTypes.DEFAULT_TYPE, chat_id: int, v
                 download_url = status.get('download')
                 if download_url:
                     try:
-                        # Download the video file
-                        temp_video_path = f"temp_video_{video_id[:8]}.mp4"
-                        
+                        # Download video data directly to memory
                         async with aiohttp.ClientSession() as session:
                             async with session.get(download_url) as video_response:
                                 if video_response.status == 200:
-                                    with open(temp_video_path, 'wb') as f:
-                                        async for chunk in video_response.content.iter_chunked(8192):
-                                            f.write(chunk)
+                                    # Read entire video into memory
+                                    video_data = await video_response.read()
                                     
-                                    # Send video directly to chat
-                                    with open(temp_video_path, 'rb') as video_file:
-                                        await context.bot.send_video(
-                                            chat_id=chat_id,
-                                            video=video_file,
-                                            caption="🎉 Your NutriBot advice video is ready!\n\n💡 This video contains your previous gardening/composting advice.",
-                                            supports_streaming=True
-                                        )
+                                    # Send video directly from memory using BytesIO
+                                    video_buffer = io.BytesIO(video_data)
+                                    video_buffer.name = f"nutribot_advice_{video_id[:8]}.mp4"
                                     
-                                    # Clean up temp file
-                                    try:
-                                        os.remove(temp_video_path)
-                                    except:
-                                        pass
+                                    await context.bot.send_video(
+                                        chat_id=chat_id,
+                                        video=video_buffer,
+                                        caption="🎉 Your NutriBot advice video is ready!\n\n💡 This video contains your previous gardening/composting advice.",
+                                        supports_streaming=True
+                                    )
                                         
                                 else:
                                     # Fallback message if download fails
