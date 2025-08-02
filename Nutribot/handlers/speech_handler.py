@@ -1,10 +1,10 @@
-import os
 import logging
+import io
 
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from services.speech_to_text import convert_to_wav, transcribe_audio
+from services.speech_to_text import transcribe_audio_memory
 from constants import KEYWORD_TRIGGERS, AMA
 from handlers.llama_handler import llama_response
 from config import Config
@@ -51,27 +51,24 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     file = await context.bot.get_file(voice.file_id)
-    os.makedirs("temp", exist_ok=True)
-    ogg_path = os.path.join("temp", f"{voice.file_unique_id}.ogg")
-    wav_path = ogg_path.replace(".ogg", ".wav")
 
     try:
         await update.message.reply_text("🎤 Processing your voice…")
-        await file.download_to_drive(ogg_path)
+        
+        # Download audio data directly to memory
+        ogg_buffer = io.BytesIO()
+        await file.download_to_memory(ogg_buffer)
+        ogg_buffer.seek(0)
 
-        if not convert_to_wav(ogg_path, wav_path):
-            await update.message.reply_text("❌ Couldn’t convert audio. Try again?")
-            return
-
-        # **Now always-English** translation
-        transcription = transcribe_audio(wav_path)
+        # Transcribe audio directly from OGG buffer using OpenAI Whisper
+        transcription = await transcribe_audio_memory(ogg_buffer)
         if not transcription:
             await update.message.reply_text(
-                "❌ I didn’t catch that—please try again."
+                "❌ I didn't catch that—please try again."
             )
             return
 
-        await update.message.reply_text(f"🗣️ You said: “{transcription}”")
+        await update.message.reply_text(f"🗣️ You said: \"{transcription}\"")
 
         if not context.user_data.get("username"):
             await update.message.reply_text(
@@ -86,13 +83,6 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "❌ Something went wrong. Please try again."
         )
-    finally:
-        for p in (ogg_path, wav_path):
-            try:
-                if os.path.exists(p):
-                    os.remove(p)
-            except:
-                pass
 
 async def process_voice_command(
     update: Update,

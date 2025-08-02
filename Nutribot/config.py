@@ -28,9 +28,7 @@ class Config:
     CLARIFAI_COMPOST_MODEL_URL: str = "https://clarifai.com/shyueqi/Nuritbot/models/TANKER-SEGMENTER"
     CLARIFAI_PLANT_MODEL_URL: str = "https://clarifai.com/s10257235/NutriBot-Image-Classification/models/Image-Classification-Model"
     
-    # File Paths
-    FFMPEG_PATH: str = os.getenv("FFMPEG_PATH", r"C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe")
-    TEMP_AUDIO_DIR: str = "temp/"
+    # File Paths (removed FFMPEG_PATH - now using pydub)
     
     # Webhook Configuration
     WEBHOOK_URL: str = os.getenv("WEBHOOK_URL")
@@ -49,7 +47,6 @@ class Config:
     # Audio Processing Settings
     AUDIO_SAMPLE_RATE: int = 16000
     AUDIO_CHANNELS: int = 1
-    AUDIO_CODEC: str = "pcm_s16le"
     
     # Scientific Constants
     class CompostCalculations:
@@ -122,6 +119,5 @@ CLARIFAI_PAT = Config.CLARIFAI_PAT
 OPENAI_MODEL = Config.OPENAI_MODEL
 OPENAI_API_KEY = Config.OPENAI_API_KEY
 REPLICATE_API_TOKEN = Config.REPLICATE_API_TOKEN
-FFMPEG_PATH = Config.FFMPEG_PATH
 # Legacy - use specific model URLs instead
 CLARIFAI_MODEL_URL = Config.CLARIFAI_COMPOST_MODEL_URL

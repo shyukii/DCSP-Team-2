@@ -1,97 +1,87 @@
 # services/speech_to_text.py
 
-import os
 import logging
+import io
 from dotenv import load_dotenv
-import replicate
+import openai
 from config import Config
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
+# Set up OpenAI client
+openai.api_key = Config.OPENAI_API_KEY
 
-# Pin to the only available version on Replicate
-MODEL = Config.REPLICATE_SPEECH_MODEL
-
-def convert_to_wav(input_path: str, output_path: str) -> bool:
-    from config import FFMPEG_PATH
-    import subprocess
-
-    try:
-        subprocess.run(
-            [
-                FFMPEG_PATH,
-                "-i", input_path,
-                "-acodec", Config.AUDIO_CODEC,
-                "-ar", str(Config.AUDIO_SAMPLE_RATE),
-                "-ac", str(Config.AUDIO_CHANNELS),
-                "-y",
-                output_path,
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        logger.info(f"✅ Converted {input_path} → {output_path}")
-        return True
-    except Exception as e:
-        logger.error(f"FFmpeg conversion error: {e}")
-        return False
-
-
-def transcribe_audio(wav_path: str) -> str:
+async def transcribe_audio_memory(audio_buffer: io.BytesIO) -> str:
     """
-    Speech-to-Text using OpenAI Whisper via Replicate
+    Speech-to-Text using OpenAI Whisper API directly from memory buffer
     """
-    if not os.path.exists(wav_path):
-        logger.error(f"Audio file not found: {wav_path}")
-        return ""
-
-    # Check file size (Replicate has limits)
-    file_size = os.path.getsize(wav_path)
-    if file_size > 25 * 1024 * 1024:  # 25MB limit
-        logger.error(f"Audio file too large: {file_size} bytes")
-        return ""
-
     try:
-        # Upload file to Replicate first
-        logger.info(f"📤 Uploading audio file to Replicate ({file_size} bytes)...")
-        with open(wav_path, "rb") as audio_file:
-            file_upload = replicate.files.create(audio_file)
+        # Reset buffer position
+        audio_buffer.seek(0)
+        
+        # Check buffer size (OpenAI has 25MB limit)
+        buffer_size = len(audio_buffer.getvalue())
+        if buffer_size > 25 * 1024 * 1024:  # 25MB limit
+            logger.error(f"Audio buffer too large: {buffer_size} bytes")
+            return ""
 
-        logger.info(f"✅ File uploaded: {file_upload}")
-
-        # Now use the uploaded file URL with minimal parameters
-        logger.info("🎯 Running Whisper transcription...")
-        output = replicate.run(
-            MODEL,
-            input={
-                "audio": file_upload.urls["get"],
-                "model": "base",
-                "translate": False,
-            }
+        logger.info(f"🎯 Transcribing audio with OpenAI Whisper ({buffer_size} bytes)...")
+        
+        # Reset position before reading
+        audio_buffer.seek(0)
+        
+        # Set a filename for the buffer (OpenAI needs this for format detection)
+        audio_buffer.name = "voice_message.ogg"
+        
+        # Create OpenAI client and transcribe
+        client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
+        
+        response = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_buffer,
+            response_format="text"
         )
-
-        logger.info(f"🔍 Whisper output: {output}")
-
-        # The output is a dictionary with 'transcription', 'language', etc.
-        if isinstance(output, dict):
-            text = output.get("transcription", "")
-            detected_language = output.get("language", "unknown")
-            logger.info(f"🌍 Detected language: {detected_language}")
-        elif isinstance(output, str):
-            text = output
-        else:
-            text = str(output)
+        
+        # Response is just the text string
+        text = response.strip() if isinstance(response, str) else str(response).strip()
         
         if not text:
-            logger.warning("Empty transcription result")
+            logger.warning("Empty transcription result from OpenAI")
             return ""
             
-        logger.info(f"🔤 Transcribed: {text!r}")
-        return text.strip()
+        logger.info(f"✅ Transcribed: {text!r}")
+        return text
 
     except Exception as e:
-        logger.error(f"⚠️ Replicate Whisper failed: {e}")
+        logger.error(f"⚠️ OpenAI Whisper transcription failed: {e}")
+        return ""
+
+
+# Legacy functions (keeping for backward compatibility but not used)
+def convert_to_wav_memory(input_buffer: io.BytesIO) -> io.BytesIO:
+    """
+    No longer needed - OpenAI Whisper accepts OGG directly
+    """
+    logger.warning("convert_to_wav_memory called but no longer needed with OpenAI API")
+    return input_buffer
+
+
+def transcribe_audio(audio_path: str) -> str:
+    """
+    Legacy file-based transcription (not used in memory implementation)
+    """
+    logger.warning("Legacy transcribe_audio called - consider using transcribe_audio_memory")
+    try:
+        with open(audio_path, "rb") as audio_file:
+            client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
+            response = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                response_format="text"
+            )
+            return response.strip() if isinstance(response, str) else str(response).strip()
+    except Exception as e:
+        logger.error(f"⚠️ OpenAI transcription failed: {e}")
         return ""
 
