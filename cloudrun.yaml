@@ -1,0 +1,103 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: nutribot-app
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        # Autoscaling
+        autoscaling.knative.dev/maxScale: "10"
+        autoscaling.knative.dev/minScale: "1"
+        
+        # Resource allocation
+        run.googleapis.com/memory: "2Gi"
+        run.googleapis.com/cpu: "1"
+        
+        # Timeout settings
+        run.googleapis.com/timeout: "3600s"
+        
+        # Execution environment
+        run.googleapis.com/execution-environment: gen2
+        
+        # Enable Cloud SQL connections if needed
+        # run.googleapis.com/cloudsql-instances: "PROJECT_ID:REGION:INSTANCE_ID"
+        
+    spec:
+      containerConcurrency: 10
+      containers:
+      - image: gcr.io/PROJECT_ID/nutribot-app:latest
+        ports:
+        - containerPort: 8080
+          name: http1
+        
+        env:
+        # Telegram Bot Configuration
+        - name: BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: bot-token
+              key: latest
+        
+        # OpenAI Configuration
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-api-key
+              key: latest
+        
+        # Replicate Configuration
+        - name: REPLICATE_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: replicate-api-token
+              key: latest
+        
+        # Supabase Configuration
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: supabase-url
+              key: latest
+        
+        - name: SUPABASE_ANON_KEY
+          valueFrom:
+            secretKeyRef:
+              name: supabase-anon-key
+              key: latest
+        
+        # Clarifai Configuration
+        - name: CLARIFAI_TANK_PAT
+          valueFrom:
+            secretKeyRef:
+              name: clarifai-tank-pat
+              key: latest
+        
+        - name: CLARIFAI_PLANT_PAT
+          valueFrom:
+            secretKeyRef:
+              name: clarifai-plant-pat
+              key: latest
+        
+        # Webhook Configuration
+        - name: WEBHOOK_URL
+          value: "https://nutribot-app-nimble-equator-460013-a6.a.run.app"
+        
+        - name: WEBHOOK_PORT
+          value: "8080"
+        
+        # Runtime Configuration
+        - name: PYTHONIOENCODING
+          value: "utf-8"
+        
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "0.5"
+            memory: "1Gi"
+      
+      serviceAccountName: nutribot-service-account
