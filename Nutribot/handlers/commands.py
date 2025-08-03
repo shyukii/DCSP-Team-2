@@ -226,7 +226,24 @@ async def handle_ml_crop_selection(update: Update, context: ContextTypes.DEFAULT
         return ML_GREENS_INPUT
     
     elif query.data == "back_to_input":
-        return await input_command(update, context)
+        # Show the input method selection menu using edit_message_text
+        keyboard = [
+            [InlineKeyboardButton("🧠 ML Smart Recommendations", callback_data="use_ml_calculator")],
+            [InlineKeyboardButton("🧮 Basic Calculator", callback_data="use_calculator")],
+            [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            "🥕 **Food & Water Input Guide**\n\n"
+            "Choose your recommendation method:\n\n"
+            "🧠 **ML Smart**: Crop-specific recommendations with soil volume-based water calculations\n"
+            "🧮 **Basic**: Simple ratio-based calculations\n\n"
+            "Which would you prefer?",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        return MAIN_MENU
 
 async def handle_ml_greens_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle greens input for ML recommendations"""
