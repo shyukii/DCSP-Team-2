@@ -64,6 +64,7 @@ from handlers.auth import (
 from handlers.llama_handler import llama_response
 from handlers.commands import (
     status_command,
+    dashboards_command,
     input_command,
     scan_command,
     handle_photo,
@@ -134,6 +135,7 @@ def setup_handlers():
                 CallbackQueryHandler(handle_calculator_choice, pattern="^(use_ml_calculator|use_calculator)$"),
                 CommandHandler("input", input_command),
                 CommandHandler("status", status_command),
+                CommandHandler("dashboards", dashboards_command),
                 CommandHandler(["back", "menu"], back_to_menu_command),
                 MessageHandler(filters.PHOTO, handle_photo)
             ],
@@ -186,6 +188,7 @@ def setup_handlers():
     application.add_handler(CommandHandler("co2", co2_calculator_command))
     application.add_handler(CommandHandler("profile", profile_command))
     application.add_handler(CommandHandler("watering", watering_command))
+    application.add_handler(CommandHandler("dashboards", dashboards_command))
     application.add_handler(CommandHandler(["back", "menu"], back_to_menu_command))
     
     # Note: CO2 callbacks (co2_personal, co2_global) are now handled by the main menu handler

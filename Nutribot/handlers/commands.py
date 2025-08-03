@@ -47,6 +47,31 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Call the existing menu handler with ec_forecast and return the state
     return await handle_main_menu(fake_update, context)
 
+async def dashboards_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle /dashboards command - same as clicking View Dashboards button"""
+    telegram_id = update.effective_user.id
+    user_data = get_cached_user_data(telegram_id, context)
+    
+    if not user_data:
+        await update.message.reply_text("Please /start to login first.")
+        return MAIN_MENU
+    
+    # Show the same message as the View Dashboards button
+    await update.message.reply_text(
+        "🌍 **NutriCycle Dashboards**\n\n"
+        "View your comprehensive composting analytics:\n"
+        "• CO₂ Savings Tracker\n"
+        "• Soil EC Monitoring\n" 
+        "• Plant Moisture Analytics\n\n"
+        "👆 Click the link below to access your dashboards:",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📊 Open Dashboards", url="https://nutricycle-dashboard.surge.sh/")],
+            [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
+        ])
+    )
+    return MAIN_MENU
+
 async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     telegram_id = update.effective_user.id
     user_data = get_cached_user_data(telegram_id, context)
