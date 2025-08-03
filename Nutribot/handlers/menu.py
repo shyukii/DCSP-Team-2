@@ -475,8 +475,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             "• Plant Moisture Analytics\n\n"
             "👆 Click the link below to access your dashboards:",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("� Open Dashboards", url="https://nutricycle-dashboard.surge.sh/")],
-                [InlineKeyboardButton("� Back to Menu", callback_data="back_to_menu")]
+                [InlineKeyboardButton("📊 Open Dashboards", url="https://nutricycle-dashboard.surge.sh/")],
+                [InlineKeyboardButton("🔙 Back to Menu", callback_data="back_to_menu")]
             ])
         )
         return MAIN_MENU

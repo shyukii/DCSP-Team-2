@@ -133,6 +133,7 @@ def setup_handlers():
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"), 
                 CallbackQueryHandler(handle_calculator_choice, pattern="^(use_ml_calculator|use_calculator)$"),
                 CommandHandler("input", input_command),
+                CommandHandler("status", status_command),
                 CommandHandler(["back", "menu"], back_to_menu_command),
                 MessageHandler(filters.PHOTO, handle_photo)
             ],
@@ -163,10 +164,12 @@ def setup_handlers():
             ],
             EC_FORECAST_SELECTION: [
                 CallbackQueryHandler(handle_main_menu),
-                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
+                CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),
+                CommandHandler("status", status_command)
             ],
             EC_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, handle_ec_input),
+                CallbackQueryHandler(handle_main_menu, pattern="^ec_forecast$"),
                 CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$")
             ],
         },
@@ -178,7 +181,6 @@ def setup_handlers():
 
     # Non-conversation command handlers
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("status", status_command))
     application.add_handler(CommandHandler("scan", scan_command))
     application.add_handler(CommandHandler("care", care_command))
     application.add_handler(CommandHandler("co2", co2_calculator_command))

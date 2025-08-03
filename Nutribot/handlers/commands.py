@@ -17,23 +17,35 @@ logger = logging.getLogger(__name__)
 ml_recommender = MLCompostRecommendation()
 
 
-async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    from handlers.menu import handle_main_menu
+    
     telegram_id = update.effective_user.id
     user_data = get_cached_user_data(telegram_id, context)
     
     if not user_data:
         await update.message.reply_text("Please /start to login first.")
         return
-        
-    tank_vol = user_data.get("tank_volume", 0)
-    soil_vol = user_data.get("soil_volume", 0)
-    await update.message.reply_text(
-        "🧪 **Compost Status Check**\n\n"
-        "Based on your setup, your compost is approximately 65% ready.\n"
-        "Estimated time to full maturity: 2-3 weeks.\n\n"
-        "The moisture level appears normal and bacterial activity is good.",
-        parse_mode="Markdown"
-    )
+    
+    # Create a fake callback query to trigger the ec_forecast menu
+    class FakeCallbackQuery:
+        def __init__(self):
+            self.data = "ec_forecast"
+            
+        async def answer(self):
+            pass
+            
+        async def edit_message_text(self, text, parse_mode=None, reply_markup=None):
+            await update.message.reply_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+    
+    # Create fake update to trigger ec_forecast handler
+    fake_update = type('obj', (object,), {
+        'callback_query': FakeCallbackQuery(),
+        'effective_user': update.effective_user
+    })()
+    
+    # Call the existing menu handler with ec_forecast and return the state
+    return await handle_main_menu(fake_update, context)
 
 async def input_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     telegram_id = update.effective_user.id
